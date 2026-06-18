@@ -8,12 +8,13 @@ Phase A — Planning
   14.1-table-specifications/
     01-tickets.md
     02-messages.md
-    03-departments.md
-    04-purchase-verifications.md
+    03-attachments.md
+    04-departments.md
     05-activities.md
-    06-providers.md
-    07-magic-tokens.md
-    08-notification-logs.md
+    06-purchase-verifications.md
+    07-auth-tokens.md
+    08-providers.md
+    09-notification-logs.md
 
 15. Service Container
 16. Module System
