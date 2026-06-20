@@ -22,38 +22,16 @@ if (! defined('ABSPATH')) {
 }
 
 /**
- * Plugin version.
- */
-define('SBAY_VERSION', '0.1.0');
-
-/**
- * Plugin file.
- */
-define('SBAY_PLUGIN_FILE', __FILE__);
-
-/**
- * Plugin basename.
- */
-define('SBAY_PLUGIN_BASENAME', plugin_basename(__FILE__));
-
-/**
- * Plugin path.
- */
-define('SBAY_PLUGIN_PATH', plugin_dir_path(__FILE__));
-
-/**
- * Plugin URL.
- */
-define('SBAY_PLUGIN_URL', plugin_dir_url(__FILE__));
-
-/**
  * Load Composer autoloader.
  */
-$autoload = SBAY_PLUGIN_PATH . 'vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
-if (file_exists($autoload)) {
-  require_once $autoload;
-}
+
+/**
+ * Define constants FIRST
+ */
+\SupportBay\Core\Constants::define();
+
 
 /**
  * Load helper functions (fallback).
@@ -63,6 +41,7 @@ $functions = SBAY_PLUGIN_PATH . 'includes/functions.php';
 if (file_exists($functions)) {
   require_once $functions;
 }
+
 
 /**
  * Plugin activation
