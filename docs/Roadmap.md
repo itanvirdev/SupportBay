@@ -38,11 +38,10 @@ I would build SupportBay in this order:
 
 ### Stage 1 — Plugin Foundation
 
-supportbay.php
 composer.json
-Bootstrap.php
-Container.php
+supportbay.php
 Application.php
+Container.php
 
 Result:
 

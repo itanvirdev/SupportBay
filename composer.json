@@ -1,0 +1,88 @@
+{
+	"name": "supportbay/supportbay",
+	"description": "A modern WordPress support system with Envato integration, AI chatbot, live chat, and extensible provider architecture.",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"authors": [
+		{
+			"name": "SupportBay Team"
+		}
+	],
+	"keywords": [
+		"wordpress",
+		"support",
+		"helpdesk",
+		"ticket",
+		"envato",
+		"woocommerce",
+		"edd",
+		"live-chat",
+		"ai"
+	],
+	"homepage": "https://supportbay.io",
+	"minimum-stability": "stable",
+	"prefer-stable": true,
+	"require": {
+		"php": ">=8.1"
+	},
+	"autoload": {
+		"psr-4": {
+			"SupportBay\\": "includes/"
+		},
+		"files": [
+			"includes/functions.php"
+		]
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"SupportBay\\Tests\\": "tests/"
+		}
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^10.5",
+		"phpstan/phpstan": "^2.1",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.1",
+		"wp-coding-standards/wpcs": "^3.2",
+		"phpcompatibility/phpcompatibility-wp": "^2.1"
+	},
+	"scripts": {
+		"post-install-cmd": [
+			"@autoload"
+		],
+		"post-update-cmd": [
+			"@autoload"
+		],
+		"autoload": "composer dump-autoload",
+		"lint": "phpcs",
+		"lint:fix": "phpcbf",
+		"analyse": "phpstan analyse",
+		"test": "phpunit"
+	},
+	"config": {
+		"sort-packages": true,
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	},
+	"archive": {
+		"exclude": [
+			"/docs",
+			"/tests",
+			"/.github",
+			"/node_modules",
+			"/assets/src",
+			"/package.json",
+			"/package-lock.json",
+			"/webpack.config.js",
+			"/phpstan.neon",
+			"/phpcs.xml.dist",
+			"/.editorconfig",
+			"/.gitignore",
+			"/.gitattributes"
+		]
+	},
+	"support": {
+		"issues": "https://github.com/itanvirdev/SupportBay/issues",
+		"source": "https://github.com/itanvirdev/SupportBay"
+	}
+}
