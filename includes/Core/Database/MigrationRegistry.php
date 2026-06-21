@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Database;
 
 use SupportBay\Modules\Tickets\Database\TicketSchema;
+use SupportBay\Modules\Messages\Database\MessageSchema;
 
 final class MigrationRegistry {
   /**
@@ -15,8 +16,8 @@ final class MigrationRegistry {
   public static function tables(): array {
     return [
       TicketSchema::class,
+      MessageSchema::class,
 
-      // MessageSchema::class,
       // AttachmentSchema::class,
       // DepartmentSchema::class,
     ];

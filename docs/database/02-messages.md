@@ -27,6 +27,29 @@ Messages
  └── Activities
 ```
 
+## Development Strategy
+
+```
+Modules/
+└── Messages/
+    ├── Database/
+    │   └── MessageSchema.php
+    │
+    ├── Entities/
+    │   └── Message.php
+    │
+    ├── Enums/
+    │   └── MessageType.php
+    │
+    ├── Repositories/
+    │   └── MessageRepository.php
+    │
+    ├── Services/
+    │   └── MessageService.php
+    │
+    └── MessageServiceProvider.php
+```
+
 ---
 
 # Table Structure

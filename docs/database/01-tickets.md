@@ -35,6 +35,29 @@ Ticket
  └── Notifications
 ```
 
+## Development Strategy
+
+```
+Modules/
+└── Tickets/
+    ├── Database/
+    │   └── TicketSchema.php
+    ├── Entities/
+    │   └── Ticket.php
+    ├── Enums/
+    │   ├── TicketPriority.php
+    │   ├── TicketState.php
+    │   └── TicketStatus.php
+    ├── Http/
+    │   └── Controllers/
+    │           └── TicketController.php
+    ├── Repositories/
+    │   └── TicketRepository.php
+    ├── Services/
+    │   └── TicketService.php
+    └── TicketServiceProvider.php
+```
+
 ---
 
 # Table Structure

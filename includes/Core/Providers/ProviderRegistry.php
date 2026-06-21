@@ -6,6 +6,7 @@ namespace SupportBay\Core\Providers;
 
 use SupportBay\Core\Container\Container;
 use SupportBay\Modules\Tickets\TicketServiceProvider;
+use SupportBay\Modules\Messages\MessageServiceProvider;
 
 final class ProviderRegistry {
   /**
@@ -35,6 +36,7 @@ final class ProviderRegistry {
    */
   private static function registerModuleProviders(Container $container): void {
     self::addProvider(new TicketServiceProvider());
+    self::addProvider(new MessageServiceProvider());
   }
 
   /**
@@ -48,7 +50,7 @@ final class ProviderRegistry {
       }
 
       if (method_exists($provider, 'boot')) {
-        $provider->boot();
+        $provider->boot($container);
       }
     }
   }

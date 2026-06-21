@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Tickets;
 
 use SupportBay\Core\Container\Container;
-use SupportBay\Core\Providers\ProviderRegistry;
+use SupportBay\Core\Providers\ServiceProvider;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 
-final class TicketServiceProvider {
+final class TicketServiceProvider extends ServiceProvider {
   public function register(Container $container): void {
     $container->bind('ticket_repository', function () {
       return new TicketRepository();
@@ -22,7 +22,7 @@ final class TicketServiceProvider {
     });
   }
 
-  public function boot(): void {
+  public function boot(Container $container): void {
     // Future: hooks, cron, REST routes
   }
 }
