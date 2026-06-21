@@ -31,21 +31,22 @@ Messages
 
 # Table Structure
 
-| Column           | Type            | Null | Default           | Index             | Description                      |
-| ---------------- | --------------- | ---- | ----------------- | ----------------- | -------------------------------- |
-| id               | BIGINT UNSIGNED | No   | AUTO_INCREMENT    | PRIMARY           | Internal message ID              |
-| ticket_id        | BIGINT UNSIGNED | No   | -                 | INDEX             | Parent ticket                    |
-| author_id        | BIGINT UNSIGNED | Yes  | NULL              | INDEX             | WordPress user ID                |
-| author_type      | VARCHAR(20)     | No   | customer          | INDEX             | customer, agent, manager, system |
-| type             | VARCHAR(20)     | No   | reply             | INDEX             | reply, internal_note, system     |
-| content          | LONGTEXT        | No   | -                 | FULLTEXT (future) | Sanitized HTML content           |
-| edited_by        | BIGINT UNSIGNED | Yes  | NULL              | -                 | User who last edited             |
-| edited_at        | DATETIME        | Yes  | NULL              | INDEX             | Last edit timestamp              |
-| customer_read_at | DATETIME        | Yes  | NULL              | INDEX             | Customer viewed message          |
-| staff_read_at    | DATETIME        | Yes  | NULL              | INDEX             | Staff viewed message             |
-| metadata         | LONGTEXT        | Yes  | NULL              | -                 | JSON metadata                    |
-| created_at       | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX             | Created date                     |
-| updated_at       | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX             | Updated date                     |
+| Column           | Type            | Null | Default           | Index             | Description                             |
+| ---------------- | --------------- | ---- | ----------------- | ----------------- | --------------------------------------- |
+| id               | BIGINT UNSIGNED | No   | AUTO_INCREMENT    | PRIMARY           | Internal message ID                     |
+| ticket_id        | BIGINT UNSIGNED | No   | -                 | INDEX             | Parent ticket                           |
+| author_id        | BIGINT UNSIGNED | Yes  | NULL              | INDEX             | WordPress user ID                       |
+| author_type      | VARCHAR(20)     | No   | customer          | INDEX             | customer, guest, agent, manager, system |
+| type             | VARCHAR(20)     | No   | reply             | INDEX             | reply, internal_note, system            |
+| content          | LONGTEXT        | No   | -                 | FULLTEXT (future) | Sanitized HTML content                  |
+| edited_by_id     | BIGINT UNSIGNED | Yes  | NULL              | -                 | User who last edited                    |
+| edited_at        | DATETIME        | Yes  | NULL              | INDEX             | Last edit timestamp                     |
+| customer_read_at | DATETIME        | Yes  | NULL              | INDEX             | Customer viewed message                 |
+| staff_read_at    | DATETIME        | Yes  | NULL              | INDEX             | Staff viewed message                    |
+| metadata         | LONGTEXT        | Yes  | NULL              | -                 | JSON metadata                           |
+| created_at       | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX             | Created date                            |
+| updated_at       | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX             | Updated date                            |
+| is_deleted       | TINYINT(1)      | No   | DEFAULT 0         |                   |                                         |
 
 ---
 
