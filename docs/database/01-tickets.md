@@ -39,30 +39,32 @@ Ticket
 
 # Table Structure
 
-| Column                   | Type            | Null | Default           | Index   | Description                                 |
-| ------------------------ | --------------- | ---- | ----------------- | ------- | ------------------------------------------- |
-| id                       | BIGINT UNSIGNED | No   | AUTO_INCREMENT    | PRIMARY | Internal ticket ID                          |
-| track_id                 | CHAR(9)         | No   | -                 | UNIQUE  | Public ticket identifier (e.g. `#54E5DF43`) |
-| customer_id              | BIGINT UNSIGNED | No   | -                 | INDEX   | WordPress customer ID                       |
-| purchase_verification_id | BIGINT UNSIGNED | Yes  | NULL              | INDEX   | Purchase verification reference             |
-| department_id            | BIGINT UNSIGNED | No   | General Support   | INDEX   | Support department                          |
-| assigned_agent_id        | BIGINT UNSIGNED | Yes  | NULL              | INDEX   | Assigned support agent                      |
-| subject                  | VARCHAR(255)    | No   | -                 | INDEX   | Ticket subject                              |
-| status                   | VARCHAR(20)     | No   | open              | INDEX   | Open, Resolved, Closed                      |
-| state                    | VARCHAR(20)     | No   | active            | INDEX   | Active, Inactive, Trash                     |
-| priority                 | VARCHAR(20)     | No   | normal            | INDEX   | Controlled by staff                         |
-| source                   | VARCHAR(30)     | No   | web               | INDEX   | Web, API, Email (future)                    |
-| last_message_id          | VARCHAR(20)     | Yes  | NULL              | INDEX   | customer, agent, manager, system            |
-| last_reply_at            | DATETIME        | Yes  | NULL              | INDEX   | Last reply timestamp                        |
-| first_response_at        | DATETIME        | Yes  | NULL              | -       | First staff response                        |
-| resolved_at              | DATETIME        | Yes  | NULL              | -       | Resolution timestamp                        |
-| closed_at                | DATETIME        | Yes  | NULL              | -       | Closure timestamp                           |
-| reopened_at              | DATETIME        | Yes  | NULL              | -       | Reopen timestamp                            |
-| metadata                 | LONGTEXT        | Yes  | NULL              | -       | JSON metadata                               |
-| created_at               | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX   | Created date                                |
-| updated_at               | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX   | Updated date                                |
-| is_public                |                 |      |                   |         |                                             |
-| public_toket             |                 |      |                   |         |                                             |
+| Column                   | Type                 | Null | Default           | Index   | Description                                 |
+| ------------------------ | -------------------- | ---- | ----------------- | ------- | ------------------------------------------- |
+| id                       | BIGINT UNSIGNED      | No   | AUTO_INCREMENT    | PRIMARY | Internal ticket ID                          |
+| track_id                 | CHAR(9)              | No   | -                 | UNIQUE  | Public ticket identifier (e.g. `#54E5DF43`) |
+| customer_id              | BIGINT UNSIGNED      | No   | -                 | INDEX   | WordPress customer ID                       |
+| created_by_id            | BIGINT UNSIGNED      | Yes  | NULL              | INDEX   | Id (e.g `12`)                               |
+| created_by_type          | VARCHAR(20) UNSIGNED | Yes  | NULL              | INDEX   | Customer, Guest, Agent, Manger, System      |
+| purchase_verification_id | BIGINT UNSIGNED      | Yes  | NULL              | INDEX   | Purchase verification reference             |
+| department_id            | BIGINT UNSIGNED      | No   | General Support   | INDEX   | Support department                          |
+| assigned_agent_id        | BIGINT UNSIGNED      | Yes  | NULL              | INDEX   | Assigned support agent                      |
+| subject                  | VARCHAR(255)         | No   | -                 | INDEX   | Ticket subject                              |
+| status                   | VARCHAR(20)          | No   | open              | INDEX   | Open, Resolved, Closed                      |
+| state                    | VARCHAR(20)          | No   | active            | INDEX   | Active, Inactive, Trash                     |
+| priority                 | VARCHAR(20)          | No   | normal            | INDEX   | Controlled by staff                         |
+| source                   | VARCHAR(30)          | No   | web               | INDEX   | Web, API, Email, live_chat, import (future) |
+| last_message_id          | VARCHAR(20)          | Yes  | NULL              | INDEX   | customer, agent, manager, system            |
+| last_reply_at            | DATETIME             | Yes  | NULL              | INDEX   | Last reply timestamp                        |
+| first_response_at        | DATETIME             | Yes  | NULL              | -       | First staff response                        |
+| resolved_at              | DATETIME             | Yes  | NULL              | -       | Resolution timestamp                        |
+| closed_at                | DATETIME             | Yes  | NULL              | -       | Closure timestamp                           |
+| reopened_at              | DATETIME             | Yes  | NULL              | -       | Reopen timestamp                            |
+| is_public                |                      |      |                   |         |                                             |
+| public_token             |                      |      |                   |         |                                             |
+| metadata                 | LONGTEXT             | Yes  | NULL              | -       | JSON metadata                               |
+| created_at               | DATETIME             | No   | CURRENT_TIMESTAMP | INDEX   | Created date                                |
+| updated_at               | DATETIME             | No   | CURRENT_TIMESTAMP | INDEX   | Updated date                                |
 
 ---
 
@@ -334,6 +336,24 @@ Potential additions:
 - Custom fields
 
 These should be introduced through future migrations without breaking existing data.
+
+---
+
+## Modules Tickets
+
+```
+Modules/
+└── Tickets/
+    ├── Database/
+    ├── Entities/
+    │   └── Ticket.php
+    ├── Enums/
+    ├── Http/
+    │   └── Controllers/
+    ├── Repositories/
+    ├── Services/
+    └── TicketServiceProvider.php
+```
 
 ---
 

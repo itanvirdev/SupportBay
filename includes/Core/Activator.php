@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace SupportBay\Core;
 
+use SupportBay\Core\Database\DatabaseInstaller;
+
 final class Activator {
   /**
    * Plugin activation handler
    */
   public static function activate(): void {
+    DatabaseInstaller::install();
+
     self::storeVersion();
     self::createDefaultOptions();
     self::logActivation();
+
+    flush_rewrite_rules();
   }
 
   /**

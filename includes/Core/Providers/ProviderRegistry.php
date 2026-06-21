@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Providers;
 
 use SupportBay\Core\Container\Container;
+use SupportBay\Modules\Tickets\TicketServiceProvider;
 
 final class ProviderRegistry {
   /**
@@ -33,7 +34,7 @@ final class ProviderRegistry {
    * Module providers
    */
   private static function registerModuleProviders(Container $container): void {
-    // Later: auto-load Modules/*
+    self::addProvider(new TicketServiceProvider());
   }
 
   /**

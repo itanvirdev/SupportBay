@@ -41,11 +41,65 @@ I would build SupportBay in this order:
 composer.json
 supportbay.php
 Application.php
+Activator.php
+Deactivator.php
+Uninstaller.php
+Constants.php
 Container.php
+ProviderRegistry.php
 
-Result:
+Result: The plugin loads successfully.
 
-The plugin loads successfully.
+### Stage 2 — Modules Tickets
+
+```
+Modules/
+└── Tickets/
+    ├── Database/
+    │   └── TicketSchema.php
+    ├── Entities/
+    │   └── Ticket.php
+    ├── Enums/
+    │   ├── TicketPriority.php
+    │   ├── TicketState.php
+    │   └── TicketStatus.php
+    ├── Http/
+    │   └── Controllers/
+    │           └── TicketController.php
+    ├── Repositories/
+    │   └── TicketRepository.php
+    ├── Services/
+    │   └── TicketService.php
+    └── TicketServiceProvider.php
+```
+
+### Stage 3 — Modules Messages
+
+```
+Modules/
+└── Messages/
+        │
+        ├── Database/
+        │   └── MessageSchema.php
+        │
+        ├── Enums/
+        │   ├── MessageType.php
+        │   └── MessageVisibility.php (if needed)
+        │
+        ├── Entities/
+        │   └── Message.php
+        │
+        ├── Repositories/
+        │   └── MessageRepository.php
+        │
+        ├── Services/
+        │   └── MessageService.php
+        │
+        ├── Http/
+        │   └── Controllers/
+        │
+        └── MessageServiceProvider.php
+```
 
 ### Stage 2 — Core Infrastructure
 

@@ -22,6 +22,10 @@ final class Constants {
     if (! defined('SBAY_VERSION')) {
       define('SBAY_VERSION', '0.1.0');
     }
+
+    if (! defined('SBAY_DB_VERSION')) {
+      define('SBAY_DB_VERSION', '0.1.0');
+    }
   }
 
   /**
