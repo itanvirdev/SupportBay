@@ -39,7 +39,6 @@ final class MessageRepository {
         'metadata'         => $data['metadata'] ?? null,
 
         'created_at'       => $data['created_at'] ?? current_time('mysql'),
-        'updated_at'       => $data['updated_at'] ?? current_time('mysql'),
       ],
       [
         '%d', // ticket_id
@@ -60,7 +59,6 @@ final class MessageRepository {
         '%s', // metadata
 
         '%s', // created_at
-        '%s', // updated_at
       ]
     );
 

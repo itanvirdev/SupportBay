@@ -39,8 +39,7 @@ final class TicketRepository {
         'is_public'         => $data['is_public'] ?? 0,
         'public_token' => $data['public_token'] ?? null,
         'metadata'         => $data['metadata'] ?? null,
-        'created_at'        => current_time('mysql'),
-        'updated_at'        => null,
+        'created_at'        =>  $data['created_at'] ?? current_time('mysql'),
       ],
       [
         '%s', // track_id
@@ -65,7 +64,6 @@ final class TicketRepository {
         '%s', // public_token
         '%s', // metadata
         '%s', // created_at
-        '%s', // updated_at
       ]
     );
 

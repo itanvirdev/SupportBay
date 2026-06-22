@@ -50,7 +50,13 @@ ProviderRegistry.php
 
 Result: The plugin loads successfully.
 
-### Stage 2 — Modules Tickets
+### Stage 2
+
+Repositories  
+Service Providers  
+Module Registry
+
+### Modules Tickets
 
 ```
 Modules/
@@ -107,9 +113,6 @@ Contracts
 Helpers
 Support
 Exceptions
-Repositories
-Service Providers
-Module Registry
 
 Result:
 

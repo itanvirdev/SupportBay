@@ -42,7 +42,7 @@ final class ProviderRegistry {
   /**
    * Boot all providers
    */
-  private static function bootProviders(Container $container): void {
+  public static function bootProviders(Container $container): void {
     foreach (self::$providers as $provider) {
 
       if (method_exists($provider, 'register')) {
@@ -61,7 +61,6 @@ final class ProviderRegistry {
   public static function addProvider(object $provider): void {
     self::$providers[] = $provider;
   }
-
   /**
    * Reset providers (testing)
    */

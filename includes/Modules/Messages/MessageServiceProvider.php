@@ -14,21 +14,15 @@ final class MessageServiceProvider extends ServiceProvider {
    * Register module services into container
    */
   public function register(Container $container): void {
-    /**
-     * Message Repository
-     */
     $container->singleton(
       MessageRepository::class,
       fn() => new MessageRepository()
     );
 
-    /**
-     * Message Service
-     */
     $container->singleton(
       MessageService::class,
-      fn($container) => new MessageService(
-        $container->make(MessageRepository::class)
+      fn(Container $c) => new MessageService(
+        $c->make(MessageRepository::class)
       )
     );
   }

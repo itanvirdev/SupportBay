@@ -10,18 +10,27 @@ use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 
 final class TicketServiceProvider extends ServiceProvider {
-  public function register(Container $container): void {
-    $container->bind('ticket_repository', function () {
-      return new TicketRepository();
-    });
 
-    $container->bind('ticket_service', function ($c) {
-      return new TicketService(
-        $c->get('ticket_repository')
-      );
-    });
+  /**
+   * Register module services into container
+   */
+  public function register(Container $container): void {
+    $container->singleton(
+      TicketRepository::class,
+      fn() => new TicketRepository()
+    );
+
+    $container->singleton(
+      TicketService::class,
+      fn(Container $c) => new TicketService(
+        $c->make(TicketRepository::class)
+      )
+    );
   }
 
+  /**
+   * Boot logic (reserved for future)
+   */
   public function boot(Container $container): void {
     // Future: hooks, cron, REST routes
   }

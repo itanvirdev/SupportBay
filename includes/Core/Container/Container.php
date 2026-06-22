@@ -4,75 +4,108 @@ declare(strict_types=1);
 
 namespace SupportBay\Core\Container;
 
-use RuntimeException;
-
 final class Container {
   /**
-   * All bindings
+   * Service bindings.
+   *
+   * @var array<string, callable>
    */
   private array $bindings = [];
 
   /**
-   * Resolved singleton instances
+   * Shared instances.
+   *
+   * @var array<string, object>
    */
   private array $instances = [];
 
   /**
-   * Register a binding (factory-based)
+   * Shared flags.
+   *
+   * @var array<string, bool>
    */
-  public function bind(string $key, callable $resolver): void {
-    $this->bindings[$key] = $resolver;
+  private array $shared = [];
+
+  /**
+   * Register a factory binding.
+   */
+  public function bind(string $abstract, callable $resolver): void {
+    $this->bindings[$abstract] = $resolver;
+    $this->shared[$abstract] = false;
   }
 
   /**
-   * Register a singleton binding
+   * Register a singleton binding.
    */
-  public function singleton(string $key, mixed $instance): void {
-    $this->instances[$key] = $instance;
+  public function singleton(string $abstract, callable $resolver): void {
+    $this->bindings[$abstract] = $resolver;
+    $this->shared[$abstract] = true;
   }
 
   /**
-   * Resolve a service from the container
+   * Register an existing instance.
    */
-  public function get(string $key) {
-    /**
-     * Return singleton if exists
-     */
-    if (array_key_exists($key, $this->instances)) {
-      return $this->instances[$key];
+  public function instance(string $abstract, object $instance): void {
+    $this->instances[$abstract] = $instance;
+    $this->shared[$abstract] = true;
+  }
+
+  /**
+   * Resolve a service.
+   */
+  public function make(string $abstract): mixed {
+    // Existing singleton instance
+    if (isset($this->instances[$abstract])) {
+      return $this->instances[$abstract];
     }
 
-    /**
-     * Resolve from factory binding
-     */
-    if (isset($this->bindings[$key])) {
-      return ($this->bindings[$key])($this);
+    if (! isset($this->bindings[$abstract])) {
+      return null;
     }
 
-    return null;
+    $object = ($this->bindings[$abstract])($this);
+
+    if ($this->shared[$abstract]) {
+      $this->instances[$abstract] = $object;
+    }
+
+    return $object;
   }
 
   /**
-   * Check if service exists
+   * Alias of make().
    */
-  public function has(string $key): bool {
-    return isset($this->bindings[$key]) || array_key_exists($key, $this->instances);
+  public function get(string $abstract): mixed {
+    return $this->make($abstract);
   }
 
   /**
-   * Remove a service (useful for testing or overrides)
+   * Check whether a service exists.
    */
-  public function forget(string $key): void {
-    unset($this->bindings[$key], $this->instances[$key]);
+  public function has(string $abstract): bool {
+    return isset($this->bindings[$abstract])
+      || isset($this->instances[$abstract]);
   }
 
   /**
-   * Get all registered services (debugging)
+   * Forget a binding.
+   */
+  public function forget(string $abstract): void {
+    unset(
+      $this->bindings[$abstract],
+      $this->instances[$abstract],
+      $this->shared[$abstract]
+    );
+  }
+
+  /**
+   * Debug helper.
    */
   public function all(): array {
     return [
-      'bindings' => $this->bindings,
-      'instances' => $this->instances,
+      'bindings' => array_keys($this->bindings),
+      'instances' => array_keys($this->instances),
+      'shared' => $this->shared,
     ];
   }
 }

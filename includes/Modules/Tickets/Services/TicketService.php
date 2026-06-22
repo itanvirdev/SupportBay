@@ -14,6 +14,9 @@ final class TicketService {
   ) {
   }
 
+  /**
+   * Create a ticket
+   */
   public function create(array $data): int {
     $data['track_id'] = $data['track_id'] ?? $this->generateTrackId();
 

@@ -19,10 +19,18 @@ final class Application {
   private bool $booted = false;
 
   /**
+   * Static reference for dev/testing access
+   */
+  private static ?Container $staticContainer = null;
+
+  /**
    * Initialize Application
    */
   public function __construct() {
     $this->container = new Container();
+
+    // allow global access
+    self::$staticContainer = $this->container;
   }
 
   /**
@@ -44,15 +52,26 @@ final class Application {
    * Register core container bindings
    */
   private function registerCoreBindings(): void {
-    $this->container->singleton('app', $this);
-    $this->container->singleton('container', $this->container);
+    $this->container->instance(Application::class, $this);
+    $this->container->instance(Container::class, $this->container);
   }
 
   /**
    * Get container instance
    */
-  public function container(): Container {
-    return $this->container;
+  // public function container(): Container {
+  //   return $this->container;
+  // }
+
+  /**
+   * Static container access (for dev tools / flow test)
+   */
+  public static function container(): Container {
+    if (!self::$staticContainer) {
+      throw new \RuntimeException('Container not initialized yet.');
+    }
+
+    return self::$staticContainer;
   }
 
   /**

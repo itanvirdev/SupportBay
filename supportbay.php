@@ -4,7 +4,7 @@
  * Plugin Name:       SupportBay
  * Plugin URI:        https://supportbay.io
  * Description:       Modern WordPress support system with ticketing, Envato verification, live chat, AI chatbot, and provider integrations.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.7
  * Requires PHP:      8.1
  * Author:            SupportBay Team
@@ -65,3 +65,27 @@ register_deactivation_hook(
  * Boot SupportBay.
  */
 (new SupportBay\Core\Application())->boot();
+
+
+/**
+ * DEV ONLY: Flow Test
+ */
+if (defined('WP_DEBUG') && WP_DEBUG) {
+
+  add_action('init', function () {
+
+    // IMPORTANT: prevent running on every refresh if needed
+    if (!isset($_GET['sbay_test'])) {
+      return;
+    }
+
+    $container = \SupportBay\Core\Application::container(); // or your container accessor
+
+    \SupportBay\Dev\MessageFlowTest::run(
+      $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
+      $container->make(\SupportBay\Modules\Messages\Services\MessageService::class)
+    );
+
+    exit;
+  });
+}
