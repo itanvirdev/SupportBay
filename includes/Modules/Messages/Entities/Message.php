@@ -6,8 +6,10 @@ namespace SupportBay\Modules\Messages\Entities;
 
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Core\Entities\Entity;
 
-final class Message {
+final class Message extends Entity {
+
   public function __construct(
     private int $id,
     private int $ticketId,
@@ -25,11 +27,29 @@ final class Message {
     private ?string $customerReadAt,
     private ?string $staffReadAt,
 
-    private ?string $metadata,
+    private ?array $metadata,
 
     private string $createdAt,
     private ?string $updatedAt,
   ) {
+  }
+
+  public function toArray(): array {
+    return [
+      'id' => $this->id,
+      'ticket_id' => $this->ticketId,
+      'author_id' => $this->authorId,
+      'author_type' => $this->authorType->value,
+      'type' => $this->type->value,
+      'content' => $this->content,
+      'edited_by_id' => $this->editedById,
+      'edited_at' => $this->editedAt,
+      'customer_read_at' => $this->customerReadAt,
+      'staff_read_at' => $this->staffReadAt,
+      'metadata' => $this->metadata,
+      'created_at' => $this->createdAt,
+      'updated_at' => $this->updatedAt,
+    ];
   }
 
   // -------------------------

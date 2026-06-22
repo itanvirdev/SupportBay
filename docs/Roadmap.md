@@ -50,8 +50,6 @@ ProviderRegistry.php
 
 Result: The plugin loads successfully.
 
-### Stage 2
-
 Repositories  
 Service Providers  
 Module Registry
@@ -79,7 +77,7 @@ Modules/
     └── TicketServiceProvider.php
 ```
 
-### Stage 3 — Modules Messages
+### Modules Messages
 
 ```
 Modules/
@@ -106,6 +104,13 @@ Modules/
         │
         └── MessageServiceProvider.php
 ```
+
+#### ✅ Successfully done flow test
+
+## Base Architecture
+
+- /Core/Database/Repository.php (refactor the Ticket & Message Repository)
+- /Core/Entities/Entity.php
 
 ### Stage 2 — Core Infrastructure
 

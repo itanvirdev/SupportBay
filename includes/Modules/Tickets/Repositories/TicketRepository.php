@@ -4,42 +4,39 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Tickets\Repositories;
 
+use SupportBay\Core\Database\Repository;
 use SupportBay\Modules\Tickets\Database\TicketSchema;
 
-final class TicketRepository {
+final class TicketRepository extends Repository {
   /**
    * Create a new ticket
    */
   public function create(array $data): int {
-    global $wpdb;
-
-    $table = TicketSchema::tableName();
-
-    $wpdb->insert(
-      $table,
+    return $this->insert(
       [
-        'track_id'          => $data['track_id'],
-        'customer_id'       => $data['customer_id'] ?? null,
-        'created_by_id'       => $data['created_by_id'] ?? null,
-        'created_by_type' => $data['created_by_type'] ?? 'customer',
+        'track_id'                 => $data['track_id'],
+        'customer_id'              => $data['customer_id'] ?? null,
+        'created_by_id'            => $data['created_by_id'] ?? null,
+        'created_by_type'          => $data['created_by_type'],
         'purchase_verification_id' => $data['purchase_verification_id'] ?? null,
-        'department_id' => $data['department_id'],
-        'assigned_agent_id' => $data['assigned_agent_id'] ?? null,
-        'subject'           => $data['subject'] ?? '',
-        'status'            => $data['status'] ?? 'open',
-        'state'             => $data['state'] ?? 'active',
-        'priority'          => $data['priority'] ?? 'normal',
-        'source'          => $data['source'] ?? 'web',
-        'last_message_id'      => $data['last_message_id'] ?? null,
-        'last_reply_at'      => $data['last_reply_at'] ?? null,
-        'first_response_at'      => $data['first_response_at'] ?? null,
-        'resolved_at'      => $data['resolved_at'] ?? null,
-        'closed_at'      => $data['closed_at'] ?? null,
-        'reopened_at'      => $data['reopened_at'] ?? null,
-        'is_public'         => $data['is_public'] ?? 0,
-        'public_token' => $data['public_token'] ?? null,
-        'metadata'         => $data['metadata'] ?? null,
-        'created_at'        =>  $data['created_at'] ?? current_time('mysql'),
+        'department_id'            => $data['department_id'],
+        'assigned_agent_id'        => $data['assigned_agent_id'] ?? null,
+        'subject'                  => $data['subject'],
+        'status'                   => $data['status'],
+        'state'                    => $data['state'],
+        'priority'                 => $data['priority'],
+        'source'                   => $data['source'],
+        'last_message_id'          => $data['last_message_id'] ?? null,
+        'last_reply_at'            => $data['last_reply_at'] ?? null,
+        'first_response_at'        => $data['first_response_at'] ?? null,
+        'resolved_at'              => $data['resolved_at'] ?? null,
+        'closed_at'                => $data['closed_at'] ?? null,
+        'reopened_at'              => $data['reopened_at'] ?? null,
+        'is_public'                => $data['is_public'] ?? 0,
+        'public_token'             => $data['public_token'] ?? null,
+        'metadata'                 => $data['metadata'] ?? null,
+        'created_at'               => $data['created_at'] ?? $this->now(),
+        'updated_at'               => $data['updated_at'] ?? $this->now(),
       ],
       [
         '%s', // track_id
@@ -64,23 +61,25 @@ final class TicketRepository {
         '%s', // public_token
         '%s', // metadata
         '%s', // created_at
+        '%s', // updated_at
       ]
     );
+  }
 
-    return (int) $wpdb->insert_id;
+  /**
+   * Table
+   */
+  protected function table(): string {
+    return TicketSchema::tableName();
   }
 
   /**
    * Find ticket by ID
    */
-  public function find(int $id): ?array {
-    global $wpdb;
-
-    $table = TicketSchema::tableName();
-
-    $result = $wpdb->get_row(
-      $wpdb->prepare(
-        "SELECT * FROM {$table} WHERE id = %d",
+  public function find(int $id): ?Ticket {
+    $result = $this->db->get_row(
+      $this->db->prepare(
+        "SELECT * FROM {$this->table()} WHERE id = %d",
         $id
       ),
       ARRAY_A
@@ -92,14 +91,10 @@ final class TicketRepository {
   /**
    * Find ticket by track_id
    */
-  public function findByTrackId(string $trackId): ?array {
-    global $wpdb;
-
-    $table = TicketSchema::tableName();
-
-    $result = $wpdb->get_row(
-      $wpdb->prepare(
-        "SELECT * FROM {$table} WHERE track_id = %s",
+  public function findByTrackId(string $trackId): ?Ticket {
+    $result = $this->db->get_row(
+      $this->db->prepare(
+        "SELECT * FROM {$this->table()} WHERE track_id = %s",
         $trackId
       ),
       ARRAY_A
@@ -111,14 +106,12 @@ final class TicketRepository {
   /**
    * Get tickets by customer
    */
-  public function getByCustomer(int $customerId): array {
-    global $wpdb;
-
-    $table = TicketSchema::tableName();
-
-    return $wpdb->get_results(
-      $wpdb->prepare(
-        "SELECT * FROM {$table} WHERE customer_id = %d ORDER BY id DESC",
+  public function getByCustomer(int $customerId): ?Ticket {
+    return $this->db->get_results(
+      $this->db->prepare(
+        "SELECT * FROM {$this->table()}
+         WHERE customer_id = %d
+         ORDER BY id DESC",
         $customerId
       ),
       ARRAY_A
@@ -129,31 +122,15 @@ final class TicketRepository {
    * Update ticket
    */
   public function update(int $id, array $data): bool {
-    global $wpdb;
+    $data['updated_at'] = $this->now();
 
-    $table = TicketSchema::tableName();
-
-    $data['updated_at'] = current_time('mysql');
-
-    return (bool) $wpdb->update(
-      $table,
-      $data,
-      ['id' => $id]
-    );
+    return $this->updateById($id, $data);
   }
 
   /**
    * Delete ticket (soft-delete can be added later)
    */
   public function delete(int $id): bool {
-    global $wpdb;
-
-    $table = TicketSchema::tableName();
-
-    return (bool) $wpdb->delete(
-      $table,
-      ['id' => $id],
-      ['%d']
-    );
+    return $this->deleteById($id);
   }
 }

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Tickets\Services;
 
-use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 use SupportBay\Common\Enums\AuthorType;
 use SupportBay\Common\Enums\SourceType;
+use SupportBay\Modules\Tickets\Enums\TicketPriority;
+use SupportBay\Modules\Tickets\Enums\TicketState;
+use SupportBay\Modules\Tickets\Enums\TicketStatus;
+use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 
 final class TicketService {
   public function __construct(
@@ -20,7 +23,10 @@ final class TicketService {
   public function create(array $data): int {
     $data['track_id'] = $data['track_id'] ?? $this->generateTrackId();
 
-    $data['source'] = $data['source'] ?? SourceType::default()->value;
+    $data['status']          = $data['status'] ?? TicketStatus::default()->value;
+    $data['state']           = $data['state'] ?? TicketState::default()->value;
+    $data['priority']        = $data['priority'] ?? TicketPriority::default()->value;
+    $data['source']          = $data['source'] ?? SourceType::default()->value;
     $data['created_by_type'] = $data['created_by_type'] ?? AuthorType::default()->value;
 
     return $this->repository->create($data);

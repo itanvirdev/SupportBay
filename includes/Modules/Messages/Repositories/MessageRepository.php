@@ -4,22 +4,18 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Messages\Repositories;
 
+use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Core\Database\Repository;
 use SupportBay\Modules\Messages\Database\MessageSchema;
 use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Messages\Enums\MessageType;
-use SupportBay\Common\Enums\AuthorType;
 
-final class MessageRepository {
+final class MessageRepository extends Repository {
   /**
    * Create a new message
    */
   public function create(array $data): int {
-    global $wpdb;
-
-    $table = MessageSchema::tableName();
-
-    $wpdb->insert(
-      $table,
+    return $this->insert(
       [
         'ticket_id'        => $data['ticket_id'],
 
@@ -38,7 +34,7 @@ final class MessageRepository {
 
         'metadata'         => $data['metadata'] ?? null,
 
-        'created_at'       => $data['created_at'] ?? current_time('mysql'),
+        'created_at'       => $data['created_at'] ?? $this->now(),
       ],
       [
         '%d', // ticket_id
@@ -61,27 +57,30 @@ final class MessageRepository {
         '%s', // created_at
       ]
     );
+  }
 
-    return (int) $wpdb->insert_id;
+  /**
+   * Table
+   */
+  protected function table(): string {
+    return MessageSchema::tableName();
   }
 
   /**
    * Find message by ID (returns Entity)
    */
   public function find(int $id): ?Message {
-    global $wpdb;
-
-    $table = MessageSchema::tableName();
-
-    $row = $wpdb->get_row(
-      $wpdb->prepare(
-        "SELECT * FROM {$table} WHERE id = %d",
+    $result = $this->db->get_row(
+      $this->db->prepare(
+        "SELECT * FROM {$this->table()} WHERE id = %d",
         $id
       ),
       ARRAY_A
     );
 
-    return $row ? $this->hydrate($row) : null;
+    return $result
+      ? $this->hydrate($result)
+      : null;
   }
 
   /**
@@ -90,89 +89,61 @@ final class MessageRepository {
    * @return Message[]
    */
   public function getByTicket(int $ticketId): array {
-    global $wpdb;
-
-    $table = MessageSchema::tableName();
-
-    $rows = $wpdb->get_results(
-      $wpdb->prepare(
-        "SELECT * FROM {$table} 
-                 WHERE ticket_id = %d 
-                 ORDER BY id ASC",
+    $result = $this->db->get_results(
+      $this->db->prepare(
+        "SELECT *
+         FROM {$this->table()}
+         WHERE ticket_id = %d
+         ORDER BY id ASC",
         $ticketId
       ),
       ARRAY_A
     );
 
-    return array_map(fn($row) => $this->hydrate($row), $rows);
+    return array_map(
+      fn(array $row) => $this->hydrate($row),
+      $result
+    );
   }
 
   /**
    * Update message
    */
   public function update(int $id, array $data): bool {
-    global $wpdb;
+    $data['updated_at'] = $this->now();
 
-    $table = MessageSchema::tableName();
-
-    $data['updated_at'] = current_time('mysql');
-
-    return (bool) $wpdb->update(
-      $table,
-      $data,
-      ['id' => $id]
-    );
+    return $this->updateById($id, $data);
   }
 
   /**
    * Mark as read by customer
    */
   public function markCustomerRead(int $id): bool {
-    global $wpdb;
-
-    $table = MessageSchema::tableName();
-
-    return (bool) $wpdb->update(
-      $table,
-      ['customer_read_at' => current_time('mysql')],
-      ['id' => $id]
-    );
+    return $this->updateById($id, [
+      'customer_read_at' => $this->now(),
+    ]);
   }
 
   /**
    * Mark as read by staff
    */
   public function markStaffRead(int $id): bool {
-    global $wpdb;
-
-    $table = MessageSchema::tableName();
-
-    return (bool) $wpdb->update(
-      $table,
-      ['staff_read_at' => current_time('mysql')],
-      ['id' => $id]
-    );
+    return $this->updateById($id, [
+      'staff_read_at' => $this->now(),
+    ]);
   }
 
   /**
    * Delete message
    */
   public function delete(int $id): bool {
-    global $wpdb;
-
-    $table = MessageSchema::tableName();
-
-    return (bool) $wpdb->delete(
-      $table,
-      ['id' => $id],
-      ['%d']
-    );
+    return $this->deleteById($id);
   }
 
   /**
    * Hydrate DB row → Message Entity
    */
-  private function hydrate(array $row): Message {
+  protected function hydrate(array $row): Message {
     return new Message(
       id: (int) $row['id'],
       ticketId: (int) $row['ticket_id'],
