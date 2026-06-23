@@ -108,9 +108,9 @@ final class Message extends Entity {
     return $this->updatedAt;
   }
 
-    // -------------------------
-    // Domain Methods
-    // -------------------------
+  // -------------------------
+  // Domain Methods
+  // -------------------------
 
   /**
    * Is this message visible to customer?

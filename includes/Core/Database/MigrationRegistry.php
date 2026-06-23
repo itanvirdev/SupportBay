@@ -6,6 +6,7 @@ namespace SupportBay\Core\Database;
 
 use SupportBay\Modules\Tickets\Database\TicketSchema;
 use SupportBay\Modules\Messages\Database\MessageSchema;
+use SupportBay\Modules\Departments\Database\DepartmentSchema;
 
 final class MigrationRegistry {
   /**
@@ -17,9 +18,9 @@ final class MigrationRegistry {
     return [
       TicketSchema::class,
       MessageSchema::class,
+      DepartmentSchema::class,
 
       // AttachmentSchema::class,
-      // DepartmentSchema::class,
     ];
   }
 }

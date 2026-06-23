@@ -54,7 +54,7 @@ Repositories
 Service Providers  
 Module Registry
 
-### Modules Tickets
+### Module Tickets
 
 ```
 Modules/
@@ -77,7 +77,7 @@ Modules/
     └── TicketServiceProvider.php
 ```
 
-### Modules Messages
+### Module Messages
 
 ```
 Modules/
@@ -111,6 +111,25 @@ Modules/
 
 - /Core/Database/Repository.php (refactor the Ticket & Message Repository)
 - /Core/Entities/Entity.php
+
+### Module Departments
+
+```
+Modules/
+└── Departments/
+    ├── Database/
+    │   └── DepartmentSchema.php
+    ├── Enums/
+    │   └── DepartmentStatus.php
+    ├── Entities/
+    │   └── Department.php
+    ├── Repositories/
+    │   └── DepartmentRepository.php
+    ├── Services/
+    │   └── DepartmentService.php
+    ├── DepartmentServiceProvider.php
+    └── Controllers/ (later)
+```
 
 ### Stage 2 — Core Infrastructure
 

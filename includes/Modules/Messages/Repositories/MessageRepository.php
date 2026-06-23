@@ -11,6 +11,14 @@ use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Messages\Enums\MessageType;
 
 final class MessageRepository extends Repository {
+
+  /**
+   * Table
+   */
+  protected function table(): string {
+    return MessageSchema::tableName();
+  }
+
   /**
    * Create a new message
    */
@@ -57,13 +65,6 @@ final class MessageRepository extends Repository {
         '%s', // created_at
       ]
     );
-  }
-
-  /**
-   * Table
-   */
-  protected function table(): string {
-    return MessageSchema::tableName();
   }
 
   /**

@@ -8,6 +8,15 @@ use SupportBay\Core\Database\Repository;
 use SupportBay\Modules\Tickets\Database\TicketSchema;
 
 final class TicketRepository extends Repository {
+
+  /**
+   * Table
+   */
+  protected function table(): string {
+    return TicketSchema::tableName();
+  }
+
+
   /**
    * Create a new ticket
    */
@@ -66,12 +75,6 @@ final class TicketRepository extends Repository {
     );
   }
 
-  /**
-   * Table
-   */
-  protected function table(): string {
-    return TicketSchema::tableName();
-  }
 
   /**
    * Find ticket by ID

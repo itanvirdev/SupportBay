@@ -24,6 +24,25 @@ Tickets
 Messages
 ```
 
+## Development Strategy
+
+```
+Modules/
+└── Departments/
+    ├── Database/
+    │   └── DepartmentSchema.php
+    ├── Enums/
+    │   └── DepartmentStatus.php
+    ├── Entities/
+    │   └── Department.php
+    ├── Repositories/
+    │   └── DepartmentRepository.php
+    ├── Services/
+    │   └── DepartmentService.php
+    ├── DepartmentServiceProvider.php
+    └── Controllers/ (later)
+```
+
 ---
 
 # Table Structure
@@ -34,10 +53,12 @@ Messages
 | name                 | VARCHAR(100)    | No   | -                 | UNIQUE  | Department name                     |
 | slug                 | VARCHAR(120)    | No   | -                 | UNIQUE  | URL-safe identifier                 |
 | description          | TEXT            | Yes  | NULL              | -       | Optional description                |
-| is_active            | TINYINT(1)      | No   | 1                 | INDEX   | Enable/disable department           |
+| status               | VARCHAR(20)     | No   | 1                 | INDEX   | Enable/disable department           |
 | sort_order           | INT UNSIGNED    | No   | 0                 | INDEX   | Display order                       |
 | auto_assign_agent_id | BIGINT UNSIGNED | Yes  | NULL              | INDEX   | Default agent (optional v1 feature) |
 | default_priority     | VARCHAR(20)     | No   | normal            | INDEX   | Default ticket priority             |
+| color                | VARCHAR(20)     | Yes  | Null              |         | Based on the department             |
+| icon                 | VARCHAR(100)    | Yes  | Null              |         | Based on the department             |
 | metadata             | LONGTEXT        | Yes  | NULL              | -       | JSON config for future rules        |
 | created_at           | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX   | Created time                        |
 | updated_at           | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX   | Updated time                        |
@@ -104,7 +125,7 @@ name ASC
 If:
 
 ```text id="d6"
-is_active = 0
+status = inactive / active
 ```
 
 Then:
@@ -146,7 +167,6 @@ Department Repository handles:
 - CRUD operations
 - listing active departments
 - sorting
-- validation
 - assignment helpers
 
 Business rules handled in service layer.
