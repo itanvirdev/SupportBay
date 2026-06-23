@@ -109,6 +109,95 @@ abstract class Repository {
   }
 
   /**
+   * Find a record by ID
+   */
+  protected function findById(int $id): ?object {
+    $row = $this->db->get_row(
+      $this->db->prepare(
+        "SELECT * FROM {$this->table()} WHERE id = %d",
+        $id
+      ),
+      ARRAY_A
+    );
+
+    return $row
+      ? $this->hydrate($row)
+      : null;
+  }
+
+  /**
+   * Get all records
+   *
+   * @return object[]
+   */
+  protected function findAll(
+    string $orderBy = 'id',
+    string $direction = 'ASC'
+  ): array {
+
+    $rows = $this->db->get_results(
+      "SELECT * FROM {$this->table()} ORDER BY {$orderBy} {$direction}",
+      ARRAY_A
+    );
+
+    return array_map(
+      fn(array $row) => $this->hydrate($row),
+      $rows
+    );
+  }
+
+  /**
+   * Get first matching record
+   */
+  protected function first(
+    string $where,
+    array $values = []
+  ): ?object {
+
+    $sql = "SELECT * FROM {$this->table()} WHERE {$where} LIMIT 1";
+
+    $row = $this->db->get_row(
+      $this->db->prepare($sql, ...$values),
+      ARRAY_A
+    );
+
+    return $row
+      ? $this->hydrate($row)
+      : null;
+  }
+
+
+  /**
+   * Find records by WHERE clause
+   *
+   * @return object[]
+   */
+  protected function findWhere(
+    string $where,
+    array $values = [],
+    string $orderBy = 'id',
+    string $direction = 'ASC'
+  ): array {
+
+    $sql = "
+        SELECT *
+        FROM {$this->table()}
+        WHERE {$where}
+        ORDER BY {$orderBy} {$direction}
+    ";
+
+    $rows = $this->db->get_results(
+      $this->db->prepare($sql, ...$values),
+      ARRAY_A
+    );
+
+    return array_map(
+      fn(array $row) => $this->hydrate($row),
+      $rows
+    );
+  }
+
+  /**
    * Check if a record exists.
    */
   public function exists(int $id): bool {

@@ -80,15 +80,7 @@ final class TicketRepository extends Repository {
    * Find ticket by ID
    */
   public function find(int $id): ?Ticket {
-    $result = $this->db->get_row(
-      $this->db->prepare(
-        "SELECT * FROM {$this->table()} WHERE id = %d",
-        $id
-      ),
-      ARRAY_A
-    );
-
-    return $result ?: null;
+    return $this->findById($id);
   }
 
   /**

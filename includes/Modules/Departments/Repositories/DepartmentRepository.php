@@ -57,33 +57,21 @@ final class DepartmentRepository extends Repository {
 
   /**
    * Find by ID
+   * @var Department|null
    */
   public function find(int $id): ?Department {
-    $row = $this->findById($id);
-
-    return $row
-      ? $this->hydrate($row)
-      : null;
+    return $this->findById($id);
   }
 
   /**
    * Find by slug
+   * @var Department|null
    */
   public function findBySlug(string $slug): ?Department {
-    $row = $this->db->get_row(
-      $this->db->prepare(
-        "SELECT *
-        FROM {$this->table()}
-        WHERE slug = %s
-        LIMIT 1",
-        $slug
-      ),
-      ARRAY_A
+    return $this->first(
+      'slug = %s',
+      [$slug]
     );
-
-    return $row
-      ? $this->hydrate($row)
-      : null;
   }
 
   /**
@@ -112,17 +100,7 @@ final class DepartmentRepository extends Repository {
    * @return Department[]
    */
   public function getAll(): array {
-    $rows = $this->db->get_results(
-      "SELECT *
-      FROM {$this->table()}
-      ORDER BY sort_order ASC, name ASC",
-      ARRAY_A
-    );
-
-    return array_map(
-      fn(array $row) => $this->hydrate($row),
-      $rows
-    );
+    return $this->findAll('sort_order', 'ASC');
   }
 
   /**
@@ -131,20 +109,10 @@ final class DepartmentRepository extends Repository {
    * @return Department[]
    */
   public function getActive(): array {
-    $rows = $this->db->get_results(
-      $this->db->prepare(
-        "SELECT *
-        FROM {$this->table()}
-        WHERE status = %s
-        ORDER BY sort_order ASC, name ASC",
-        DepartmentStatus::ACTIVE->value
-      ),
-      ARRAY_A
-    );
-
-    return array_map(
-      fn(array $row) => $this->hydrate($row),
-      $rows
+    return $this->findWhere(
+      'status = %s',
+      ['active'],
+      'sort_order'
     );
   }
 

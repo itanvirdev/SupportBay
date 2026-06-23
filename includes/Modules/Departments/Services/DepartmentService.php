@@ -24,7 +24,7 @@ final class DepartmentService {
   public function create(array $data): Department {
     $this->validate($data);
 
-    $data = $this->normalize($data);
+    $data = $this->normalizeForCreate($data);
 
     $id = $this->repository->create($data);
 
@@ -47,7 +47,7 @@ final class DepartmentService {
       return null;
     }
 
-    $data = $this->normalize($data);
+    $data = $this->normalizeForUpdate($data);
 
     $this->repository->update($id, $data);
 
@@ -119,20 +119,24 @@ final class DepartmentService {
   }
 
   /**
-   * Normalize defaults
+   * Normalize defaults for create
    */
-  private function normalize(array $data): array {
+  private function normalizeForCreate(array $data): array {
+    $data['slug'] ??= $this->generateSlug($data['name']);
+    $data['status'] ??= DepartmentStatus::default()->value;
+    $data['default_priority'] ??= TicketPriority::NORMAL->value;
+    $data['sort_order'] ??= 0;
 
-    $data['slug'] = $data['slug']
-      ?? $this->generateSlug($data['name']);
+    return $data;
+  }
 
-    $data['status'] = $data['status']
-      ?? DepartmentStatus::default()->value;
-
-    $data['default_priority'] = $data['default_priority']
-      ?? TicketPriority::NORMAL->value;
-
-    $data['sort_order'] = $data['sort_order'] ?? 0;
+  /**
+   * Normalize defaults for update
+   */
+  private function normalizeForUpdate(array $data): array {
+    if (isset($data['name']) && empty($data['slug'])) {
+      $data['slug'] = $this->generateSlug($data['name']);
+    }
 
     return $data;
   }

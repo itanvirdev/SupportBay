@@ -88,4 +88,25 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 
     exit;
   });
+
+  // add_action('init', function () {
+
+  //   // IMPORTANT: prevent running on every refresh if needed
+  //   if (!isset($_GET['sbay_test'])) {
+  //     return;
+  //   }
+
+
+  //   if (!current_user_can('manage_options')) {
+  //     return;
+  //   }
+
+  //   \SupportBay\Dev\DepartmentFlowTest::run(
+  //     \SupportBay\Core\Application::container()->make(
+  //       \SupportBay\Modules\Departments\Services\DepartmentService::class
+  //     )
+  //   );
+
+  //   exit;
+  // });
 }

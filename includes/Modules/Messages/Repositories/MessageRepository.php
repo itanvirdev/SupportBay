@@ -71,17 +71,7 @@ final class MessageRepository extends Repository {
    * Find message by ID (returns Entity)
    */
   public function find(int $id): ?Message {
-    $result = $this->db->get_row(
-      $this->db->prepare(
-        "SELECT * FROM {$this->table()} WHERE id = %d",
-        $id
-      ),
-      ARRAY_A
-    );
-
-    return $result
-      ? $this->hydrate($result)
-      : null;
+    return $this->findById($id);
   }
 
   /**
