@@ -78,20 +78,10 @@ final class DepartmentRepository extends Repository {
    * Find by name
    */
   public function findByName(string $name): ?Department {
-    $row = $this->db->get_row(
-      $this->db->prepare(
-        "SELECT *
-        FROM {$this->table()}
-        WHERE name = %s
-        LIMIT 1",
-        $name
-      ),
-      ARRAY_A
+    return $this->first(
+      'name = %s',
+      [$name]
     );
-
-    return $row
-      ? $this->hydrate($row)
-      : null;
   }
 
   /**

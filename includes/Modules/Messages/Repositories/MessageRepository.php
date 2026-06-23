@@ -80,20 +80,11 @@ final class MessageRepository extends Repository {
    * @return Message[]
    */
   public function getByTicket(int $ticketId): array {
-    $result = $this->db->get_results(
-      $this->db->prepare(
-        "SELECT *
-         FROM {$this->table()}
-         WHERE ticket_id = %d
-         ORDER BY id ASC",
-        $ticketId
-      ),
-      ARRAY_A
-    );
-
-    return array_map(
-      fn(array $row) => $this->hydrate($row),
-      $result
+    return $this->findWhere(
+      'ticket_id = %d',
+      [$ticketId],
+      'id',
+      'ASC'
     );
   }
 

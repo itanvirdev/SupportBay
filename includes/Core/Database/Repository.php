@@ -33,13 +33,6 @@ abstract class Repository {
   abstract protected function table(): string;
 
   /**
-   * Current WordPress datetime.
-   */
-  protected function now(): string {
-    return current_time('mysql');
-  }
-
-  /**
    * Insert a record.
    *
    * Returns the inserted ID.
@@ -218,5 +211,12 @@ abstract class Repository {
     return (int) $this->db->get_var(
       "SELECT COUNT(*) FROM {$this->table()}"
     );
+  }
+
+  /**
+   * Current WordPress datetime.
+   */
+  protected function now(): string {
+    return current_time('mysql');
   }
 }
