@@ -28,14 +28,24 @@ abstract class Repository {
   }
 
   /**
-   * Get the table name.
+   * Database table.
    */
   abstract protected function table(): string;
 
   /**
-   * Insert a record.
-   *
-   * Returns the inserted ID.
+   * Hydrate database row into entity.
+   */
+  abstract protected function hydrate(array $row): object;
+
+  /**
+   * Current datetime.
+   */
+  protected function now(): string {
+    return current_time('mysql');
+  }
+
+  /**
+   * Insert record.
    */
   protected function insert(array $data, array $formats = []): int {
     $result = $this->db->insert(
@@ -53,8 +63,9 @@ abstract class Repository {
     return (int) $this->db->insert_id;
   }
 
+
   /**
-   * Update a record by primary key.
+   * Update by primary key.
    */
   protected function updateById(
     int $id,
@@ -64,9 +75,7 @@ abstract class Repository {
     $result = $this->db->update(
       $this->table(),
       $data,
-      [
-        $this->primaryKey => $id,
-      ],
+      [$this->primaryKey => $id],
       $formats,
       ['%d']
     );
@@ -81,14 +90,12 @@ abstract class Repository {
   }
 
   /**
-   * Delete a record by primary key.
+   * Delete by primary key.
    */
   protected function deleteById(int $id): bool {
     $result = $this->db->delete(
       $this->table(),
-      [
-        $this->primaryKey => $id,
-      ],
+      [$this->primaryKey => $id],
       ['%d']
     );
 
@@ -102,31 +109,28 @@ abstract class Repository {
   }
 
   /**
-   * Find a record by ID
+   * Find by primary key.
    */
   protected function findById(int $id): ?object {
     $row = $this->db->get_row(
       $this->db->prepare(
-        "SELECT * FROM {$this->table()} WHERE id = %d",
+        "SELECT * FROM {$this->table()} WHERE {$this->primaryKey} = %d LIMIT 1",
         $id
       ),
       ARRAY_A
     );
 
-    return $row
-      ? $this->hydrate($row)
-      : null;
+    return $row ? $this->hydrate($row) : null;
   }
 
   /**
-   * Get all records
-   *
-   * @return object[]
+   * Get all records.
    */
   protected function findAll(
     string $orderBy = 'id',
     string $direction = 'ASC'
   ): array {
+    $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
 
     $rows = $this->db->get_results(
       "SELECT * FROM {$this->table()} ORDER BY {$orderBy} {$direction}",
@@ -140,47 +144,43 @@ abstract class Repository {
   }
 
   /**
-   * Get first matching record
+   * Find first matching record.
    */
-  protected function first(
-    string $where,
-    array $values = []
-  ): ?object {
-
-    $sql = "SELECT * FROM {$this->table()} WHERE {$where} LIMIT 1";
+  protected function first(array $where): ?object {
+    $query = $this->buildWhere($where);
 
     $row = $this->db->get_row(
-      $this->db->prepare($sql, ...$values),
+      $this->db->prepare(
+        "SELECT * FROM {$this->table()} {$query['sql']} LIMIT 1",
+        ...$query['values']
+      ),
       ARRAY_A
     );
 
-    return $row
-      ? $this->hydrate($row)
-      : null;
+    return $row ? $this->hydrate($row) : null;
   }
 
 
   /**
-   * Find records by WHERE clause
-   *
-   * @return object[]
+   * Find matching records.
    */
   protected function findWhere(
-    string $where,
-    array $values = [],
+    array $where,
     string $orderBy = 'id',
     string $direction = 'ASC'
   ): array {
+    $direction = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
 
-    $sql = "
-        SELECT *
-        FROM {$this->table()}
-        WHERE {$where}
-        ORDER BY {$orderBy} {$direction}
-    ";
+    $query = $this->buildWhere($where);
 
     $rows = $this->db->get_results(
-      $this->db->prepare($sql, ...$values),
+      $this->db->prepare(
+        "SELECT *
+                 FROM {$this->table()}
+                 {$query['sql']}
+                 ORDER BY {$orderBy} {$direction}",
+        ...$query['values']
+      ),
       ARRAY_A
     );
 
@@ -191,32 +191,76 @@ abstract class Repository {
   }
 
   /**
-   * Check if a record exists.
+   * Check record exists.
    */
-  public function exists(int $id): bool {
-    $count = (int) $this->db->get_var(
+  protected function exists(array $where): bool {
+    return $this->count($where) > 0;
+  }
+
+  /**
+   * Count records.
+   */
+  protected function count(array $where = []): int {
+    if (empty($where)) {
+      return (int) $this->db->get_var(
+        "SELECT COUNT(*) FROM {$this->table()}"
+      );
+    }
+
+    $query = $this->buildWhere($where);
+
+    return (int) $this->db->get_var(
       $this->db->prepare(
-        "SELECT COUNT(*) FROM {$this->table()} WHERE {$this->primaryKey} = %d",
-        $id
+        "SELECT COUNT(*)
+                 FROM {$this->table()}
+                 {$query['sql']}",
+        ...$query['values']
       )
     );
-
-    return $count > 0;
   }
 
   /**
-   * Count all records.
+   * Get single column value.
    */
-  public function count(): int {
-    return (int) $this->db->get_var(
-      "SELECT COUNT(*) FROM {$this->table()}"
+  protected function value(
+    string $column,
+    array $where
+  ): mixed {
+    $query = $this->buildWhere($where);
+
+    return $this->db->get_var(
+      $this->db->prepare(
+        "SELECT {$column}
+                 FROM {$this->table()}
+                 {$query['sql']}
+                 LIMIT 1",
+        ...$query['values']
+      )
     );
   }
 
   /**
-   * Current WordPress datetime.
+   * Build WHERE clause.
    */
-  protected function now(): string {
-    return current_time('mysql');
+  private function buildWhere(array $where): array {
+    $clauses = [];
+    $values = [];
+
+    foreach ($where as $column => $value) {
+      if (is_int($value)) {
+        $clauses[] = "{$column} = %d";
+      } elseif (is_float($value)) {
+        $clauses[] = "{$column} = %f";
+      } else {
+        $clauses[] = "{$column} = %s";
+      }
+
+      $values[] = $value;
+    }
+
+    return [
+      'sql' => 'WHERE ' . implode(' AND ', $clauses),
+      'values' => $values,
+    ];
   }
 }

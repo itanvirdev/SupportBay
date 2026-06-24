@@ -87,22 +87,18 @@ final class TicketRepository extends Repository {
    * Find ticket by track_id
    */
   public function findByTrackId(string $trackId): ?Ticket {
-    return $this->first(
-      'name = %s',
-      [$trackId]
-    );
+    return $this->first([
+      'track_id' => $trackId,
+    ]);
   }
 
   /**
    * Get tickets by customer
    */
   public function customerTickets(int $customerId): array {
-    return $this->findWhere(
-      'customer_id = %d',
-      [$customerId],
-      'id',
-      'DESC'
-    );
+    return $this->findWhere([
+      'customer_id' => $customerId,
+    ]);
   }
 
   /**

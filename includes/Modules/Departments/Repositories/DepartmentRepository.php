@@ -68,20 +68,18 @@ final class DepartmentRepository extends Repository {
    * @var Department|null
    */
   public function findBySlug(string $slug): ?Department {
-    return $this->first(
-      'slug = %s',
-      [$slug]
-    );
+    return $this->first([
+      'slug' => $slug,
+    ]);
   }
 
   /**
    * Find by name
    */
   public function findByName(string $name): ?Department {
-    return $this->first(
-      'name = %s',
-      [$name]
-    );
+    return $this->first([
+      'name' => $name,
+    ]);
   }
 
   /**
@@ -100,8 +98,7 @@ final class DepartmentRepository extends Repository {
    */
   public function getActive(): array {
     return $this->findWhere(
-      'status = %s',
-      ['active'],
+      ['status' => DepartmentStatus::ACTIVE->value],
       'sort_order'
     );
   }
