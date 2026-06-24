@@ -133,6 +133,24 @@ Modules/
 
 #### ✅ Successfully done department flow test
 
+## Events Base
+
+```
+Core/
+└── Events/
+    ├── Contracts/
+    │   ├── Event.php
+    │   └── Listener.php
+    │
+    ├── EventDispatcher.php
+    ├── EventServiceProvider.php
+    ├── EventManager.php          // facade/helper
+    │
+    ├── AbstractEvent.php
+    │
+    └── Listeners/
+```
+
 ### Stage 2 — Core Infrastructure
 
 Contracts

@@ -8,6 +8,7 @@ use SupportBay\Core\Container\Container;
 use SupportBay\Modules\Tickets\TicketServiceProvider;
 use SupportBay\Modules\Messages\MessageServiceProvider;
 use SupportBay\Modules\Departments\DepartmentServiceProvider;
+use SupportBay\Core\Events\EventServiceProvider;
 
 final class ProviderRegistry {
   /**
@@ -28,8 +29,9 @@ final class ProviderRegistry {
    * Core providers
    */
   private static function registerCoreProviders(Container $container): void {
-    // Example future:
-    // self::$providers[] = new EventServiceProvider();
+    self::addProvider(
+      new EventServiceProvider()
+    );
   }
 
   /**
