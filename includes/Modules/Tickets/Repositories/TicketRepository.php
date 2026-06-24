@@ -6,6 +6,7 @@ namespace SupportBay\Modules\Tickets\Repositories;
 
 use SupportBay\Core\Database\Repository;
 use SupportBay\Modules\Tickets\Database\TicketSchema;
+use SupportBay\Modules\Tickets\Entities\Ticket;
 
 final class TicketRepository extends Repository {
 
@@ -95,10 +96,10 @@ final class TicketRepository extends Repository {
   /**
    * Get tickets by customer
    */
-  public function customerTickets(int $customerId): array {
+  public function getByCustomer(int $customerId): array {
     return $this->findWhere([
       'customer_id' => $customerId,
-    ]);
+    ], 'id', 'DESC');
   }
 
   /**
@@ -115,5 +116,60 @@ final class TicketRepository extends Repository {
    */
   public function delete(int $id): bool {
     return $this->deleteById($id);
+  }
+
+  /**
+   * Hydrate DB row → Ticket Entity
+   */
+  protected function hydrate(array $row): object {
+    return new Ticket(
+      id: (int) $row['id'],
+      trackId: (string) $row['track_id'],
+
+      customerId: isset($row['customer_id'])
+        ? (int) $row['customer_id']
+        : null,
+
+      createdById: isset($row['created_by_id'])
+        ? (int) $row['created_by_id']
+        : null,
+
+      createdByType: AuthorType::from($row['created_by_type']),
+
+      purchaseVerificationId: isset($row['purchase_verification_id'])
+        ? (int) $row['purchase_verification_id']
+        : null,
+
+      departmentId: (int) $row['department_id'],
+
+      assignedAgentId: isset($row['assigned_agent_id'])
+        ? (int) $row['assigned_agent_id']
+        : null,
+
+      subject: (string) $row['subject'],
+
+      status: TicketStatus::from($row['status']),
+      state: TicketState::from($row['state']),
+      priority: TicketPriority::from($row['priority']),
+      source: SourceType::from($row['source']),
+
+      lastMessageId: isset($row['last_message_id'])
+        ? (int) $row['last_message_id']
+        : null,
+
+      lastReplyAt: $row['last_reply_at'] ?? null,
+      firstResponseAt: $row['first_response_at'] ?? null,
+      resolvedAt: $row['resolved_at'] ?? null,
+      closedAt: $row['closed_at'] ?? null,
+      reopenedAt: $row['reopened_at'] ?? null,
+
+      isPublic: (bool) $row['is_public'],
+      publicToken: $row['public_token'] ?? null,
+
+      metadata: $row['metadata'] ?? null,
+
+      createdAt: $row['created_at'],
+      updatedAt: $row['updated_at'] ?? null,
+    );
   }
 }

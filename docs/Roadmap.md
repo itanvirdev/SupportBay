@@ -144,11 +144,22 @@ Core/
     │
     ├── EventDispatcher.php
     ├── EventServiceProvider.php
-    ├── EventManager.php          // facade/helper
+    ├── EventManager.php          // facade/helper (letter)
     │
     ├── AbstractEvent.php
     │
     └── Listeners/
+```
+
+###
+
+```
+Modules/
+└── Messages/
+    └── Events/
+    |   └── MessageCreated.php
+    └── Listeners/
+        └── SyncTicketReplyListener.php
 ```
 
 ### Stage 2 — Core Infrastructure

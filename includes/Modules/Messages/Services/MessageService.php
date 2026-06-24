@@ -10,10 +10,12 @@ use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Common\Enums\AuthorType;
 use InvalidArgumentException;
 use RuntimeException;
+use SupportBay\Modules\Messages\Events\MessageCreated;
 
 final class MessageService {
   public function __construct(
-    private MessageRepository $repository
+    private readonly MessageRepository $repository,
+    private readonly EventDispatcher $dispatcher,
   ) {
   }
 
@@ -25,20 +27,20 @@ final class MessageService {
 
     $data = $this->normalize($data);
 
-    // 1. Persist message → now returns ID
+    // Save message
     $messageId = $this->repository->create($data);
 
-    // 2. Re-fetch as ENTITY (important upgrade)
+    // Hydrate entity
     $message = $this->repository->find($messageId);
 
     if (!$message) {
-      throw new RuntimeException('Failed to create message entity.');
+      throw new RuntimeException('Failed to create message.');
     }
 
-    // 3. Domain orchestration using ENTITY
-    $this->syncTicket($message);
-    $this->handleReadState($message);
-    $this->triggerEvents($message);
+    // Dispatch event
+    $this->dispatcher->dispatch(
+      new MessageCreated($message)
+    );
 
     return $message;
   }
