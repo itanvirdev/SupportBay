@@ -151,7 +151,7 @@ Core/
     └── Listeners/
 ```
 
-###
+### Message Event
 
 ```
 Modules/
@@ -162,7 +162,18 @@ Modules/
         └── SyncTicketReplyListener.php
 ```
 
+### Event System
+
 ### Stage 2 — Core Infrastructure
+
+```
+Core/Events/ListenerRegistry.php
+Refactor EventDispatcher.php
+Refactor Base ServiceProvider.php
+Refactor the MessageServiceProvider.php
+Refactor the Container.php
+Refactor EventServiceProvider, TicketServiceProvider, MessageServiceProvider, and DepartmentServiceProvider
+```
 
 Contracts
 Helpers

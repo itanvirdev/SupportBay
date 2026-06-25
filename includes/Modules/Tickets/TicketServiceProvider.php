@@ -11,21 +11,25 @@ use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 
 final class TicketServiceProvider extends ServiceProvider {
 
+  // protected array $listeners = [
+
+  //   TicketCreated::class => [
+
+  //     AutoAssignListener::class,
+
+  //     TicketCreatedNotificationListener::class,
+
+  //   ],
+
+  // ];
+
   /**
    * Register module services into container
    */
   public function register(Container $container): void {
-    $container->singleton(
-      TicketRepository::class,
-      fn() => new TicketRepository()
-    );
+    $container->singleton(TicketRepository::class);
 
-    $container->singleton(
-      TicketService::class,
-      fn(Container $c) => new TicketService(
-        $c->make(TicketRepository::class)
-      )
-    );
+    $container->singleton(TicketService::class);
   }
 
   /**

@@ -13,10 +13,7 @@ final class EventServiceProvider extends ServiceProvider {
    * Register event services.
    */
   public function register(Container $container): void {
-    $container->singleton(
-      EventDispatcher::class,
-      fn() => new EventDispatcher()
-    );
+    $container->singleton(EventDispatcher::class);
   }
 
   /**

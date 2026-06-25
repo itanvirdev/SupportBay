@@ -11,28 +11,26 @@ use SupportBay\Modules\Departments\Services\DepartmentService;
 
 final class DepartmentServiceProvider extends ServiceProvider {
 
+  // protected array $listeners = [
+
+  //   DepartmentCreated::class => [
+
+  //     DepartmentActivityListener::class,
+
+  //   ],
+
+  // ];
+
   /**
    * Register module services
    */
+  /**
+   * Register services.
+   */
   public function register(Container $container): void {
+    $container->singleton(DepartmentRepository::class);
 
-    /**
-     * Department Repository
-     */
-    $container->singleton(
-      DepartmentRepository::class,
-      fn() => new DepartmentRepository()
-    );
-
-    /**
-     * Department Service
-     */
-    $container->singleton(
-      DepartmentService::class,
-      fn(Container $container) => new DepartmentService(
-        $container->make(DepartmentRepository::class)
-      )
-    );
+    $container->singleton(DepartmentService::class);
   }
 
   /**

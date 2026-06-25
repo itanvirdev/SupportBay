@@ -5,19 +5,40 @@ declare(strict_types=1);
 namespace SupportBay\Core\Providers;
 
 use SupportBay\Core\Container\Container;
+use SupportBay\Core\Events\ListenerRegistry;
 
 abstract class ServiceProvider {
   /**
-   * Register services into container
+   * Event listeners.
+   *
+   * @var array<class-string, array<class-string>>
    */
-  public function register(Container $container): void {
-    // override in child
+  protected array $listeners = [];
+
+  /**
+   * Register services.
+   */
+  abstract public function register(Container $container): void;
+
+  /**
+   * Boot provider.
+   */
+  public function boot(Container $container): void {
+    $this->registerListeners();
   }
 
   /**
-   * Boot logic after all providers registered
+   * Register all event listeners.
    */
-  public function boot(Container $container): void {
-    // override in child
+  protected function registerListeners(): void {
+    foreach ($this->listeners as $event => $listeners) {
+
+      foreach ($listeners as $listener) {
+        ListenerRegistry::add(
+          $event,
+          $listener
+        );
+      }
+    }
   }
 }

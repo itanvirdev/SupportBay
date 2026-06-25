@@ -4,60 +4,44 @@ declare(strict_types=1);
 
 namespace SupportBay\Core\Events;
 
+use RuntimeException;
+use SupportBay\Core\Container\Container;
 use SupportBay\Core\Events\Contracts\Event;
 use SupportBay\Core\Events\Contracts\Listener;
 
 final class EventDispatcher {
   /**
-   * Registered listeners.
-   *
-   * @var array<string, Listener[]>
+   * DI Container.
    */
-  private array $listeners = [];
-
-  /**
-   * Register a listener.
-   */
-  public function listen(string $event, Listener $listener): void {
-    $this->listeners[$event][] = $listener;
+  public function __construct(
+    private readonly Container $container
+  ) {
   }
 
   /**
    * Dispatch an event.
    */
   public function dispatch(Event $event): void {
-    foreach ($this->getListeners($event->name()) as $listener) {
+    foreach (ListenerRegistry::listeners($event::class) as $listenerClass) {
+      $listener = $this->resolve($listenerClass);
+
       $listener->handle($event);
     }
   }
 
   /**
-   * Determine whether an event has listeners.
+   * Resolve listener from the container.
    */
-  public function hasListeners(string $event): bool {
-    return !empty($this->listeners[$event]);
-  }
+  private function resolve(string $listenerClass): Listener {
+    $listener = $this->container->get($listenerClass);
 
-  /**
-   * Get listeners for an event.
-   *
-   * @return Listener[]
-   */
-  public function getListeners(string $event): array {
-    return $this->listeners[$event] ?? [];
-  }
+    if (!$listener instanceof Listener) {
+      throw new RuntimeException(sprintf(
+        'Listener [%s] is not registered in the container.',
+        $listenerClass
+      ));
+    }
 
-  /**
-   * Remove listeners for an event.
-   */
-  public function forget(string $event): void {
-    unset($this->listeners[$event]);
-  }
-
-  /**
-   * Remove all listeners.
-   */
-  public function flush(): void {
-    $this->listeners = [];
+    return $listener;
   }
 }
