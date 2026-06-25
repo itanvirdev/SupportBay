@@ -24,6 +24,40 @@ Message
 Attachment
 ```
 
+### Development Strategy
+
+```
+Modules/
+└── Attachments/
+    ├── Database/
+    │   └── AttachmentSchema.php
+    │
+    ├── Enums/
+    │   ├── AttachmentCategory.php
+    │   ├── AttachmentState.php
+    │   ├── ScanStatus.php
+    │   └── StorageDisk.php
+    │
+    ├── Entities/
+    │   └── Attachment.php
+    │
+    ├── Repositories/
+    │   └── AttachmentRepository.php
+    │
+    ├── Services/
+    │   └── AttachmentService.php
+    │
+    ├── Events/
+    │   ├── AttachmentUploaded.php
+    │   └── AttachmentDeleted.php
+    │
+    ├── Listeners/
+    │   ├── LogAttachmentUploadedActivity.php
+    │   └── LogAttachmentDeletedActivity.php
+    │
+    └── AttachmentServiceProvider.php
+```
+
 ---
 
 # Table Structure
@@ -33,7 +67,8 @@ Attachment
 | id               | BIGINT UNSIGNED | No   | AUTO_INCREMENT    | PRIMARY | Attachment ID                               |
 | message_id       | BIGINT UNSIGNED | No   | -                 | INDEX   | Parent message                              |
 | ticket_id        | BIGINT UNSIGNED | No   | -                 | INDEX   | Denormalized for performance                |
-| uploaded_by      | BIGINT UNSIGNED | Yes  | NULL              | INDEX   | WP user ID                                  |
+| uploaded_by_id   | BIGINT UNSIGNED | Yes  | NULL              | INDEX   | WP user ID                                  |
+| uploaded_by_type | BIGINT UNSIGNED | Yes  | NULL              | INDEX   | WP user ID                                  |
 | disk             | VARCHAR(50)     | No   | local             | INDEX   | Storage driver (local, s3, r2)              |
 | original_name    | VARCHAR(255)    | No   | -                 | -       | Original filename                           |
 | stored_name      | VARCHAR(255)    | No   | -                 | UNIQUE  | Generated secure filename                   |

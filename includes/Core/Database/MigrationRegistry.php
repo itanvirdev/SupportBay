@@ -8,6 +8,7 @@ use SupportBay\Modules\Tickets\Database\TicketSchema;
 use SupportBay\Modules\Messages\Database\MessageSchema;
 use SupportBay\Modules\Departments\Database\DepartmentSchema;
 use SupportBay\Modules\Activities\Database\ActivitySchema;
+use SupportBay\Modules\Attachments\Database\AttachmentSchema;
 
 final class MigrationRegistry {
   /**
@@ -21,8 +22,7 @@ final class MigrationRegistry {
       MessageSchema::class,
       DepartmentSchema::class,
       ActivitySchema::class,
-
-      // AttachmentSchema::class,
+      AttachmentSchema::class,
     ];
   }
 }

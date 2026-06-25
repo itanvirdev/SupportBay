@@ -210,6 +210,38 @@ Refactor Module Entities
 
 #### ✅ Successfully done activity flow test
 
+### Module Attachments
+
+Modules/
+└── Attachments/
+├── Database/
+│ └── AttachmentSchema.php
+│
+├── Enums/
+│ ├── AttachmentCategory.php
+│ ├── AttachmentState.php
+│ ├── ScanStatus.php
+│ └── StorageDisk.php
+│
+├── Entities/
+│ └── Attachment.php
+│
+├── Repositories/
+│ └── AttachmentRepository.php
+│
+├── Services/
+│ └── AttachmentService.php
+│
+├── Events/
+│ ├── AttachmentUploaded.php
+│ └── AttachmentDeleted.php
+│
+├── Listeners/
+│ ├── LogAttachmentUploadedActivity.php
+│ └── LogAttachmentDeletedActivity.php
+│
+└── AttachmentServiceProvider.php
+
 Contracts
 Helpers
 Support
