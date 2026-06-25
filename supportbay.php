@@ -81,9 +81,10 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 
     $container = \SupportBay\Core\Application::container(); // or your container accessor
 
-    \SupportBay\Dev\MessageFlowTest::run(
+    \SupportBay\Dev\ActivityFlowTest::run(
       $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
-      $container->make(\SupportBay\Modules\Messages\Services\MessageService::class)
+      $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
+      $container->make(\SupportBay\Modules\Activities\Services\ActivityService::class)
     );
 
     exit;

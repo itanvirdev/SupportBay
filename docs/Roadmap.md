@@ -175,6 +175,35 @@ Refactor the Container.php
 Refactor EventServiceProvider, TicketServiceProvider, MessageServiceProvider, and DepartmentServiceProvider
 ```
 
+### Module Activities
+
+```
+Modules/
+└── Activities/
+    ├── ActivityServiceProvider.php
+    │
+    ├── Database/
+    │   └── ActivitySchema.php
+    │
+    ├── Entities/
+    │   └── Activity.php
+    │
+    ├── Repositories/
+    │   └── ActivityRepository.php
+    │
+    ├── Services/
+    │   └── ActivityService.php
+    │
+    ├── Enums/
+    │   └── ActivityType.php
+    │
+    ├── Listeners/
+    │   └── LogMessageCreatedActivity.php
+    │
+    └── Tests/
+        └── ActivityFlowTest.php
+```
+
 Contracts
 Helpers
 Support

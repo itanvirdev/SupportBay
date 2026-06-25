@@ -12,6 +12,7 @@ use SupportBay\Modules\Messages\Listeners\SyncTicketReplyListener;
 use SupportBay\Modules\Messages\Repositories\MessageRepository;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
+use SupportBay\Modules\Activities\Listeners\LogMessageCreatedActivity;
 
 final class MessageServiceProvider extends ServiceProvider {
   /**
@@ -22,6 +23,7 @@ final class MessageServiceProvider extends ServiceProvider {
   protected array $listeners = [
     MessageCreated::class => [
       SyncTicketReplyListener::class,
+      LogMessageCreatedActivity::class,
     ],
   ];
 
@@ -37,5 +39,7 @@ final class MessageServiceProvider extends ServiceProvider {
     $container->singleton(MessageService::class);
 
     $container->singleton(SyncTicketReplyListener::class);
+
+    $container->singleton(LogMessageCreatedActivity::class);
   }
 }

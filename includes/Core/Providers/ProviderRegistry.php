@@ -9,6 +9,7 @@ use SupportBay\Modules\Tickets\TicketServiceProvider;
 use SupportBay\Modules\Messages\MessageServiceProvider;
 use SupportBay\Modules\Departments\DepartmentServiceProvider;
 use SupportBay\Core\Events\EventServiceProvider;
+use SupportBay\Modules\Activities\ActivityServiceProvider;
 
 final class ProviderRegistry {
   /**
@@ -29,9 +30,7 @@ final class ProviderRegistry {
    * Core providers
    */
   private static function registerCoreProviders(Container $container): void {
-    self::addProvider(
-      new EventServiceProvider()
-    );
+    self::addProvider(new EventServiceProvider());
   }
 
   /**
@@ -39,8 +38,9 @@ final class ProviderRegistry {
    */
   private static function registerModuleProviders(Container $container): void {
     self::addProvider(new TicketServiceProvider());
-    self::addProvider(new MessageServiceProvider());
     self::addProvider(new DepartmentServiceProvider());
+    self::addProvider(new ActivityServiceProvider());
+    self::addProvider(new MessageServiceProvider());
   }
 
   /**

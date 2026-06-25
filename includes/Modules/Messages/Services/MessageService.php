@@ -11,6 +11,7 @@ use SupportBay\Common\Enums\AuthorType;
 use InvalidArgumentException;
 use RuntimeException;
 use SupportBay\Modules\Messages\Events\MessageCreated;
+use SupportBay\Core\Events\EventDispatcher;
 
 final class MessageService {
   public function __construct(

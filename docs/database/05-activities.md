@@ -25,21 +25,50 @@ Activities
 
 Each activity belongs to one ticket.
 
+### Development Strategy
+
+```
+Modules/
+└── Activities/
+    ├── ActivityServiceProvider.php
+    │
+    ├── Database/
+    │   └── ActivitySchema.php
+    │
+    ├── Entities/
+    │   └── Activity.php
+    │
+    ├── Repositories/
+    │   └── ActivityRepository.php
+    │
+    ├── Services/
+    │   └── ActivityService.php
+    │
+    ├── Enums/
+    │   └── ActivityType.php
+    │
+    ├── Listeners/
+    │   └── LogMessageCreatedActivity.php
+    │
+    └── Tests/
+        └── ActivityFlowTest.php
+```
+
 ---
 
 # Table Structure
 
-| Column     | Type            | Null | Default           | Index   | Description                          |
-| ---------- | --------------- | ---- | ----------------- | ------- | ------------------------------------ |
-| id         | BIGINT UNSIGNED | No   | AUTO_INCREMENT    | PRIMARY | Activity ID                          |
-| ticket_id  | BIGINT UNSIGNED | No   | -                 | INDEX   | Parent ticket                        |
-| actor_id   | BIGINT UNSIGNED | Yes  | NULL              | INDEX   | WordPress user ID                    |
-| actor_type | VARCHAR(20)     | No   | system            | INDEX   | customer, agent, manager, system, ai |
-| event      | VARCHAR(50)     | No   | -                 | INDEX   | Event identifier                     |
-| payload    | LONGTEXT        | Yes  | NULL              | -       | JSON event data                      |
-| ip_address | VARCHAR(45)     | Yes  | NULL              | -       | IPv4 / IPv6 address (optional)       |
-| user_agent | TEXT            | Yes  | NULL              | -       | Client user agent (optional)         |
-| created_at | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX   | Event timestamp                      |
+| Column      | Type            | Null | Default           | Index   | Description                          |
+| ----------- | --------------- | ---- | ----------------- | ------- | ------------------------------------ |
+| id          | BIGINT UNSIGNED | No   | AUTO_INCREMENT    | PRIMARY | Activity ID                          |
+| ticket_id   | BIGINT UNSIGNED | No   | -                 | INDEX   | Parent ticket                        |
+| actor_id    | BIGINT UNSIGNED | Yes  | NULL              | INDEX   | WordPress user ID                    |
+| actor_type  | VARCHAR(20)     | No   | system            | INDEX   | customer, agent, manager, system, ai |
+| event_type  | VARCHAR(50)     | No   | -                 | INDEX   | Event identifier                     |
+| description | TEXT            | Yes  | NULL              | INDEX   | Event identifier                     |
+| payload     | LONGTEXT        | Yes  | NULL              | -       | JSON event data                      |
+| ip_address  | VARCHAR(45)     | Yes  | NULL              | -       | IPv4 / IPv6 address (optional)       |
+| created_at  | DATETIME        | No   | CURRENT_TIMESTAMP | INDEX   | Event timestamp                      |
 
 ---
 
