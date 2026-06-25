@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Tickets\Entities;
 
 use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Common\Enums\SourceType;
 use SupportBay\Core\Entities\Entity;
-use SupportBay\Modules\Tickets\Enums\SourceType;
+use SupportBay\Modules\Tickets\Enums\TicketSource;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
@@ -96,6 +97,58 @@ final class Ticket extends Entity {
     ];
   }
 
+  // -------------------------
+  // Getters
+  // -------------------------
+
+  public function id(): int {
+    return $this->id;
+  }
+
+  public function customerId(): int {
+    return $this->customerId;
+  }
+
+  public function departmentId(): int {
+    return $this->departmentId;
+  }
+
+  public function assignedAgentId(): ?int {
+    return $this->assignedAgentId;
+  }
+
+  public function subject(): string {
+    return $this->subject;
+  }
+
+  public function status(): TicketStatus {
+    return $this->status;
+  }
+
+  public function state(): TicketState {
+    return $this->state;
+  }
+
+  public function priority(): TicketPriority {
+    return $this->priority;
+  }
+
+  public function source(): SourceType {
+    return $this->source;
+  }
+
+  public function metadata(): ?string {
+    return $this->metadata;
+  }
+
+  public function createdAt(): string {
+    return $this->createdAt;
+  }
+
+  public function updatedAt(): ?string {
+    return $this->updatedAt;
+  }
+
   // --------------------------------------------------
   // Domain Methods
   // --------------------------------------------------
@@ -126,6 +179,18 @@ final class Ticket extends Entity {
 
   public function isAssigned(): bool {
     return $this->assignedAgentId !== null;
+  }
+
+  public function isUnassigned(): bool {
+    return $this->assignedAgentId === null;
+  }
+
+  public function isHighPriority(): bool {
+    return $this->priority === TicketPriority::HIGH;
+  }
+
+  public function isUrgent(): bool {
+    return $this->priority === TicketPriority::URGENT;
   }
 
   public function hasCustomer(): bool {

@@ -161,6 +161,13 @@ final class Department extends Entity {
   }
 
   /**
+   * Is default priority urgent?
+   */
+  public function isUrgentDepartment(): bool {
+    return $this->defaultPriority === TicketPriority::URGENT;
+  }
+
+  /**
    * Has metadata?
    */
   public function hasMetadata(): bool {
