@@ -305,6 +305,8 @@ Modules/
         └── CustomerFlowTest.php
 ```
 
+#### ✅ Successfully done customer flow test
+
 Contracts
 Helpers
 Support

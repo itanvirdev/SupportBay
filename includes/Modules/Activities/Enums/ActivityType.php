@@ -26,6 +26,9 @@ enum ActivityType: string {
   case MESSAGE_CREATED     = 'message_created';
   case MESSAGE_EDITED      = 'message_edited';
 
+  case CUSTOMER_CREATED = 'customer_created';
+  case CUSTOMER_UPDATED = 'customer_updated';
+
   case ATTACHMENT_UPLOADED = 'attachment_uploaded';
   case ATTACHMENT_DELETED  = 'attachment_deleted';
 
@@ -54,6 +57,9 @@ enum ActivityType: string {
 
       self::MESSAGE_CREATED     => 'Message Created',
       self::MESSAGE_EDITED      => 'Message Edited',
+
+      self::CUSTOMER_CREATED     => 'Customer Created',
+      self::CUSTOMER_UPDATED      => 'Customer Updated',
 
       self::ATTACHMENT_UPLOADED => 'Attachment Uploaded',
       self::ATTACHMENT_DELETED  => 'Attachment Deleted',

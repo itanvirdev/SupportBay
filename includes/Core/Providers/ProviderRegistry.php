@@ -11,6 +11,7 @@ use SupportBay\Modules\Departments\DepartmentServiceProvider;
 use SupportBay\Core\Events\EventServiceProvider;
 use SupportBay\Modules\Activities\ActivityServiceProvider;
 use SupportBay\Modules\Attachments\AttachmentServiceProvider;
+use SupportBay\Modules\Customers\CustomerServiceProvider;
 
 final class ProviderRegistry {
   /**
@@ -43,6 +44,7 @@ final class ProviderRegistry {
     self::addProvider(new ActivityServiceProvider());
     self::addProvider(new MessageServiceProvider());
     self::addProvider(new AttachmentServiceProvider());
+    self::addProvider(new CustomerServiceProvider());
   }
 
   /**

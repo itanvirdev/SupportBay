@@ -6,6 +6,7 @@ namespace SupportBay\Core\Database;
 
 use RuntimeException;
 use wpdb;
+use SupportBay\Core\Entities\Entity;
 
 abstract class Repository {
   /**
@@ -262,5 +263,27 @@ abstract class Repository {
       'sql' => 'WHERE ' . implode(' AND ', $clauses),
       'values' => $values,
     ];
+  }
+
+
+
+  public function create(array $data): int {
+    return $this->insert($data);
+  }
+
+  public function update(int $id, array $data): bool {
+    return $this->updateById($id, $data);
+  }
+
+  public function delete(int $id): bool {
+    return $this->deleteById($id);
+  }
+
+  public function find(int $id): ?Entity {
+    return $this->findById($id);
+  }
+
+  public function all(): array {
+    return $this->findAll();
   }
 }

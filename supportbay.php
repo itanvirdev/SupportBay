@@ -84,12 +84,16 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 
     switch ($test) {
 
-      case 'attachment':
-        \SupportBay\Dev\AttachmentFlowTest::run(
+      case 'ticket':
+        \SupportBay\Dev\TicketFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+        );
+        break;
+
+      case 'message':
+        \SupportBay\Dev\MessageFlowTest::run(
           $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
           $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
-          $container->make(\SupportBay\Modules\Attachments\Services\AttachmentService::class),
-          $container->make(\SupportBay\Modules\Activities\Services\ActivityService::class),
         );
         break;
 
@@ -101,16 +105,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
-      case 'message':
-        \SupportBay\Dev\MessageFlowTest::run(
+      case 'attachment':
+        \SupportBay\Dev\AttachmentFlowTest::run(
           $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
           $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
-        );
-        break;
-
-      case 'ticket':
-        \SupportBay\Dev\TicketFlowTest::run(
-          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->make(\SupportBay\Modules\Attachments\Services\AttachmentService::class),
+          $container->make(\SupportBay\Modules\Activities\Services\ActivityService::class),
         );
         break;
 
@@ -120,13 +120,54 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'customer':
+        \SupportBay\Dev\CustomerFlowTest::run(
+          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)
+        );
+        break;
+
+      case 'all':
+        \SupportBay\Dev\TicketFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+        );
+
+        \SupportBay\Dev\MessageFlowTest::run(
+          $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
+        );
+
+        \SupportBay\Dev\ActivityFlowTest::run(
+          $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
+          $container->make(\SupportBay\Modules\Activities\Services\ActivityService::class),
+        );
+
+        \SupportBay\Dev\AttachmentFlowTest::run(
+          $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
+          $container->make(\SupportBay\Modules\Attachments\Services\AttachmentService::class),
+          $container->make(\SupportBay\Modules\Activities\Services\ActivityService::class),
+        );
+
+        \SupportBay\Dev\DepartmentFlowTest::run(
+          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
+        );
+
+        \SupportBay\Dev\CustomerFlowTest::run(
+          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)
+        );
+        break;
+
       default:
         echo '<pre>';
         echo "Unknown SupportBay test: {$test}\n\n";
         echo "Available tests:\n";
-        echo "- attachment\n";
-        echo "- activity\n";
+        echo "- ticket\n";
         echo "- message\n";
+        echo "- activity\n";
+        echo "- attachment\n";
+        echo "- department\n";
+        echo "- customer\n";
         echo '</pre>';
     }
 
