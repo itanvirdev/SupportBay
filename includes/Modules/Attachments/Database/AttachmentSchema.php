@@ -4,93 +4,113 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Attachments\Database;
 
-use SupportBay\Core\Database\Schema;
+use SupportBay\Modules\Attachments\Enums\AttachmentCategory;
+use SupportBay\Modules\Attachments\Enums\AttachmentState;
+use SupportBay\Modules\Attachments\Enums\ScanStatus;
+use SupportBay\Modules\Attachments\Enums\StorageDisk;
 
-final class AttachmentSchema extends Schema {
+final class AttachmentSchema {
   /**
    * Table name.
    */
-  protected string $table = 'sbay_attachments';
+  public static function tableName(): string {
+    global $wpdb;
+
+    return $wpdb->prefix . 'sbay_attachments';
+  }
 
   /**
-   * Table schema.
+   * Database schema.
    */
-  protected function schema(): string {
-    return "
-        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  public static function schema(): string {
+    global $wpdb;
 
-        message_id BIGINT UNSIGNED NOT NULL,
-        ticket_id BIGINT UNSIGNED NOT NULL,
+    return "CREATE TABLE " . self::tableName() . " (
 
-        uploaded_by BIGINT UNSIGNED NULL,
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 
-        disk VARCHAR(50) NOT NULL DEFAULT 'local',
+            message_id BIGINT UNSIGNED NOT NULL,
 
-        original_name VARCHAR(255) NOT NULL,
-        stored_name VARCHAR(255) NOT NULL,
+            ticket_id BIGINT UNSIGNED NOT NULL,
 
-        path TEXT NOT NULL,
+            uploaded_by_id BIGINT UNSIGNED NULL,
 
-        file_size BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            uploaded_by_type VARCHAR(20) NOT NULL DEFAULT 'system',
 
-        extension VARCHAR(20) NOT NULL,
-        mime_type VARCHAR(150) NOT NULL,
+            disk VARCHAR(50) NOT NULL DEFAULT '" . StorageDisk::LOCAL->value . "',
 
-        category VARCHAR(30) NOT NULL DEFAULT 'document',
+            original_name VARCHAR(255) NOT NULL,
 
-        checksum CHAR(64) NULL,
+            stored_name VARCHAR(255) NOT NULL,
 
-        width INT UNSIGNED NULL,
-        height INT UNSIGNED NULL,
+            path TEXT NOT NULL,
 
-        duration DECIMAL(10,2) NULL,
+            file_size BIGINT UNSIGNED NOT NULL DEFAULT 0,
 
-        is_previewable TINYINT(1) NOT NULL DEFAULT 0,
+            extension VARCHAR(20) NOT NULL,
 
-        scan_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+            mime_type VARCHAR(150) NOT NULL,
 
-        state VARCHAR(20) NOT NULL DEFAULT 'active',
+            category VARCHAR(30) NOT NULL DEFAULT '" . AttachmentCategory::DOCUMENT->value . "',
 
-        download_count INT UNSIGNED NOT NULL DEFAULT 0,
+            checksum CHAR(64) NULL,
 
-        last_accessed_at DATETIME NULL,
+            width INT UNSIGNED NULL,
 
-        metadata LONGTEXT NULL,
+            height INT UNSIGNED NULL,
 
-        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            duration DECIMAL(10,2) NULL,
 
-        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-            ON UPDATE CURRENT_TIMESTAMP,
+            is_previewable TINYINT(1) NOT NULL DEFAULT 0,
 
-        PRIMARY KEY (id),
+            scan_status VARCHAR(20) NOT NULL DEFAULT '" . ScanStatus::PENDING->value . "',
 
-        UNIQUE KEY stored_name (stored_name),
+            state VARCHAR(20) NOT NULL DEFAULT '" . AttachmentState::ACTIVE->value . "',
 
-        KEY message_id (message_id),
-        KEY ticket_id (ticket_id),
+            download_count INT UNSIGNED NOT NULL DEFAULT 0,
 
-        KEY uploaded_by (uploaded_by),
+            last_accessed_at DATETIME NULL,
 
-        KEY disk (disk),
+            metadata LONGTEXT NULL,
 
-        KEY file_size (file_size),
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-        KEY extension (extension),
-        KEY mime_type (mime_type),
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-        KEY category (category),
+            PRIMARY KEY (id),
 
-        KEY checksum (checksum),
+            UNIQUE KEY stored_name (stored_name),
 
-        KEY is_previewable (is_previewable),
+            KEY message_id (message_id),
 
-        KEY scan_status (scan_status),
+            KEY ticket_id (ticket_id),
 
-        KEY state (state),
+            KEY uploaded_by_id (uploaded_by_id),
 
-        KEY last_accessed_at (last_accessed_at),
+            KEY uploaded_by_type (uploaded_by_type),
 
-        KEY created_at (created_at)
-        ";
+            KEY disk (disk),
+
+            KEY file_size (file_size),
+
+            KEY extension (extension),
+
+            KEY mime_type (mime_type),
+
+            KEY category (category),
+
+            KEY checksum (checksum),
+
+            KEY is_previewable (is_previewable),
+
+            KEY scan_status (scan_status),
+
+            KEY state (state),
+
+            KEY last_accessed_at (last_accessed_at),
+
+            KEY created_at (created_at)
+
+        ) {$wpdb->get_charset_collate()};";
   }
 }

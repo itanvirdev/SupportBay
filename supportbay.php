@@ -74,40 +74,50 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 
   add_action('init', function () {
 
-    // IMPORTANT: prevent running on every refresh if needed
-    if (!isset($_GET['sbay_test'])) {
+    if (! isset($_GET['sbay_test'])) {
       return;
     }
 
-    $container = \SupportBay\Core\Application::container(); // or your container accessor
+    $container = \SupportBay\Core\Application::container();
 
-    \SupportBay\Dev\ActivityFlowTest::run(
-      $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
-      $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
-      $container->make(\SupportBay\Modules\Activities\Services\ActivityService::class)
-    );
+    $test = sanitize_key((string) $_GET['sbay_test']);
+
+    switch ($test) {
+
+      case 'attachment':
+        \SupportBay\Dev\AttachmentFlowTest::run(
+          $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
+          $container->make(\SupportBay\Modules\Attachments\Services\AttachmentService::class),
+          $container->make(\SupportBay\Modules\Activities\Services\ActivityService::class),
+        );
+        break;
+
+      case 'activity':
+        \SupportBay\Dev\ActivityFlowTest::run(
+          $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
+          $container->make(\SupportBay\Modules\Activities\Services\ActivityService::class),
+        );
+        break;
+
+      case 'message':
+        \SupportBay\Dev\MessageFlowTest::run(
+          $container->make(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
+        );
+        break;
+
+      default:
+        echo '<pre>';
+        echo "Unknown SupportBay test: {$test}\n\n";
+        echo "Available tests:\n";
+        echo "- attachment\n";
+        echo "- activity\n";
+        echo "- message\n";
+        echo '</pre>';
+    }
 
     exit;
   });
-
-  // add_action('init', function () {
-
-  //   // IMPORTANT: prevent running on every refresh if needed
-  //   if (!isset($_GET['sbay_test'])) {
-  //     return;
-  //   }
-
-
-  //   if (!current_user_can('manage_options')) {
-  //     return;
-  //   }
-
-  //   \SupportBay\Dev\DepartmentFlowTest::run(
-  //     \SupportBay\Core\Application::container()->make(
-  //       \SupportBay\Modules\Departments\Services\DepartmentService::class
-  //     )
-  //   );
-
-  //   exit;
-  // });
 }

@@ -83,10 +83,6 @@ final class Activity extends Entity {
     return $this->ipAddress;
   }
 
-  public function userAgent(): ?string {
-    return $this->userAgent;
-  }
-
   public function createdAt(): string {
     return $this->createdAt;
   }
