@@ -21,20 +21,12 @@ final class DepartmentService {
   /**
    * Create department
    */
-  public function create(array $data): Department {
+  public function create(array $data): int {
     $this->validate($data);
 
     $data = $this->normalizeForCreate($data);
 
-    $id = $this->repository->create($data);
-
-    $department = $this->repository->find($id);
-
-    if (!$department) {
-      throw new RuntimeException('Failed to create department.');
-    }
-
-    return $department;
+    return $this->repository->create($data);
   }
 
   /**

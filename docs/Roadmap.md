@@ -261,6 +261,8 @@ includes/
 - rewrite the AttachmentFlowTest.php ✅
 - rewrite the ActivityFlowTest.php ✅
 - rewrite the TicketFlowTest.php ✅
+- rewrite the DepartmentFlowTest.php ✅
+- rewrite the MessageFlowTest.php ✅
 
 Contracts
 Helpers
