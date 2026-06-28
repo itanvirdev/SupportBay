@@ -5,88 +5,119 @@ declare(strict_types=1);
 namespace SupportBay\Dev;
 
 use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Core\Testing\Assert;
+use SupportBay\Core\Testing\FlowTest;
+use SupportBay\Modules\Activities\Enums\ActivityType;
 use SupportBay\Modules\Activities\Services\ActivityService;
-use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
 
-final class ActivityFlowTest {
-  public static function run(
-    TicketService $ticketService,
-    MessageService $messageService,
-    ActivityService $activityService
-  ): void {
+final class ActivityFlowTest extends FlowTest {
+  /**
+   * Test title.
+   */
+  protected static function title(): string {
+    return 'Activity Flow Test';
+  }
+
+  /**
+   * Execute flow.
+   */
+  protected static function execute(...$services): void {
+    [
+      $ticketService,
+      $messageService,
+      $activityService,
+    ] = $services;
+
+    /** @var TicketService $ticketService */
+    /** @var MessageService $messageService */
+    /** @var ActivityService $activityService */
 
     echo "🚀 Starting SupportBay Activity Flow Test...\n\n";
 
-    /**
-     * 1. Create Ticket
-     */
+    // -------------------------------------------------
+    // Create Ticket
+    // -------------------------------------------------
+
     $ticketId = $ticketService->create([
-      'subject'       => 'Activity Flow Test Ticket',
       'customer_id'   => 1,
       'department_id' => 1,
+      'subject'       => 'Activity Flow Test',
     ]);
 
-    echo "✅ Ticket Created\n";
-    echo "   Ticket ID: {$ticketId}\n\n";
+    Assert::true(
+      $ticketId > 0,
+      'Ticket created.'
+    );
 
-    /**
-     * 2. Create Message
-     *
-     * This should dispatch:
-     * MessageCreated Event
-     *
-     * Which should trigger:
-     * LogMessageCreatedActivity Listener
-     */
+    // -------------------------------------------------
+    // Create Message
+    // -------------------------------------------------
+
     $message = $messageService->create([
       'ticket_id'   => $ticketId,
       'author_id'   => 1,
       'author_type' => AuthorType::CUSTOMER->value,
-      'type'        => MessageType::REPLY->value,
-      'content'     => 'Testing activity logging.',
+      'content'     => 'Testing activity logging...',
     ]);
 
-    echo "✅ Message Created\n";
-    echo "   Message ID: {$message->id()}\n\n";
-
-    /**
-     * 3. Fetch Timeline
-     */
-    $activities = $activityService->getByTicket(
-      $ticketId
+    Assert::notNull(
+      $message,
+      'Message created.'
     );
 
-    echo "📋 Activity Timeline\n";
-    echo "--------------------------\n";
+    Assert::true(
+      $message->id() > 0,
+      'Message ID generated.'
+    );
+
+    // -------------------------------------------------
+    // Verify Activity Timeline
+    // -------------------------------------------------
+
+    $activities = $activityService->getByTicket($ticketId);
+
+    Assert::true(
+      count($activities) > 0,
+      'Activity timeline generated.'
+    );
+
+    $messageActivity = null;
 
     foreach ($activities as $activity) {
-
-      echo "ID: {$activity->id()}\n";
-      echo "Event: {$activity->eventType()->value}\n";
-      echo "Actor: {$activity->actorType()->value}\n";
-      echo "Description: {$activity->description()}\n";
-      echo "Created: {$activity->createdAt()}\n";
-      echo "--------------------------\n";
+      if ($activity->eventType() === ActivityType::MESSAGE_CREATED) {
+        $messageActivity = $activity;
+        break;
+      }
     }
 
-    /**
-     * 4. Verify Listener
-     */
-    $messageActivities = $activityService->getByEvent(
-      \SupportBay\Modules\Activities\Enums\ActivityType::MESSAGE_CREATED
+    Assert::notNull(
+      $messageActivity,
+      'MessageCreated activity recorded.'
     );
 
-    echo "\n🧠 Verification\n";
+    Assert::equals(
+      AuthorType::CUSTOMER,
+      $messageActivity->actorType(),
+      'Activity actor is customer.'
+    );
 
-    if (count($messageActivities) > 0) {
-      echo "✅ MessageCreated listener executed.\n";
-      echo "✅ Activity record created.\n";
-    } else {
-      echo "❌ No activity record found.\n";
-    }
+    Assert::equals(
+      ActivityType::MESSAGE_CREATED,
+      $messageActivity->eventType(),
+      'Activity type is message_created.'
+    );
 
-    echo "\n🎯 Activity Flow Test Completed.\n";
+    Assert::equals(
+      $ticketId,
+      $messageActivity->ticketId(),
+      'Activity belongs to ticket.'
+    );
+
+    Assert::true(
+      $messageActivity->hasPayload(),
+      'Activity payload stored.'
+    );
   }
 }
