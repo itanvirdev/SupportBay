@@ -264,6 +264,47 @@ includes/
 - rewrite the DepartmentFlowTest.php ✅
 - rewrite the MessageFlowTest.php ✅
 
+### Module Customer
+
+```
+Modules/
+└── Customers/
+    │
+    ├── CustomerServiceProvider.php
+    │
+    ├── Database/
+    │   └── CustomerSchema.php
+    │
+    ├── Entities/
+    │   └── Customer.php
+    │
+    ├── Enums/
+    │   ├── CustomerState.php
+    │   └── CustomerSource.php
+    │
+    ├── Repositories/
+    │   └── CustomerRepository.php
+    │
+    ├── Services/
+    │   └── CustomerService.php
+    │
+    ├── Events/
+    │   ├── CustomerCreated.php
+    │   ├── CustomerUpdated.php
+    │   └── CustomerStateChanged.php
+    │
+    ├── Listeners/
+    │   ├── LogCustomerCreatedActivity.php
+    │   ├── LogCustomerUpdatedActivity.php
+    │   └── LogCustomerStateChangedActivity.php
+    │
+    ├── Validators/
+    │   └── CustomerValidator.php
+    │
+    └── Tests/
+        └── CustomerFlowTest.php
+```
+
 Contracts
 Helpers
 Support
@@ -277,11 +318,11 @@ Internal framework is operational.
 
 Create repositories for:
 
-Tickets
-Messages
-Attachments
-Activities
-Departments
+Tickets ✅
+Messages ✅
+Attachments ✅
+Activities ✅
+Departments ✅
 Purchase Verifications
 Auth Tokens
 Providers
@@ -293,13 +334,13 @@ At this stage, do not implement business logic yet.
 
 Build:
 
-TicketService
+TicketService ✅
 
-MessageService
+MessageService ✅
 
-AttachmentService
+AttachmentService ✅
 
-DepartmentService
+DepartmentService ✅
 
 NotificationService
 
