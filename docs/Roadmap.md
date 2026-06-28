@@ -248,6 +248,18 @@ Rewrite the flow tests
 
 #### ✅ Successfully done attachment flow test
 
+#### Add core testing base
+
+```
+includes/
+└── Core/
+    └── Testing/
+        ├── Assert.php
+        └── FlowTest.php
+```
+
+- rewrite the AttachmentFlowTest.php ✅
+
 Contracts
 Helpers
 Support

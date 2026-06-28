@@ -4,174 +4,166 @@ declare(strict_types=1);
 
 namespace SupportBay\Dev;
 
+use SupportBay\Core\Testing\Assert;
+use SupportBay\Core\Testing\FlowTest;
+use SupportBay\Common\Enums\AuthorType;
 use SupportBay\Modules\Activities\Enums\ActivityType;
 use SupportBay\Modules\Activities\Services\ActivityService;
+use SupportBay\Modules\Attachments\Enums\AttachmentCategory;
+use SupportBay\Modules\Attachments\Enums\AttachmentState;
+use SupportBay\Modules\Attachments\Enums\ScanStatus;
 use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
-use SupportBay\Common\Enums\AuthorType;
-use SupportBay\Dev\Assert;
 
-final class AttachmentFlowTest {
-  public static function run(
-    TicketService $ticketService,
-    MessageService $messageService,
-    AttachmentService $attachmentService,
-    ActivityService $activityService,
-  ): void {
+final class AttachmentFlowTest extends FlowTest {
+  /**
+   * Test title.
+   */
+  protected static function title(): string {
+    return 'Attachment Flow Test';
+  }
 
-    echo "<pre>";
+  /**
+   * Execute flow.
+   */
+  protected static function execute(...$services): void {
+    [
+      $ticketService,
+      $messageService,
+      $attachmentService,
+      $activityService,
+    ] = $services;
 
-    try {
+    /** @var TicketService $ticketService */
+    /** @var MessageService $messageService */
+    /** @var AttachmentService $attachmentService */
+    /** @var ActivityService $activityService */
 
-      echo "🚀 Starting SupportBay Attachment Flow Test...\n\n";
+    echo "🚀 Starting SupportBay Attachment Flow Test...\n\n";
 
-      // -------------------------------------------------
-      // Create Ticket
-      // -------------------------------------------------
+    // -------------------------------------------------
+    // Create Ticket
+    // -------------------------------------------------
 
-      $ticketId = $ticketService->create([
-        'customer_id'   => 1,
-        'department_id' => 1,
-        'subject'       => 'Attachment Flow Test',
-      ]);
+    $ticketId = $ticketService->create([
+      'customer_id'   => 1,
+      'department_id' => 1,
+      'subject'       => 'Attachment Flow Test',
+    ]);
 
-      Assert::true(
-        $ticketId > 0,
-        'Ticket created.'
-      );
+    Assert::true($ticketId > 0, 'Ticket created.');
 
-      // -------------------------------------------------
-      // Create Message
-      // -------------------------------------------------
+    // -------------------------------------------------
+    // Create Message
+    // -------------------------------------------------
 
-      $message = $messageService->create([
-        'ticket_id'   => $ticketId,
-        'author_id'   => 1,
-        'author_type' => 'customer',
-        'content'     => 'Uploading an attachment...',
-      ]);
+    $message = $messageService->create([
+      'ticket_id'   => $ticketId,
+      'author_id'   => 1,
+      'author_type' => AuthorType::CUSTOMER->value,
+      'content'     => 'Uploading an attachment...',
+    ]);
 
-      Assert::notNull(
-        $message,
-        'Message created.'
-      );
+    Assert::notNull($message, 'Message created.');
+    Assert::true($message->id() > 0, 'Message ID generated.');
 
-      Assert::true(
-        $message->id() > 0,
-        'Message ID generated.'
-      );
+    // -------------------------------------------------
+    // Upload Attachment
+    // -------------------------------------------------
 
-      // -------------------------------------------------
-      // Upload Attachment
-      // -------------------------------------------------
+    $attachmentId = $attachmentService->upload([
+      'message_id'       => $message->id(),
+      'ticket_id'        => $ticketId,
 
-      $attachmentId = $attachmentService->upload([
-        'message_id'     => $message->id(),
-        'ticket_id'      => $ticketId,
-        'uploaded_by_id'    => 1,
-        'uploaded_by_type' => AuthorType::CUSTOMER->value,
-        'original_name'  => 'invoice.pdf',
-        'path'           => 'uploads/supportbay/invoice.pdf',
-        'file_size'      => 125480,
-        'extension'      => 'pdf',
-        'mime_type'      => 'application/pdf',
-        'checksum'       => hash('sha256', 'invoice.pdf'),
-        'is_previewable' => true,
-      ]);
+      'uploaded_by_id'   => 1,
+      'uploaded_by_type' => AuthorType::CUSTOMER->value,
 
-      Assert::true(
-        $attachmentId > 0,
-        'Attachment uploaded.'
-      );
+      'original_name'    => 'invoice.pdf',
 
-      // -------------------------------------------------
-      // Verify Attachment
-      // -------------------------------------------------
+      'path'             => 'uploads/supportbay/invoice.pdf',
 
-      $attachment = $attachmentService->find($attachmentId);
+      'file_size'        => 125480,
 
-      Assert::notNull(
-        $attachment,
-        'Attachment retrieved.'
-      );
+      'extension'        => 'pdf',
 
-      Assert::equals(
-        'invoice.pdf',
-        $attachment->originalName(),
-        'Original filename stored.'
-      );
+      'mime_type'        => 'application/pdf',
 
-      Assert::equals(
-        'pdf',
-        $attachment->category()->value,
-        'Attachment category detected.'
-      );
+      'checksum'         => hash('sha256', 'invoice.pdf'),
 
-      Assert::equals(
-        'active',
-        $attachment->state()->value,
-        'Attachment state is active.'
-      );
+      'is_previewable'   => true,
+    ]);
 
-      Assert::equals(
-        'pending',
-        $attachment->scanStatus()->value,
-        'Scan status is pending.'
-      );
+    Assert::true($attachmentId > 0, 'Attachment uploaded.');
 
-      Assert::true(
-        $attachment->canPreview(),
-        'Attachment is previewable.'
-      );
+    // -------------------------------------------------
+    // Verify Attachment
+    // -------------------------------------------------
 
-      // -------------------------------------------------
-      // Verify Activity
-      // -------------------------------------------------
+    $attachment = $attachmentService->find($attachmentId);
 
-      $activities = $activityService->getByTicket($ticketId);
+    Assert::notNull($attachment, 'Attachment retrieved.');
 
-      Assert::true(
-        count($activities) > 0,
-        'Activity timeline generated.'
-      );
+    Assert::equals(
+      'invoice.pdf',
+      $attachment->originalName(),
+      'Original filename stored.'
+    );
 
-      $activityFound = false;
+    Assert::equals(
+      AttachmentCategory::PDF,
+      $attachment->category(),
+      'Attachment category detected.'
+    );
 
-      foreach ($activities as $activity) {
+    Assert::equals(
+      AttachmentState::ACTIVE,
+      $attachment->state(),
+      'Attachment state is active.'
+    );
 
-        echo $activity->eventType()->value . PHP_EOL;
+    Assert::equals(
+      ScanStatus::PENDING,
+      $attachment->scanStatus(),
+      'Scan status is pending.'
+    );
 
-        if ($activity->eventType() === ActivityType::ATTACHMENT_UPLOADED) {
+    Assert::true(
+      $attachment->canPreview(),
+      'Attachment is previewable.'
+    );
 
-          $activityFound = true;
+    // -------------------------------------------------
+    // Verify Activities
+    // -------------------------------------------------
 
-          Assert::equals(
-            'customer',
-            $activity->actorType()->value,
-            'Activity actor is customer.'
-          );
+    $activities = $activityService->getByTicket($ticketId);
 
-          break;
-        }
+    Assert::true(
+      count($activities) >= 2,
+      'Activity timeline generated.'
+    );
+
+    $attachmentActivity = null;
+
+    foreach ($activities as $activity) {
+
+      // echo $activity->eventType()->value . PHP_EOL;
+
+      if ($activity->eventType() === ActivityType::ATTACHMENT_UPLOADED) {
+        $attachmentActivity = $activity;
       }
-
-      Assert::true(
-        $activityFound,
-        'AttachmentUploaded activity recorded.'
-      );
-
-      echo "\n🎯 Attachment Flow Test Passed.\n";
-    } catch (\Throwable $e) {
-
-      echo "\n";
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-      echo "❌ TEST FAILED\n";
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-      echo $e->getMessage() . "\n";
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
     }
 
-    echo "</pre>";
+    Assert::notNull(
+      $attachmentActivity,
+      'AttachmentUploaded activity recorded.'
+    );
+
+    Assert::equals(
+      AuthorType::CUSTOMER,
+      $attachmentActivity->actorType(),
+      'Activity actor is customer.'
+    );
   }
 }

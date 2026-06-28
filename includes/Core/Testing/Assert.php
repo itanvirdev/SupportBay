@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SupportBay\Dev;
+namespace SupportBay\Core\Testing;
 
 use RuntimeException;
 
