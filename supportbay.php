@@ -108,6 +108,18 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'ticket':
+        \SupportBay\Dev\TicketFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+        );
+        break;
+
+      case 'department':
+        \SupportBay\Dev\DepartmentFlowTest::run(
+          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
+        );
+        break;
+
       default:
         echo '<pre>';
         echo "Unknown SupportBay test: {$test}\n\n";

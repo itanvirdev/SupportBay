@@ -6,6 +6,7 @@ namespace SupportBay\Modules\Tickets\Services;
 
 use SupportBay\Common\Enums\AuthorType;
 use SupportBay\Common\Enums\SourceType;
+use SupportBay\Modules\Tickets\Entities\Ticket;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
@@ -32,6 +33,30 @@ final class TicketService {
     return $this->repository->create($data);
   }
 
+  /**
+   * Find ticket.
+   */
+  public function find(int $id): ?Ticket {
+    return $this->repository->find($id);
+  }
+
+  /**
+   * Find number.
+   */
+  public function findByNumber(string $number): ?Ticket {
+    return $this->repository->findByNumber($number);
+  }
+
+  /**
+   * @return Ticket[]
+   */
+  public function all(): array {
+    return $this->repository->all();
+  }
+
+  /**
+   * Generate trackId
+   */
   private function generateTrackId(): string {
     return strtoupper(bin2hex(random_bytes(4)));
   }

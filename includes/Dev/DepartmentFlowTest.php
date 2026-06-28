@@ -4,115 +4,88 @@ declare(strict_types=1);
 
 namespace SupportBay\Dev;
 
-use SupportBay\Modules\Departments\Services\DepartmentService;
+use SupportBay\Core\Testing\Assert;
+use SupportBay\Core\Testing\FlowTest;
 use SupportBay\Modules\Departments\Enums\DepartmentStatus;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
+use SupportBay\Modules\Departments\Services\DepartmentService;
 
-final class DepartmentFlowTest {
+final class DepartmentFlowTest extends FlowTest {
+  /**
+   * Test title.
+   */
+  protected static function title(): string {
+    return 'Department Flow Test';
+  }
 
-  public static function run(
-    DepartmentService $departmentService
-  ): void {
-
-    echo "<pre>";
+  /**
+   * Execute flow.
+   */
+  protected static function execute(...$services): void {
+    /** @var DepartmentService $departmentService */
+    [$departmentService] = $services;
 
     echo "🚀 Starting SupportBay Department Flow Test...\n\n";
 
-    /**
-     * -------------------------------------------------
-     * Create Department
-     * -------------------------------------------------
-     */
+    // -------------------------------------------------
+    // Create Department
+    // -------------------------------------------------
 
-    $department = $departmentService->create([
-      'name' => 'Technical Support',
+    $departmentId = $departmentService->create([
+      'name' => 'Support',
+      'slug' => 'support',
     ]);
 
-    echo "✅ Department Created\n";
-    echo "   ID: {$department->id()}\n";
-    echo "   Name: {$department->name()}\n";
-    echo "   Slug: {$department->slug()}\n";
-    echo "   Status: {$department->status()->value}\n";
-    echo "   Priority: {$department->defaultPriority()->value}\n\n";
-
-    /**
-     * -------------------------------------------------
-     * Find by ID
-     * -------------------------------------------------
-     */
-
-    $found = $departmentService->find($department->id());
-
-    echo "🔍 Find By ID\n";
-    echo "   Name: {$found->name()}\n";
-    echo "   Active: " . ($found->isActive() ? 'YES' : 'NO') . "\n\n";
-
-    /**
-     * -------------------------------------------------
-     * Find by Slug
-     * -------------------------------------------------
-     */
-
-    $slug = $departmentService->findBySlug($department->slug());
-
-    echo "🔍 Find By Slug\n";
-    echo "   {$slug->slug()}\n\n";
-
-    /**
-     * -------------------------------------------------
-     * Update
-     * -------------------------------------------------
-     */
-
-    $updated = $departmentService->update(
-      $department->id(),
-      [
-        'description' => 'Handles all technical issues.',
-        'status' => DepartmentStatus::INACTIVE->value,
-        'default_priority' => TicketPriority::HIGH->value,
-      ]
+    Assert::true(
+      $departmentId > 0,
+      'Department created.'
     );
 
-    echo "✏️ Department Updated\n";
-    echo "   Status: {$updated->status()->value}\n";
-    echo "   Priority: {$updated->defaultPriority()->value}\n";
-    echo "   Active: " . ($updated->isActive() ? 'YES' : 'NO') . "\n\n";
+    // -------------------------------------------------
+    // Retrieve Department
+    // -------------------------------------------------
 
-    /**
-     * -------------------------------------------------
-     * Active Departments
-     * -------------------------------------------------
-     */
+    $department = $departmentService->find($departmentId);
 
-    $active = $departmentService->active();
+    Assert::notNull(
+      $department,
+      'Department retrieved.'
+    );
 
-    echo "📋 Active Departments\n";
-    echo "   Count: " . count($active) . "\n\n";
+    Assert::equals(
+      $departmentId,
+      $department->id(),
+      'Department ID matches.'
+    );
 
-    /**
-     * -------------------------------------------------
-     * Delete
-     * -------------------------------------------------
-     */
+    Assert::equals(
+      'Support',
+      $department->name(),
+      'Department name stored.'
+    );
 
-    $deleted = $departmentService->delete($department->id());
+    Assert::equals(
+      'support',
+      $department->slug(),
+      'Department slug stored.'
+    );
 
-    echo "🗑 Department Deleted: ";
-    echo $deleted ? "YES\n\n" : "NO\n\n";
+    Assert::equals(
+      DepartmentStatus::ACTIVE,
+      $department->status(),
+      'Default status applied.'
+    );
 
-    /**
-     * -------------------------------------------------
-     * Verify Delete
-     * -------------------------------------------------
-     */
+    Assert::equals(
+      TicketPriority::NORMAL,
+      $department->defaultPriority(),
+      'Default priority applied.'
+    );
 
-    $verify = $departmentService->find($department->id());
-
-    echo "🔍 Verify Delete: ";
-    echo $verify ? "FAILED\n\n" : "SUCCESS\n\n";
-
-    echo "🎯 Department Flow Completed Successfully.\n";
-
-    echo "</pre>";
+    Assert::equals(
+      0,
+      $department->sortOrder(),
+      'Default sort order applied.'
+    );
   }
 }

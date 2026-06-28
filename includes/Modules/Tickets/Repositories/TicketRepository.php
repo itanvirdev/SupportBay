@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Tickets\Repositories;
 
 use SupportBay\Core\Database\Repository;
+use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Common\Enums\SourceType;
+use SupportBay\Modules\Tickets\Enums\TicketPriority;
+use SupportBay\Modules\Tickets\Enums\TicketState;
+use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use SupportBay\Modules\Tickets\Database\TicketSchema;
 use SupportBay\Modules\Tickets\Entities\Ticket;
 
