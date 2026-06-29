@@ -83,12 +83,12 @@ final class CustomerFlowTest extends FlowTest {
       'Last login is empty.'
     );
 
-    Assert::notEmpty(
+    Assert::notNull(
       $customer->createdAt(),
       'Created timestamp generated.'
     );
 
-    Assert::notEmpty(
+    Assert::notNull(
       $customer->updatedAt(),
       'Updated timestamp generated.'
     );

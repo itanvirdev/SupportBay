@@ -4,75 +4,71 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Auth\Database;
 
-use SupportBay\Core\Database\Schema;
 use SupportBay\Modules\Auth\Enums\AuthTokenState;
 use SupportBay\Modules\Auth\Enums\AuthTokenType;
 
-final class AuthTokenSchema extends Schema {
+final class AuthTokenSchema {
   /**
-   * Database table.
+   * Database table name.
    */
-  protected string $table = 'sbay_auth_tokens';
+  public static function tableName(): string {
+    global $wpdb;
+
+    return $wpdb->prefix . 'sbay_auth_tokens';
+  }
 
   /**
-   * Schema version.
+   * Database schema.
    */
-  protected string $version = '1.0.0';
+  public static function schema(): string {
+    global $wpdb;
 
-  /**
-   * Table definition.
-   */
-  protected function columns(): array {
-    return [
+    return "CREATE TABLE " . self::tableName() . " (
 
-      'id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT',
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-      'user_id BIGINT UNSIGNED NOT NULL',
+            user_id BIGINT UNSIGNED NOT NULL,
 
-      'type VARCHAR(30) NOT NULL DEFAULT "' . AuthTokenType::MAGIC_LOGIN->value . '"',
+            type VARCHAR(30) NOT NULL DEFAULT '" . AuthTokenType::MAGIC_LOGIN->value . "',
 
-      'state VARCHAR(20) NOT NULL DEFAULT "' . AuthTokenState::ACTIVE->value . '"',
+            state VARCHAR(20) NOT NULL DEFAULT '" . AuthTokenState::ACTIVE->value . "',
 
-      'token_hash CHAR(64) NOT NULL',
+            token_hash CHAR(64) NOT NULL,
 
-      'redirect_to VARCHAR(255) NULL',
+            redirect_to VARCHAR(255) NULL,
 
-      'expires_at DATETIME NOT NULL',
+            expires_at DATETIME NOT NULL,
 
-      'last_used_at DATETIME NULL',
+            last_used_at DATETIME NULL,
 
-      'revoked_at DATETIME NULL',
+            revoked_at DATETIME NULL,
 
-      'revoked_by BIGINT UNSIGNED NULL',
+            revoked_by BIGINT UNSIGNED NULL,
 
-      'ip_address VARCHAR(45) NULL',
+            use_count INT UNSIGNED NOT NULL DEFAULT 0,
 
-      'user_agent TEXT NULL',
+            max_uses INT UNSIGNED NULL,
 
-      'metadata LONGTEXT NULL',
+            ip_address VARCHAR(45) NULL,
 
-      'created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+            user_agent TEXT NULL,
 
-      'updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+            metadata LONGTEXT NULL,
 
-      'PRIMARY KEY (id)',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-      'UNIQUE KEY token_hash (token_hash)',
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-      'KEY user_id (user_id)',
+            UNIQUE KEY token_hash (token_hash),
 
-      'KEY type (type)',
+            KEY user_id (user_id),
+            KEY type (type),
+            KEY state (state),
+            KEY expires_at (expires_at),
+            KEY revoked_at (revoked_at),
+            KEY last_used_at (last_used_at),
+            KEY created_at (created_at)
 
-      'KEY state (state)',
-
-      'KEY expires_at (expires_at)',
-
-      'KEY last_used_at (last_used_at)',
-
-      'KEY revoked_at (revoked_at)',
-
-      'KEY revoked_by (revoked_by)',
-
-    ];
+        ) {$wpdb->get_charset_collate()};";
   }
 }

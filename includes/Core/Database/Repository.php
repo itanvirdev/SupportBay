@@ -266,23 +266,37 @@ abstract class Repository {
   }
 
 
-
+  /**
+   * Create
+   */
   public function create(array $data): int {
     return $this->insert($data);
   }
 
+  /**
+   * Update
+   */
   public function update(int $id, array $data): bool {
     return $this->updateById($id, $data);
   }
 
+  /**
+   * Delete
+   */
   public function delete(int $id): bool {
     return $this->deleteById($id);
   }
 
+  /**
+   * Find by ID.
+   */
   public function find(int $id): ?Entity {
     return $this->findById($id);
   }
 
+  /**
+   * Find all
+   */
   public function all(): array {
     return $this->findAll();
   }

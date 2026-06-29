@@ -29,11 +29,15 @@ final class AuthTokenRepository extends Repository {
       tokenHash: $row['token_hash'],
       redirectTo: $row['redirect_to'],
       useCount: (int) $row['use_count'],
-      maxUses: isset($row['max_uses']) ? (int) $row['max_uses'] : null,
+      maxUses: $row['max_uses'] !== null
+        ? (int) $row['max_uses']
+        : null,
       expiresAt: $row['expires_at'],
       lastUsedAt: $row['last_used_at'],
       revokedAt: $row['revoked_at'],
-      revokedBy: isset($row['revoked_by']) ? (int) $row['revoked_by'] : null,
+      revokedBy: $row['revoked_by'] !== null
+        ? (int) $row['revoked_by']
+        : null,
       ipAddress: $row['ip_address'],
       userAgent: $row['user_agent'],
       metadata: $row['metadata'],
@@ -43,59 +47,34 @@ final class AuthTokenRepository extends Repository {
   }
 
   /**
-   * Create token.
-   */
-  public function create(array $data): int {
-    return $this->insert($data);
-  }
-
-  /**
-   * Update token.
-   */
-  public function update(int $id, array $data): bool {
-    return $this->updateById($id, $data);
-  }
-
-  /**
-   * Delete token.
-   */
-  public function delete(int $id): bool {
-    return $this->deleteById($id);
-  }
-
-  /**
-   * Find by ID.
-   */
-  public function find(int $id): ?AuthToken {
-    return $this->findById($id);
-  }
-
-  /**
-   * Find by hash.
+   * Find token by SHA-256 hash.
    */
   public function findByHash(string $hash): ?AuthToken {
+    /** @var AuthToken|null */
     return $this->first([
       'token_hash' => $hash,
     ]);
   }
 
   /**
-   * Get all tokens for a user.
+   * Find all tokens belonging to a user.
    *
    * @return AuthToken[]
    */
-  public function getByUser(int $userId): array {
+  public function findByUser(int $userId): array {
+    /** @var AuthToken[] */
     return $this->findWhere([
       'user_id' => $userId,
     ]);
   }
 
   /**
-   * Get active tokens.
+   * Find active tokens for a user.
    *
    * @return AuthToken[]
    */
-  public function getActiveByUser(int $userId): array {
+  public function findActiveByUser(int $userId): array {
+    /** @var AuthToken[] */
     return $this->findWhere([
       'user_id' => $userId,
       'state'   => AuthTokenState::ACTIVE->value,
