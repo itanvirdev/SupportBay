@@ -137,11 +137,7 @@ Status:
 
 ---
 
-# Current Milestone
-
-## Customer Module 🚧
-
-Next implementation:
+## Customer Module ✅
 
 - Customer Schema
 - Customer Entity
@@ -162,14 +158,16 @@ Sources:
 
 - Manual
 - Guest Ticket
-- Envato
-- Future Providers
+- Providers
+- Admin
 
 ---
 
-# Upcoming Milestones
+# Current Milestone
 
-## Magic Login
+## Magic Login 🚧
+
+Next implementation:
 
 - Token Repository
 - Magic Token Entity
@@ -181,6 +179,8 @@ Sources:
 - Flow Test
 
 ---
+
+# Upcoming Milestones
 
 ## Provider Registry
 
@@ -272,10 +272,10 @@ Sources:
 - ✅ ActivityFlowTest
 - ✅ AttachmentFlowTest
 - ✅ DepartmentFlowTest
+- ✅ CustomerFlowTest
 
 Upcoming:
 
-- ⏳ CustomerFlowTest
 - ⏳ MagicLoginFlowTest
 - ⏳ ProviderFlowTest
 - ⏳ VerificationFlowTest

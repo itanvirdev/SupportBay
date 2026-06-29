@@ -307,6 +307,47 @@ Modules/
 
 #### ✅ Successfully done customer flow test
 
+### Module Auth
+
+```
+Modules/
+└── Auth/
+    ├── AuthServiceProvider.php
+    │
+    ├── Database/
+    │   └── AuthTokenSchema.php
+    │
+    ├── Entities/
+    │   └── AuthToken.php
+    │
+    ├── Enums/
+    │   ├── AuthTokenType.php
+    │   └── AuthTokenState.php
+    │
+    ├── Repositories/
+    │   └── AuthTokenRepository.php
+    │
+    ├── Services/
+    │   └── AuthService.php
+    │
+    ├── Events/
+    │   ├── AuthTokenCreated.php
+    │   ├── AuthTokenAuthenticated.php
+    │   └── AuthTokenRevoked.php
+    │
+    ├── Listeners/
+    │   ├── LogAuthTokenCreatedActivity.php
+    │   ├── LogAuthTokenAuthenticatedActivity.php
+    │   └── LogAuthTokenRevokedActivity.php
+    │
+    └── Tests/
+        └── AuthFlowTest.php
+
+✅ AuthServiceProvider
+
+✅ AuthFlowTest
+```
+
 Contracts
 Helpers
 Support

@@ -55,7 +55,7 @@ final class Activity extends Entity {
     return $this->id;
   }
 
-  public function ticketId(): int {
+  public function ticketId(): ?int {
     return $this->ticketId;
   }
 
