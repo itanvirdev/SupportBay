@@ -19,6 +19,13 @@ final class Assert {
   }
 
   /**
+   * Assert that a value is false.
+   */
+  public static function false(bool $condition, string $message): void {
+    self::true(! $condition, $message);
+  }
+
+  /**
    * Assert equality.
    */
   public static function equals(
@@ -36,6 +43,13 @@ final class Assert {
     }
 
     echo "✅ {$message}\n";
+  }
+
+  /**
+   * Assert value is null.
+   */
+  public static function null(mixed $value, string $message): void {
+    self::true($value === null, $message);
   }
 
   /**

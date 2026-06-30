@@ -32,6 +32,10 @@ enum ActivityType: string {
   case ATTACHMENT_UPLOADED = 'attachment_uploaded';
   case ATTACHMENT_DELETED  = 'attachment_deleted';
 
+  case MAGIC_LINK_GENERATED = 'magic_link_generated';
+  case MAGIC_LINK_USED = 'magic_link_used';
+  case MAGIC_LINK_REVOKED = 'magic_link_revoked';
+
   /**
    * Human-readable label.
    */
@@ -63,6 +67,10 @@ enum ActivityType: string {
 
       self::ATTACHMENT_UPLOADED => 'Attachment Uploaded',
       self::ATTACHMENT_DELETED  => 'Attachment Deleted',
+
+      self::MAGIC_LINK_GENERATED => 'Magic Link Generated',
+      self::MAGIC_LINK_USED => 'Magic Link Used',
+      self::MAGIC_LINK_REVOKED => 'Magic Link Revoked'
     };
   }
 }

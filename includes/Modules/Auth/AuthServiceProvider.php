@@ -21,19 +21,19 @@ final class AuthServiceProvider extends ServiceProvider {
    *
    * @var array<class-string, array<class-string>>
    */
-  protected array $listeners = [
-    AuthTokenCreated::class => [
-      LogAuthTokenCreatedActivity::class,
-    ],
+  // protected array $listeners = [
+  //   AuthTokenCreated::class => [
+  //     LogAuthTokenCreatedActivity::class,
+  //   ],
 
-    AuthTokenAuthenticated::class => [
-      LogAuthTokenAuthenticatedActivity::class,
-    ],
+  //   AuthTokenAuthenticated::class => [
+  //     LogAuthTokenAuthenticatedActivity::class,
+  //   ],
 
-    AuthTokenRevoked::class => [
-      LogAuthTokenRevokedActivity::class,
-    ],
-  ];
+  //   AuthTokenRevoked::class => [
+  //     LogAuthTokenRevokedActivity::class,
+  //   ],
+  // ];
 
   /**
    * Register services.

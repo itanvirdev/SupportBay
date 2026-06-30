@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Auth\Listeners;
 
 use SupportBay\Common\Enums\AuthorType;
-use SupportBay\Core\Contracts\Listener;
+use SupportBay\Core\Events\Contracts\Listener;
 use SupportBay\Modules\Activities\Enums\ActivityType;
 use SupportBay\Modules\Activities\Services\ActivityService;
 use SupportBay\Modules\Auth\Events\AuthTokenAuthenticated;

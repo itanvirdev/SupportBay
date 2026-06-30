@@ -31,31 +31,33 @@ final class AuthFlowTest extends FlowTest {
     // Generate Token
     // -------------------------------------------------
 
-    $rawToken = $authService->create([
-      'user_id'     => 1,
-      'redirect_to' => '/support/ticket/F6C521D5',
-    ]);
+    $plainToken = $authService->generate(
+      userId: 1,
+      type: AuthTokenType::MAGIC_LOGIN,
+      redirectTo: '/support/ticket/9D980553',
+      expiresAt: date('Y-m-d H:i:s', strtotime('+30 days')),
+    );
 
     Assert::true(
-      ! empty($rawToken),
-      'Magic token generated.'
+      ! empty($plainToken),
+      'Auth token generated.'
     );
 
     // -------------------------------------------------
     // Retrieve Token
     // -------------------------------------------------
 
-    $token = $authService->findByToken($rawToken);
+    $token = $authService->findByToken($plainToken);
 
     Assert::notNull(
       $token,
-      'Token retrieved.'
+      'Auth token retrieved.'
     );
 
     Assert::equals(
       1,
       $token->userId(),
-      'User linked.'
+      'WordPress user linked.'
     );
 
     Assert::equals(
@@ -71,50 +73,77 @@ final class AuthFlowTest extends FlowTest {
     );
 
     Assert::equals(
-      '/support/ticket/F6C521D5',
+      '/support/ticket/9D980553',
       $token->redirectTo(),
       'Redirect stored.'
     );
 
-    Assert::null(
-      $token->lastUsedAt(),
-      'Token not yet used.'
+    Assert::equals(
+      0,
+      $token->useCount(),
+      'Initial use count.'
     );
 
-    // -------------------------------------------------
-    // Authenticate
-    // -------------------------------------------------
-
-    $authenticated = $authService->authenticate($rawToken);
+    Assert::false(
+      $token->isExpired(),
+      'Token is not expired.'
+    );
 
     Assert::true(
-      $authenticated,
-      'Authentication successful.'
+      $token->canBeUsed(),
+      'Token is usable.'
     );
 
-    $token = $authService->findByToken($rawToken);
+    // -------------------------------------------------
+    // Authenticate Token
+    // -------------------------------------------------
+
+    $authenticated = $authService->authenticate($plainToken);
 
     Assert::notNull(
-      $token->lastUsedAt(),
+      $authenticated,
+      'Token authenticated.'
+    );
+
+    Assert::equals(
+      1,
+      $authenticated->useCount(),
+      'Use count incremented.'
+    );
+
+    Assert::notNull(
+      $authenticated->lastUsedAt(),
       'Last used timestamp updated.'
     );
 
     // -------------------------------------------------
-    // Revoke
+    // Revoke Token
     // -------------------------------------------------
 
-    $authService->revoke($token->id());
+    $authService->revoke($authenticated->id());
 
-    $token = $authService->find($token->id());
+    $revoked = $authService->find(
+      $authenticated->id()
+    );
 
     Assert::equals(
       AuthTokenState::REVOKED,
-      $token->state(),
+      $revoked->state(),
       'Token revoked.'
     );
 
+    Assert::true(
+      $revoked->isRevoked(),
+      'Revoked state detected.'
+    );
+
+    Assert::false(
+      $revoked->canBeUsed(),
+      'Revoked token cannot be used.'
+    );
+
     Assert::notNull(
-      $token->revokedAt(),
+      $revoked->revokedAt(),
       'Revoked timestamp stored.'
     );
   }

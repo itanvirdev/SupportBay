@@ -163,11 +163,7 @@ Sources:
 
 ---
 
-# Current Milestone
-
-## Magic Login 🚧
-
-Next implementation:
+## Auth Tokens Module ✅
 
 - Token Repository
 - Magic Token Entity
@@ -180,9 +176,11 @@ Next implementation:
 
 ---
 
-# Upcoming Milestones
+# Current Milestone
 
-## Provider Registry
+## Provider Registry 🚧
+
+Next implementation:
 
 - Provider Contracts
 - Provider Registry
@@ -192,6 +190,8 @@ Next implementation:
 - Provider Settings
 
 ---
+
+# Upcoming Milestones
 
 ## Purchase Verification
 
@@ -273,10 +273,10 @@ Next implementation:
 - ✅ AttachmentFlowTest
 - ✅ DepartmentFlowTest
 - ✅ CustomerFlowTest
+- ✅ AuthFlowTest
 
 Upcoming:
 
-- ⏳ MagicLoginFlowTest
 - ⏳ ProviderFlowTest
 - ⏳ VerificationFlowTest
 - ⏳ NotificationFlowTest
@@ -295,9 +295,9 @@ Upcoming:
 | Attachments           | ✅ Complete |
 | Departments           | ✅ Complete |
 | Testing Framework     | ✅ Complete |
-| Customers             | 🚧 Next     |
-| Magic Login           | Planned     |
-| Provider Registry     | Planned     |
+| Customers             | ✅ Complete |
+| Auth                  | ✅ Complete |
+| Provider Registry     | 🚧 Next     |
 | Purchase Verification | Planned     |
 | Envato Integration    | Planned     |
 | Notifications         | Planned     |

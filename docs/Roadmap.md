@@ -366,8 +366,8 @@ Messages ✅
 Attachments ✅
 Activities ✅
 Departments ✅
+Auth Tokens ✅
 Purchase Verifications
-Auth Tokens
 Providers
 Notification Logs
 
@@ -385,11 +385,11 @@ AttachmentService ✅
 
 DepartmentService ✅
 
+AuthService ✅
+
 NotificationService
 
 EnvatoService
-
-AuthService
 
 This is where the business logic lives.
 
