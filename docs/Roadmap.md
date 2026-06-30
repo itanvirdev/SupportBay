@@ -348,6 +348,74 @@ Modules/
 ✅ AuthFlowTest
 ```
 
+### Providers
+
+```
+includes/
+└── Core/
+    └── Providers/
+        ├── Contracts/
+        │   ├── Provider.php
+        │   ├── OAuthProvider.php          (future)
+        │   ├── PurchaseProvider.php       (future)
+        │   ├── WebhookProvider.php        (future)
+        │   └── ProductSyncProvider.php    (future)
+        │
+        ├── ProviderRegistry.php   (have)
+        ├── ProviderManager.php
+        ├── ProviderDiscovery.php
+        └── ServiceProvider.php    (have)
+```
+
+```
+Modules/
+└── Providers/
+    ├── Database/
+    ├── Entities/
+    ├── Enums/
+    ├── Repositories/
+    ├── Services/
+    ├── Events/
+    ├── Listeners/
+    ├── ProviderServiceProvider.php
+    └── Tests/
+```
+
+**Step 1**
+`Provider Contract`
+
+**Step 2**
+Improve `ProviderRegistry`
+
+Support:
+
+```
+SupportBay::providers()->register($provider);
+
+SupportBay::providers()->get('envato');
+
+SupportBay::providers()->all();
+
+SupportBay::providers()->enabled();
+```
+
+**Step 3**
+`ProviderManager`
+
+**Step 4**
+`ProviderDiscovery`
+
+**Then implement Envato**
+
+```
+Providers/
+└── Envato/
+    ├── EnvatoProvider.php
+    ├── EnvatoOAuth.php
+    ├── EnvatoPurchase.php
+    └── EnvatoServiceProvider.php
+```
+
 Contracts
 Helpers
 Support

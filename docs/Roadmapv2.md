@@ -69,9 +69,7 @@
 - Events
 - Flow Test
 
-Status:
-
-**Complete**
+Status: **Complete**
 
 ---
 
@@ -85,9 +83,7 @@ Status:
 - Listeners
 - Flow Test
 
-Status:
-
-**Complete**
+Status: **Complete**
 
 ---
 
@@ -100,9 +96,7 @@ Status:
 - Activity Logging
 - Flow Test
 
-Status:
-
-**Complete**
+Status: **Complete**
 
 ---
 
@@ -117,9 +111,7 @@ Status:
 - Activity Listeners
 - Flow Test
 
-Status:
-
-**Complete**
+Status: **Complete**
 
 ---
 
@@ -131,9 +123,7 @@ Status:
 - Service
 - Flow Test
 
-Status:
-
-**Complete**
+Status: **Complete**
 
 ---
 
@@ -161,6 +151,8 @@ Sources:
 - Providers
 - Admin
 
+Status: **Complete**
+
 ---
 
 ## Auth Tokens Module ✅
@@ -173,6 +165,8 @@ Sources:
 - Token Revocation
 - Activity Logging
 - Flow Test
+
+Status: **Complete**
 
 ---
 
