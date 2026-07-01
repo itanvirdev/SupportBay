@@ -374,32 +374,39 @@ includes/
 Modules/
 └── Providers/
     ├── Database/
+    │   └── ProviderSchema.php
+    │
     ├── Entities/
+    │   └── Provider.php
+    │
     ├── Enums/
+    │   ├── ProviderCategory.php
+    │   └── ProviderStatus.php
+    │
     ├── Repositories/
+    │   └── ProviderRepository.php
+    │
     ├── Services/
+    │   └── ProviderService.php
+    │
     ├── Events/
     ├── Listeners/
     ├── ProviderServiceProvider.php
     └── Tests/
 ```
 
-**Step 1**
-`Provider Contract`
-
-**Step 2**
-Improve `ServiceProviderRegistry`
-
-Support:
-
 ```
-SupportBay::providers()->register($provider);
+9. ProviderRepository
+10. ProviderService
+11. ProviderServiceProvider
 
-SupportBay::providers()->get('envato');
+↓
 
-SupportBay::providers()->all();
+12. ProviderFlowTest
 
-SupportBay::providers()->enabled();
+↓
+
+13. EnvatoProvider
 ```
 
 **Step 3**
