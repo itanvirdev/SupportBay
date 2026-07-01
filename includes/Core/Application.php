@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core;
 
 use SupportBay\Core\Container\Container;
-use SupportBay\Core\Providers\ProviderRegistry;
+use SupportBay\Core\Foundation\ServiceProviderRegistry;
 
 final class Application {
   /**
@@ -43,7 +43,7 @@ final class Application {
 
     $this->registerCoreBindings();
 
-    ProviderRegistry::register($this->container);
+    ServiceProviderRegistry::register($this->container);
 
     $this->booted = true;
   }

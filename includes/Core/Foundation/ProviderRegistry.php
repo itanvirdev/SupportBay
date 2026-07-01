@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SupportBay\Core\Providers;
+namespace SupportBay\Core\Foundation;
 
 use SupportBay\Core\Container\Container;
 use SupportBay\Modules\Tickets\TicketServiceProvider;
@@ -14,7 +14,7 @@ use SupportBay\Modules\Attachments\AttachmentServiceProvider;
 use SupportBay\Modules\Customers\CustomerServiceProvider;
 use SupportBay\Modules\Auth\AuthServiceProvider;
 
-final class ProviderRegistry {
+final class ServiceProviderRegistry {
   /**
    * Registered providers
    */

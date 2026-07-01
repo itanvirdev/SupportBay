@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Activities;
 
 use SupportBay\Core\Container\Container;
-use SupportBay\Core\Providers\ServiceProvider;
+use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Activities\Repositories\ActivityRepository;
 use SupportBay\Modules\Activities\Services\ActivityService;
 

@@ -6,7 +6,7 @@ namespace SupportBay\Modules\Messages;
 
 use SupportBay\Core\Container\Container;
 use SupportBay\Core\Events\EventDispatcher;
-use SupportBay\Core\Providers\ServiceProvider;
+use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Messages\Events\MessageCreated;
 use SupportBay\Modules\Messages\Listeners\SyncTicketReplyListener;
 use SupportBay\Modules\Messages\Repositories\MessageRepository;

@@ -46,7 +46,7 @@ Deactivator.php
 Uninstaller.php
 Constants.php
 Container.php
-ProviderRegistry.php
+ServiceProviderRegistry.php
 
 Result: The plugin loads successfully.
 
@@ -353,6 +353,10 @@ Modules/
 ```
 includes/
 └── Core/
+    ├── Foundation/
+    │   ├── ServiceProvider.php
+    │   └── ServiceProviderRegistry.php
+    │
     └── Providers/
         ├── Contracts/
         │   ├── Provider.php
@@ -361,10 +365,9 @@ includes/
         │   ├── WebhookProvider.php        (future)
         │   └── ProductSyncProvider.php    (future)
         │
-        ├── ProviderRegistry.php   (have)
+        ├── ProviderRegistry.php
         ├── ProviderManager.php
-        ├── ProviderDiscovery.php
-        └── ServiceProvider.php    (have)
+        └── ProviderDiscovery.php
 ```
 
 ```
@@ -385,7 +388,7 @@ Modules/
 `Provider Contract`
 
 **Step 2**
-Improve `ProviderRegistry`
+Improve `ServiceProviderRegistry`
 
 Support:
 

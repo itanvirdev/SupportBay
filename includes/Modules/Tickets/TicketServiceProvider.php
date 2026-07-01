@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Tickets;
 
 use SupportBay\Core\Container\Container;
-use SupportBay\Core\Providers\ServiceProvider;
+use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SupportBay\Core\Providers;
+namespace SupportBay\Core\Foundation;
 
 use SupportBay\Core\Container\Container;
 use SupportBay\Core\Events\ListenerRegistry;

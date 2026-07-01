@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Events;
 
 use SupportBay\Core\Container\Container;
-use SupportBay\Core\Providers\ServiceProvider;
+use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Core\Events\EventDispatcher;
 
 final class EventServiceProvider extends ServiceProvider {

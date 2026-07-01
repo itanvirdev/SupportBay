@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Departments;
 
 use SupportBay\Core\Container\Container;
-use SupportBay\Core\Providers\ServiceProvider;
+use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Departments\Repositories\DepartmentRepository;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 
