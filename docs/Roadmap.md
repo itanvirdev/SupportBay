@@ -46,7 +46,7 @@ Deactivator.php
 Uninstaller.php
 Constants.php
 Container.php
-ServiceProviderRegistry.php
+ServiceIntegrationRegistry.php
 
 Result: The plugin loads successfully.
 
@@ -359,15 +359,15 @@ includes/
     │
     └── Providers/
         ├── Contracts/
-        │   ├── Provider.php
+        │   ├── IntegrationProvider.php
         │   ├── OAuthProvider.php          (future)
         │   ├── PurchaseProvider.php       (future)
         │   ├── WebhookProvider.php        (future)
         │   └── ProductSyncProvider.php    (future)
         │
-        ├── ProviderRegistry.php
-        ├── ProviderManager.php
-        └── ProviderDiscovery.php
+        ├── IntegrationRegistry.php
+        ├── IntegrationManager.php
+        └── IntegrationDiscovery.php
 ```
 
 ```

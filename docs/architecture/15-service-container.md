@@ -248,7 +248,7 @@ sbay()->get(TicketService::class);
 ## Integration Services
 
 - EnvatoService
-- ProviderManager
+- IntegrationManager
 
 ## Notification Services
 
