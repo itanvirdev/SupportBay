@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SupportBay\Core\Providers;
 
-use SupportBay\Core\Providers\Contracts\Provider;
+use SupportBay\Core\Providers\Contracts\IntegrationProvider;
 
 final class ProviderDiscovery {
   /**
@@ -33,7 +33,7 @@ final class ProviderDiscovery {
    * - Third-party plugins
    * - Automatic discovery
    *
-   * @return Provider[]
+   * @return IntegrationProvider[]
    */
   private function providers(): array {
     return [

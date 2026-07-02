@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SupportBay\Core\Providers\Contracts;
 
-interface Provider {
+interface IntegrationProvider {
   /**
    * Unique provider identifier.
    *

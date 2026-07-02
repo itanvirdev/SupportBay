@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Providers;
 
 use RuntimeException;
-use SupportBay\Core\Providers\Contracts\Provider;
+use SupportBay\Core\Providers\Contracts\IntegrationProvider;
 
 final class ProviderRegistry {
   /**
@@ -18,7 +18,7 @@ final class ProviderRegistry {
   /**
    * Register a provider.
    */
-  public function register(Provider $provider): void {
+  public function register(IntegrationProvider $provider): void {
     $slug = $provider->slug();
 
     if (isset($this->providers[$slug])) {
@@ -43,7 +43,7 @@ final class ProviderRegistry {
   /**
    * Retrieve a provider.
    */
-  public function get(string $slug): ?Provider {
+  public function get(string $slug): ?IntegrationProvider {
     return $this->providers[$slug] ?? null;
   }
 

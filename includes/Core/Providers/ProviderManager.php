@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Providers;
 
 use RuntimeException;
-use SupportBay\Core\Providers\Contracts\Provider;
+use SupportBay\Core\Providers\Contracts\IntegrationProvider;
 
 final class ProviderManager {
   /**
@@ -19,7 +19,7 @@ final class ProviderManager {
   /**
    * Register a provider.
    */
-  public function register(Provider $provider): void {
+  public function register(IntegrationProvider $provider): void {
     $this->registry->register($provider);
   }
 
@@ -35,7 +35,7 @@ final class ProviderManager {
    *
    * @throws RuntimeException
    */
-  public function provider(string $slug): Provider {
+  public function provider(string $slug): IntegrationProvider {
     $provider = $this->registry->get($slug);
 
     if (! $provider) {
