@@ -13,6 +13,7 @@ use SupportBay\Modules\Activities\ActivityServiceProvider;
 use SupportBay\Modules\Attachments\AttachmentServiceProvider;
 use SupportBay\Modules\Customers\CustomerServiceProvider;
 use SupportBay\Modules\Auth\AuthServiceProvider;
+use SupportBay\Modules\Providers\ProviderServiceProvider;
 
 final class ServiceProviderRegistry {
   /**
@@ -47,6 +48,7 @@ final class ServiceProviderRegistry {
     self::addProvider(new AttachmentServiceProvider());
     self::addProvider(new CustomerServiceProvider());
     self::addProvider(new AuthServiceProvider());
+    self::addProvider(new ProviderServiceProvider());
   }
 
   /**

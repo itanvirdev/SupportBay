@@ -348,7 +348,7 @@ Modules/
 ✅ AuthFlowTest
 ```
 
-### Providers
+### Providers Module
 
 ```
 includes/
@@ -393,37 +393,31 @@ Modules/
     ├── Listeners/
     ├── ProviderServiceProvider.php
     └── Tests/
+
+✅ ProviderFlowTest
 ```
 
-```
-9. ProviderRepository
-10. ProviderService
-11. ProviderServiceProvider
-
-↓
-
-12. ProviderFlowTest
-
-↓
-
-13. EnvatoProvider
-```
-
-**Step 3**
-`ProviderManager`
-
-**Step 4**
-`ProviderDiscovery`
-
-**Then implement Envato**
+### Envato Provider
 
 ```
-Providers/
-└── Envato/
-    ├── EnvatoProvider.php
-    ├── EnvatoOAuth.php
-    ├── EnvatoPurchase.php
-    └── EnvatoServiceProvider.php
+includes/
+└── Providers/
+    └── Envato/
+        ├── EnvatoProvider.php
+        ├── EnvatoServiceProvider.php
+        ├── Services/
+        │   └── EnvatoService.php
+        │
+        ├── Api/
+        │   └── EnvatoApi.php
+        │
+        ├── DTO/
+        │   └── Purchase.php
+        │
+        ├── Exceptions/
+        │   └── EnvatoException.php
+        │
+        └── README.md
 ```
 
 Contracts

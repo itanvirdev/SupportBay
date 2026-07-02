@@ -11,6 +11,7 @@ use SupportBay\Modules\Activities\Database\ActivitySchema;
 use SupportBay\Modules\Attachments\Database\AttachmentSchema;
 use SupportBay\Modules\Customers\Database\CustomerSchema;
 use SupportBay\Modules\Auth\Database\AuthTokenSchema;
+use SupportBay\Modules\Providers\Database\ProviderSchema;
 
 final class MigrationRegistry {
   /**
@@ -27,6 +28,7 @@ final class MigrationRegistry {
       AttachmentSchema::class,
       CustomerSchema::class,
       AuthTokenSchema::class,
+      ProviderSchema::class,
     ];
   }
 }
