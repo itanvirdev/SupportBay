@@ -403,19 +403,28 @@ Modules/
 includes/
 └── Providers/
     └── Envato/
+        │
         ├── EnvatoProvider.php
         ├── EnvatoServiceProvider.php
-        ├── Services/
-        │   └── EnvatoService.php
         │
         ├── Api/
-        │   └── EnvatoApi.php
+        │   └── EnvatoApiClient.php
         │
-        ├── DTO/
-        │   └── Purchase.php
+        ├── Services/
+        │   ├── EnvatoOAuthService.php
+        │   ├── EnvatoPurchaseService.php
+        │   └── EnvatoCustomerService.php
+        │
+        ├── Data/
+        │   ├── EnvatoCustomer.php
+        │   ├── EnvatoPurchase.php
+        │   └── EnvatoToken.php
         │
         ├── Exceptions/
         │   └── EnvatoException.php
+        │
+        └── Routes/
+        │   └── OAuthRoutes.php
         │
         └── README.md
 ```

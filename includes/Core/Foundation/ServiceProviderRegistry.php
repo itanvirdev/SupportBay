@@ -14,6 +14,7 @@ use SupportBay\Modules\Attachments\AttachmentServiceProvider;
 use SupportBay\Modules\Customers\CustomerServiceProvider;
 use SupportBay\Modules\Auth\AuthServiceProvider;
 use SupportBay\Modules\Providers\ProviderServiceProvider;
+use SupportBay\Providers\Envato\EnvatoServiceProvider;
 
 final class ServiceProviderRegistry {
   /**
@@ -27,6 +28,7 @@ final class ServiceProviderRegistry {
   public static function register(Container $container): void {
     self::registerCoreProviders($container);
     self::registerModuleProviders($container);
+    self::registerIntegrationProviders($container);
     self::bootProviders($container);
   }
 
@@ -49,6 +51,13 @@ final class ServiceProviderRegistry {
     self::addProvider(new CustomerServiceProvider());
     self::addProvider(new AuthServiceProvider());
     self::addProvider(new ProviderServiceProvider());
+  }
+
+  /**
+   * Integration Providers
+   */
+  private static function registerIntegrationProviders(Container $container): void {
+    self::addProvider(new EnvatoServiceProvider());
   }
 
   /**
