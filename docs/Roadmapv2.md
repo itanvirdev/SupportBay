@@ -181,7 +181,7 @@ Status: **Complete**
 
 ---
 
-## Envato Provider
+## Envato Provider ✅
 
 - OAuth Login
 - Customer Linking

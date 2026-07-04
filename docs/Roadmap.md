@@ -430,6 +430,55 @@ includes/
         └── MANUAL_TESTING.md
 ```
 
+### Purchase Verification
+
+```
+Modules/
+└── Verifications/
+    ├── Contracts/
+    │   └── VerificationProvider.php (future)
+    │
+    ├── Database/
+    │   ├── PurchaseVerificationSchema.php
+    │   └── VerificationMigration.php
+    │
+    ├── Entities/
+    │   └── Verification.php
+    │
+    ├── Enums/
+    │   ├── VerificationStatus.php
+    │   ├── SupportStatus.php
+    │   └── VerificationSource.php
+    │
+    ├── Events/
+    │   ├── VerificationCreated.php
+    │   ├── VerificationUpdated.php
+    │   └── VerificationExpired.php
+    │
+    ├── Listeners/
+    │
+    ├── Repositories/
+    │   └── VerificationRepository.php
+    │
+    ├── Services/
+    │   └── VerificationService.php
+    │
+    ├── Testing/
+    │   └── VerificationFlowTest.php
+    │
+    ├── VerificationServiceProvider.php
+    └── README.md
+
+SupportStatus.php
+VerificationSource.php
+Verification.php
+VerificationRepository.php
+VerificationService.php
+Events & listeners
+VerificationServiceProvider.php
+VerificationFlowTest.php
+```
+
 Contracts
 Helpers
 Support
