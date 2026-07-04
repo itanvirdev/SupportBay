@@ -170,11 +170,7 @@ Status: **Complete**
 
 ---
 
-# Current Milestone
-
-## Provider Registry 🚧
-
-Next implementation:
+## Provider Registry ✅
 
 - Provider Contracts
 - Provider Registry
@@ -185,9 +181,21 @@ Next implementation:
 
 ---
 
-# Upcoming Milestones
+## Envato Provider
 
-## Purchase Verification
+- OAuth Login
+- Customer Linking
+- Purchase Verification
+- Product Retrieval
+- Support Expiration
+
+---
+
+# Current Milestone
+
+## Purchase Verification 🚧
+
+Next implementation:
 
 - Verification Module
 - Verification Repository
@@ -197,16 +205,7 @@ Next implementation:
 
 ---
 
-## Envato Provider
-
-- OAuth Login
-- Customer Linking
-- Purchase Verification
-- Product Retrieval
-- Support Expiration
-- Flow Tests
-
----
+# Upcoming Milestones
 
 ## Notifications
 
@@ -268,10 +267,10 @@ Next implementation:
 - ✅ DepartmentFlowTest
 - ✅ CustomerFlowTest
 - ✅ AuthFlowTest
+- ✅ ProviderFlowTest
 
 Upcoming:
 
-- ⏳ ProviderFlowTest
 - ⏳ VerificationFlowTest
 - ⏳ NotificationFlowTest
 
@@ -291,9 +290,9 @@ Upcoming:
 | Testing Framework     | ✅ Complete |
 | Customers             | ✅ Complete |
 | Auth                  | ✅ Complete |
-| Provider Registry     | 🚧 Next     |
-| Purchase Verification | Planned     |
-| Envato Integration    | Planned     |
+| Provider Registry     | ✅ Complete |
+| Envato Integration    | ✅ Complete |
+| Purchase Verification | 🚧 Next     |
 | Notifications         | Planned     |
 | REST API              | Planned     |
 | React Dashboard       | Planned     |

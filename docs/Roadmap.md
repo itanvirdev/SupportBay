@@ -423,10 +423,11 @@ includes/
         ├── Exceptions/
         │   └── EnvatoException.php
         │
-        └── Routes/
+        ├── Routes/
         │   └── OAuthRoutes.php
         │
-        └── README.md
+        ├── README.md
+        └── MANUAL_TESTING.md
 ```
 
 Contracts
