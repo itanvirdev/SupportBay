@@ -469,12 +469,19 @@ Modules/
     ├── VerificationServiceProvider.php
     └── README.md
 
-SupportStatus.php
-VerificationSource.php
-Verification.php
-VerificationRepository.php
-VerificationService.php
-Events & listeners
+
+2. VerificationVerified.php
+3. VerificationRefreshed.php
+4. VerificationRevoked.php
+
+↓
+
+5. LogVerificationCreated.php
+6. LogVerificationVerified.php
+7. LogVerificationRevoked.php
+
+↓
+
 VerificationServiceProvider.php
 VerificationFlowTest.php
 ```
@@ -499,7 +506,7 @@ Activities ✅
 Departments ✅
 Auth Tokens ✅
 Purchase Verifications
-Providers
+Providers ✅
 Notification Logs
 
 At this stage, do not implement business logic yet.
