@@ -60,6 +60,15 @@ final class TicketService {
   }
 
   /**
+   * Find tickets belonging to a customer.
+   *
+   * @return Ticket[]
+   */
+  public function findByCustomer(int $customerId): array {
+    return $this->repository->getByCustomer($customerId);
+  }
+
+  /**
    * Find tickets related through the same purchase verification.
    *
    * @return Ticket[]

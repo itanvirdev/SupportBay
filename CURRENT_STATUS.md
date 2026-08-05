@@ -18,9 +18,7 @@ main
 
 # Current Sprint
 
-Sprint 1
-
-Provider-driven Purchase Verification
+Customer Portal — React Foundation
 
 Current Objective
 
@@ -320,31 +318,31 @@ VerificationService verifies purchases through registered integrations without k
 
 1.
 
-Create
+Scaffold
 
 ```
-Customer Portal foundation
+React + TypeScript build system
 ```
 
 2.
 
-Expose
+Create
 
 ```
-Authenticated customer dashboard
+Customer portal application shell
 ```
 
 3.
 
-Display
+Connect
 
 ```
-Verified purchases and related tickets
+Central API client to /sbay/v1/portal
 ```
 
 4.
 
-Create Customer Portal Flow Test.
+Render authenticated dashboard summary.
 
 ---
 
@@ -531,11 +529,11 @@ Status
 ```
 Current Sprint
 
-Customer Portal Foundation
+Customer Portal React Foundation
 
 Next Target
 
-CustomerPortalFlowTest
+React Application Shell
 ```
 
 ---

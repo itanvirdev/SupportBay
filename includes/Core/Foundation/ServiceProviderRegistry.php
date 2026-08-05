@@ -16,6 +16,7 @@ use SupportBay\Modules\Auth\AuthServiceProvider;
 use SupportBay\Modules\Providers\ProviderServiceProvider;
 use SupportBay\Providers\Envato\EnvatoServiceProvider;
 use SupportBay\Modules\Verifications\VerificationServiceProvider;
+use SupportBay\Modules\Portal\PortalServiceProvider;
 
 final class ServiceProviderRegistry {
   /**
@@ -53,6 +54,7 @@ final class ServiceProviderRegistry {
     self::addProvider(new AuthServiceProvider());
     self::addProvider(new ProviderServiceProvider());
     self::addProvider(new VerificationServiceProvider());
+    self::addProvider(new PortalServiceProvider());
   }
 
   /**

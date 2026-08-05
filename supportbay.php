@@ -182,6 +182,20 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'portal-api':
+        \SupportBay\Dev\CustomerPortalApiFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Customers\Services\CustomerService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Tickets\Services\TicketService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Verifications\Services\VerificationService::class
+          )
+        );
+        break;
+
       case 'all':
         \SupportBay\Dev\TicketFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
@@ -256,6 +270,18 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
             \SupportBay\Modules\Customers\Services\CustomerService::class
           )
         );
+
+        \SupportBay\Dev\CustomerPortalApiFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Customers\Services\CustomerService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Tickets\Services\TicketService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Verifications\Services\VerificationService::class
+          )
+        );
         break;
 
       default:
@@ -274,6 +300,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- provider-verification\n";
         echo "- ticket-verification\n";
         echo "- oauth\n";
+        echo "- portal-api\n";
         echo "- all\n";
         echo '</pre>';
     }
