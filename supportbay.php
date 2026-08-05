@@ -146,6 +146,17 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'provider-verification':
+        \SupportBay\Dev\ProviderVerificationFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Verifications\Services\VerificationService::class
+          ),
+          $container->get(
+            \SupportBay\Core\Integrations\IntegrationManager::class
+          )
+        );
+        break;
+
       case 'all':
         \SupportBay\Dev\TicketFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
@@ -190,6 +201,15 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
             \SupportBay\Modules\Verifications\Services\VerificationService::class
           )
         );
+
+        \SupportBay\Dev\ProviderVerificationFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Verifications\Services\VerificationService::class
+          ),
+          $container->get(
+            \SupportBay\Core\Integrations\IntegrationManager::class
+          )
+        );
         break;
 
       default:
@@ -202,6 +222,11 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- attachment\n";
         echo "- department\n";
         echo "- customer\n";
+        echo "- auth\n";
+        echo "- provider\n";
+        echo "- verification\n";
+        echo "- provider-verification\n";
+        echo "- all\n";
         echo '</pre>';
     }
 

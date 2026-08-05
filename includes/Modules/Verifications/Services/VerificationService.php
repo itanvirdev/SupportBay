@@ -6,6 +6,8 @@ namespace SupportBay\Modules\Verifications\Services;
 
 use RuntimeException;
 use SupportBay\Core\Events\EventDispatcher;
+use SupportBay\Core\Integrations\Contracts\PurchaseVerificationProvider;
+use SupportBay\Core\Integrations\IntegrationManager;
 use SupportBay\Modules\Verifications\Entities\Verification;
 use SupportBay\Modules\Verifications\Enums\VerificationStatus;
 use SupportBay\Modules\Verifications\Events\VerificationCreated;
@@ -21,6 +23,7 @@ final class VerificationService {
   public function __construct(
     private readonly VerificationRepository $repository,
     private readonly EventDispatcher $events,
+    private readonly IntegrationManager $integrations,
   ) {
   }
 
@@ -264,6 +267,81 @@ final class VerificationService {
     VerificationStatus $status,
   ): array {
     return $this->repository->findByStatus($status);
+  }
+
+  /**
+   * Verify a purchase through a registered integration.
+   *
+   * Repeated requests for the same provider reference return the
+   * existing verification instead of creating duplicate records.
+   *
+   * @param array<string, mixed> $context
+   */
+  public function verifyPurchase(
+    string $provider,
+    string $reference,
+    array $context = [],
+    ?int $customerId = null,
+  ): Verification {
+    $provider = sanitize_key($provider);
+    $reference = trim($reference);
+
+    if ($provider === '') {
+      throw new RuntimeException(
+        'Verification provider is required.'
+      );
+    }
+
+    if ($reference === '') {
+      throw new RuntimeException(
+        'Provider reference is required.'
+      );
+    }
+
+    $existing = $this->repository->findByReference(
+      $provider,
+      $reference,
+    );
+
+    if ($existing) {
+      return $existing;
+    }
+
+    $integration = $this->integrations->integration($provider);
+
+    if (! $integration instanceof PurchaseVerificationProvider) {
+      throw new RuntimeException(
+        sprintf(
+          'Integration "%s" does not support purchase verification.',
+          $provider
+        )
+      );
+    }
+
+    $verificationData = $integration->verifyPurchase(
+      $reference,
+      $context,
+    );
+
+    if ($verificationData->provider() !== $provider) {
+      throw new RuntimeException(
+        'Purchase verification provider does not match the requested integration.'
+      );
+    }
+
+    if ($verificationData->providerReference() !== $reference) {
+      throw new RuntimeException(
+        'Purchase verification reference does not match the requested reference.'
+      );
+    }
+
+    $data = $verificationData->toArray();
+    $data['customer_id'] = $customerId;
+    $data['last_checked_at'] = current_time('mysql');
+
+    $verificationId = $this->create($data);
+
+    return $this->findOrFail($verificationId);
   }
 
   /**

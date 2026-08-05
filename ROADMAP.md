@@ -433,17 +433,18 @@ Completed
 - Routes
 - README
 - Manual Testing Guide
+- Provider-driven Purchase Verification
+- Provider Verification Flow Test
 
 Current
 
-Connecting Purchase Verification.
+OAuth Login and Customer Linking.
 
 Pending
 
 - OAuth Login
 - Refresh Tokens
 - Customer Linking
-- Purchase Verification Flow
 
 ---
 
@@ -452,7 +453,7 @@ Pending
 Current Focus
 
 ```
-Provider Driven Purchase Verification
+Ticket Verification Integration
 ```
 
 Workflow
@@ -478,7 +479,7 @@ Verification Database
 
 ↓
 
-Verification Flow Test
+Provider Verification Flow Test
 
 ↓
 
@@ -555,7 +556,6 @@ Status
 
 Remaining
 
-- Provider Verification
 - OAuth Integration
 
 ---
@@ -1321,15 +1321,15 @@ Current
 Current Sprint
 
 ```
-Provider Verification
+Ticket Verification
 
 ↓
 
-Envato Verification
+Ticket ↔ Verification Relationship
 
 ↓
 
-Provider Verification Flow Test
+Related Tickets
 ```
 
 ↓

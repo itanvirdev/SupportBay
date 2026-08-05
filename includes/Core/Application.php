@@ -6,6 +6,9 @@ namespace SupportBay\Core;
 
 use SupportBay\Core\Container\Container;
 use SupportBay\Core\Foundation\ServiceProviderRegistry;
+use SupportBay\Core\Integrations\IntegrationDiscovery;
+use SupportBay\Core\Integrations\IntegrationManager;
+use SupportBay\Core\Integrations\IntegrationRegistry;
 
 final class Application {
   /**
@@ -54,6 +57,9 @@ final class Application {
   private function registerCoreBindings(): void {
     $this->container->instance(Application::class, $this);
     $this->container->instance(Container::class, $this->container);
+    $this->container->singleton(IntegrationRegistry::class);
+    $this->container->singleton(IntegrationManager::class);
+    $this->container->singleton(IntegrationDiscovery::class);
   }
 
   /**
