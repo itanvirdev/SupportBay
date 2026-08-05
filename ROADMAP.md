@@ -455,7 +455,7 @@ Pending
 Current Focus
 
 ```
-Customer Portal React Foundation
+Customer Portal Purchases and Tickets
 ```
 
 Workflow
@@ -514,6 +514,22 @@ Customer Portal REST API
 ↓
 
 Customer Portal API Flow Test
+
+↓
+
+React + TypeScript Build
+
+↓
+
+React Application Shell
+
+↓
+
+Authenticated Dashboard
+
+↓
+
+React Portal Flow Test
 ```
 
 Goal
@@ -524,14 +540,10 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Customer Portal API
+After React Portal Foundation
 
 ```
-React Application Shell
-
-↓
-
-Dashboard, Purchases, and Tickets UI
+Purchases and Tickets UI
 
 ↓
 
@@ -1343,13 +1355,13 @@ Current
 Current Sprint
 
 ```
-React Portal Foundation
+Purchases and Tickets UI
 
-Application Shell
+Ticket List and Details
 
-API Client
+Verified Purchases
 
-Authenticated Dashboard
+Portal Navigation
 ```
 
 ↓
@@ -1357,7 +1369,7 @@ Authenticated Dashboard
 Next Sprint
 
 ```
-Purchases and Tickets UI
+REST API and Webhooks
 ```
 
 ↓

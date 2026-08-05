@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core;
 
 use SupportBay\Core\Database\DatabaseInstaller;
+use SupportBay\Modules\Portal\Http\PortalPage;
 
 final class Activator {
   /**
@@ -17,6 +18,7 @@ final class Activator {
     self::createDefaultOptions();
     self::logActivation();
 
+    PortalPage::registerRewriteRule();
     flush_rewrite_rules();
   }
 

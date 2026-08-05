@@ -18,7 +18,7 @@ main
 
 # Current Sprint
 
-Customer Portal — React Foundation
+Customer Portal — Purchases and Tickets
 
 Current Objective
 
@@ -318,31 +318,31 @@ VerificationService verifies purchases through registered integrations without k
 
 1.
 
-Scaffold
+Add
 
 ```
-React + TypeScript build system
+Dedicated ticket list route and screen
 ```
 
 2.
 
-Create
+Add
 
 ```
-Customer portal application shell
+Dedicated verified purchases screen
 ```
 
 3.
 
-Connect
+Expose
 
 ```
-Central API client to /sbay/v1/portal
+Ticket detail API and page
 ```
 
 4.
 
-Render authenticated dashboard summary.
+Add accessible portal navigation and empty states.
 
 ---
 
@@ -529,11 +529,11 @@ Status
 ```
 Current Sprint
 
-Customer Portal React Foundation
+Customer Portal Purchases and Tickets
 
 Next Target
 
-React Application Shell
+Ticket and Purchase Screens
 ```
 
 ---

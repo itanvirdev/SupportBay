@@ -196,6 +196,14 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'portal-react':
+        \SupportBay\Dev\ReactPortalFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Portal\Http\PortalPage::class
+          )
+        );
+        break;
+
       case 'all':
         \SupportBay\Dev\TicketFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
@@ -282,6 +290,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
             \SupportBay\Modules\Verifications\Services\VerificationService::class
           )
         );
+
+        \SupportBay\Dev\ReactPortalFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Portal\Http\PortalPage::class
+          )
+        );
         break;
 
       default:
@@ -301,6 +315,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- ticket-verification\n";
         echo "- oauth\n";
         echo "- portal-api\n";
+        echo "- portal-react\n";
         echo "- all\n";
         echo '</pre>';
     }
