@@ -451,9 +451,6 @@ Modules/
     │   └── VerificationSource.php
     │
     ├── Events/
-    │   ├── VerificationCreated.php
-    │   ├── VerificationUpdated.php
-    │   └── VerificationExpired.php
     │
     ├── Listeners/
     │
@@ -463,27 +460,10 @@ Modules/
     ├── Services/
     │   └── VerificationService.php
     │
-    ├── Testing/
-    │   └── VerificationFlowTest.php
-    │
     ├── VerificationServiceProvider.php
     └── README.md
 
-
-2. VerificationVerified.php
-3. VerificationRefreshed.php
-4. VerificationRevoked.php
-
-↓
-
-5. LogVerificationCreated.php
-6. LogVerificationVerified.php
-7. LogVerificationRevoked.php
-
-↓
-
-VerificationServiceProvider.php
-VerificationFlowTest.php
+✅ VerificationFlowTest
 ```
 
 Contracts
@@ -505,7 +485,7 @@ Attachments ✅
 Activities ✅
 Departments ✅
 Auth Tokens ✅
-Purchase Verifications
+Purchase Verifications ✅
 Providers ✅
 Notification Logs
 

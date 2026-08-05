@@ -12,6 +12,7 @@ use SupportBay\Modules\Attachments\Database\AttachmentSchema;
 use SupportBay\Modules\Customers\Database\CustomerSchema;
 use SupportBay\Modules\Auth\Database\AuthTokenSchema;
 use SupportBay\Modules\Providers\Database\ProviderSchema;
+use SupportBay\Modules\Verifications\Database\PurchaseVerificationSchema;
 
 final class MigrationRegistry {
   /**
@@ -29,6 +30,7 @@ final class MigrationRegistry {
       CustomerSchema::class,
       AuthTokenSchema::class,
       ProviderSchema::class,
+      PurchaseVerificationSchema::class
     ];
   }
 }

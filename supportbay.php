@@ -138,6 +138,14 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'verification':
+        \SupportBay\Dev\VerificationFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Verifications\Services\VerificationService::class
+          )
+        );
+        break;
+
       case 'all':
         \SupportBay\Dev\TicketFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
@@ -175,6 +183,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 
         \SupportBay\Dev\ProviderFlowTest::run(
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
+        );
+
+        \SupportBay\Dev\VerificationFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Verifications\Services\VerificationService::class
+          )
         );
         break;
 

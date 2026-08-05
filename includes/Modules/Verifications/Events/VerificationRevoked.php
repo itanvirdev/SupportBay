@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Verifications\Events;
 
-use SupportBay\Modules\Verifications\Entities\Verification;
 use SupportBay\Core\Events\AbstractEvent;
+use SupportBay\Modules\Verifications\Entities\Verification;
 
-final class VerificationCreated extends AbstractEvent {
+final class VerificationRevoked extends AbstractEvent {
   public function __construct(
     private readonly Verification $verification,
   ) {
