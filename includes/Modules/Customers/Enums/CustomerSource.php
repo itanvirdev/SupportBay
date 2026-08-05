@@ -41,11 +41,7 @@ enum CustomerSource: string {
    * Was customer created by a provider?
    */
   public function isProvider(): bool {
-    return match ($this) {
-      self::ENVATO => true,
-
-      default => false,
-    };
+    return $this === self::PROVIDER;
   }
 
   /**

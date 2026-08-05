@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Providers\Envato\Routes;
 
 use SupportBay\Modules\Providers\Services\ProviderConfiguration;
-use SupportBay\Providers\Envato\Services\EnvatoOAuthService;
+use SupportBay\Modules\Auth\Services\OAuthLoginService;
 
 final class OAuthRoutes {
   /**
@@ -17,7 +17,7 @@ final class OAuthRoutes {
    * Constructor.
    */
   public function __construct(
-    private readonly EnvatoOAuthService $oauth,
+    private readonly OAuthLoginService $oauth,
     private readonly ProviderConfiguration $config,
   ) {
   }
@@ -63,9 +63,12 @@ final class OAuthRoutes {
   private function login(): void {
 
     $url = $this->oauth->authorizationUrl(
-      $this->config->clientId(self::PROVIDER) ?? '',
-      $this->config->redirectUri(self::PROVIDER) ?? '',
-      wp_create_nonce('supportbay-envato')
+      self::PROVIDER,
+      [
+        'client_id'    => $this->config->clientId(self::PROVIDER) ?? '',
+        'redirect_uri' => $this->config->redirectUri(self::PROVIDER) ?? '',
+        'state'        => wp_create_nonce('supportbay-envato'),
+      ]
     );
 
     wp_safe_redirect($url);
@@ -91,25 +94,30 @@ final class OAuthRoutes {
       );
     }
 
-    /**
-     * Future flow:
-     *
-     * exchangeCode()
-     * ↓
-     * account()
-     * ↓
-     * CustomerService
-     * ↓
-     * AuthService
-     * ↓
-     * Redirect
-     */
-
-    wp_die(
-      esc_html__(
-        'Envato OAuth callback received successfully.',
-        'supportbay'
-      )
+    $state = sanitize_text_field(
+      $_GET['state'] ?? ''
     );
+
+    if (! wp_verify_nonce($state, 'supportbay-envato')) {
+      wp_die(
+        esc_html__('Invalid OAuth state.', 'supportbay')
+      );
+    }
+
+    $customer = $this->oauth->login(
+      self::PROVIDER,
+      $code,
+      [
+        'client_id'     => $this->config->clientId(self::PROVIDER) ?? '',
+        'client_secret' => $this->config->clientSecret(self::PROVIDER) ?? '',
+        'redirect_uri'  => $this->config->redirectUri(self::PROVIDER) ?? '',
+      ]
+    );
+
+    wp_set_auth_cookie($customer->userId(), true);
+
+    wp_safe_redirect(home_url('/'));
+
+    exit;
   }
 }

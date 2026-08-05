@@ -11,6 +11,7 @@ use SupportBay\Providers\Envato\Api\EnvatoApiClient;
 use SupportBay\Providers\Envato\Services\EnvatoCustomerService;
 use SupportBay\Providers\Envato\Services\EnvatoOAuthService;
 use SupportBay\Providers\Envato\Services\EnvatoPurchaseService;
+use SupportBay\Providers\Envato\Routes\OAuthRoutes;
 
 final class EnvatoServiceProvider extends ServiceProvider {
   /**
@@ -26,6 +27,8 @@ final class EnvatoServiceProvider extends ServiceProvider {
     $container->singleton(EnvatoCustomerService::class);
 
     $container->singleton(EnvatoProvider::class);
+
+    $container->singleton(OAuthRoutes::class);
   }
 
   /**
@@ -37,5 +40,7 @@ final class EnvatoServiceProvider extends ServiceProvider {
       ->register(
         $container->get(EnvatoProvider::class)
       );
+
+    $container->get(OAuthRoutes::class)->register();
   }
 }

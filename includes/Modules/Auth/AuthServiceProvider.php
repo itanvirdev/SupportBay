@@ -14,6 +14,7 @@ use SupportBay\Modules\Auth\Listeners\LogAuthTokenCreatedActivity;
 use SupportBay\Modules\Auth\Listeners\LogAuthTokenRevokedActivity;
 use SupportBay\Modules\Auth\Repositories\AuthTokenRepository;
 use SupportBay\Modules\Auth\Services\AuthService;
+use SupportBay\Modules\Auth\Services\OAuthLoginService;
 
 final class AuthServiceProvider extends ServiceProvider {
   /**
@@ -42,5 +43,7 @@ final class AuthServiceProvider extends ServiceProvider {
     $container->singleton(AuthTokenRepository::class);
 
     $container->singleton(AuthService::class);
+
+    $container->singleton(OAuthLoginService::class);
   }
 }

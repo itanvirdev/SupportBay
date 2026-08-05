@@ -24,7 +24,7 @@ Provider-driven Purchase Verification
 
 Current Objective
 
-Complete provider-independent purchase verification before implementing OAuth and the Customer Portal.
+Build the authenticated Customer Portal on the completed provider-independent verification and OAuth foundations.
 
 ---
 
@@ -279,9 +279,7 @@ MANUAL_TESTING
 Still Missing
 
 ```
-OAuth Login
-
-Customer Linking
+Refresh Token Consumption
 ```
 
 ---
@@ -322,31 +320,31 @@ VerificationService verifies purchases through registered integrations without k
 
 1.
 
-Design
+Create
 
 ```
-Provider-independent OAuth contract
+Customer Portal foundation
 ```
 
 2.
 
-Connect
+Expose
 
 ```
-Envato OAuth login
+Authenticated customer dashboard
 ```
 
 3.
 
-Link
+Display
 
 ```
-Authenticated provider identity to Customer
+Verified purchases and related tickets
 ```
 
 4.
 
-Create OAuth Login Flow Test.
+Create Customer Portal Flow Test.
 
 ---
 
@@ -466,25 +464,9 @@ Never
 
 # Next Milestone
 
-After Provider Verification
+After OAuth Login
 
 ```
-Ticket Verification
-
-↓
-
-Related Tickets
-
-↓
-
-OAuth Login
-
-↓
-
-Customer Linking
-
-↓
-
 Customer Dashboard
 
 ↓
@@ -549,11 +531,11 @@ Status
 ```
 Current Sprint
 
-OAuth Login and Customer Linking
+Customer Portal Foundation
 
 Next Target
 
-OAuthFlowTest
+CustomerPortalFlowTest
 ```
 
 ---

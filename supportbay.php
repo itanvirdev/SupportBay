@@ -168,6 +168,20 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'oauth':
+        \SupportBay\Dev\OAuthFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Auth\Services\OAuthLoginService::class
+          ),
+          $container->get(
+            \SupportBay\Core\Integrations\IntegrationManager::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Customers\Services\CustomerService::class
+          )
+        );
+        break;
+
       case 'all':
         \SupportBay\Dev\TicketFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
@@ -230,6 +244,18 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
             \SupportBay\Modules\Verifications\Services\VerificationService::class
           )
         );
+
+        \SupportBay\Dev\OAuthFlowTest::run(
+          $container->get(
+            \SupportBay\Modules\Auth\Services\OAuthLoginService::class
+          ),
+          $container->get(
+            \SupportBay\Core\Integrations\IntegrationManager::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Customers\Services\CustomerService::class
+          )
+        );
         break;
 
       default:
@@ -247,6 +273,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- verification\n";
         echo "- provider-verification\n";
         echo "- ticket-verification\n";
+        echo "- oauth\n";
         echo "- all\n";
         echo '</pre>';
     }

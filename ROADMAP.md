@@ -435,16 +435,18 @@ Completed
 - Manual Testing Guide
 - Provider-driven Purchase Verification
 - Provider Verification Flow Test
+- Provider-independent OAuth Login
+- Customer Linking
+- Encrypted OAuth Token Storage
+- OAuth Flow Test
 
 Current
 
-OAuth Login and Customer Linking.
+Refresh token consumption and Customer Portal foundation.
 
 Pending
 
-- OAuth Login
 - Refresh Tokens
-- Customer Linking
 
 ---
 
@@ -453,7 +455,7 @@ Pending
 Current Focus
 
 ```
-OAuth Login and Customer Linking
+Customer Portal Foundation
 ```
 
 Workflow
@@ -488,6 +490,22 @@ Ticket Integration
 ↓
 
 Ticket Verification Flow Test
+
+↓
+
+OAuthProvider
+
+↓
+
+Envato OAuth Login
+
+↓
+
+Customer Linking
+
+↓
+
+OAuth Flow Test
 ```
 
 Goal
@@ -498,13 +516,9 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Ticket Verification
+After OAuth Login
 
 ```
-OAuth Login
-
-↓
-
 Customer Portal
 
 ↓
@@ -556,7 +570,7 @@ Status
 
 Remaining
 
-- OAuth Integration
+- Refresh Token Consumption
 
 ---
 
@@ -1321,15 +1335,13 @@ Current
 Current Sprint
 
 ```
-OAuth Login
+Customer Portal
 
-↓
+Dashboard
 
-Envato Login
+Purchases
 
-↓
-
-Customer Linking
+Tickets
 ```
 
 ↓
@@ -1337,17 +1349,7 @@ Customer Linking
 Next Sprint
 
 ```
-Customer Portal
-
-Dashboard
-
-Purchases
-
-Licenses
-
-Downloads
-
-Tickets
+REST API and Webhooks
 ```
 
 ↓

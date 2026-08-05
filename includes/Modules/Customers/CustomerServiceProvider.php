@@ -7,6 +7,7 @@ namespace SupportBay\Modules\Customers;
 use SupportBay\Core\Container\Container;
 use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Customers\Repositories\CustomerRepository;
+use SupportBay\Modules\Customers\Repositories\WordPressUserRepository;
 use SupportBay\Modules\Customers\Services\CustomerService;
 
 final class CustomerServiceProvider extends ServiceProvider {
@@ -15,6 +16,8 @@ final class CustomerServiceProvider extends ServiceProvider {
    */
   public function register(Container $container): void {
     $container->singleton(CustomerRepository::class);
+
+    $container->singleton(WordPressUserRepository::class);
 
     $container->singleton(CustomerService::class);
   }

@@ -6,20 +6,114 @@ namespace SupportBay\Providers\Envato;
 
 use RuntimeException;
 use SupportBay\Core\Integrations\Contracts\IntegrationProvider;
+use SupportBay\Core\Integrations\Contracts\OAuthProvider;
 use SupportBay\Core\Integrations\Contracts\PurchaseVerificationProvider;
+use SupportBay\Core\Integrations\Data\OAuthIdentityData;
+use SupportBay\Core\Integrations\Data\OAuthLoginData;
+use SupportBay\Core\Integrations\Data\OAuthTokenData;
 use SupportBay\Core\Integrations\Data\PurchaseVerificationData;
 use SupportBay\Modules\Providers\Enums\ProviderCategory;
+use SupportBay\Providers\Envato\Services\EnvatoCustomerService;
+use SupportBay\Providers\Envato\Services\EnvatoOAuthService;
 use SupportBay\Providers\Envato\Services\EnvatoPurchaseService;
 
 final class EnvatoProvider implements
   IntegrationProvider,
+  OAuthProvider,
   PurchaseVerificationProvider {
   /**
    * Constructor.
    */
   public function __construct(
     private readonly EnvatoPurchaseService $purchases,
+    private readonly EnvatoOAuthService $oauth,
+    private readonly EnvatoCustomerService $customers,
   ) {
+  }
+
+  /**
+   * Build the Envato authorization URL.
+   *
+   * @param array<string, mixed> $context
+   */
+  public function authorizationUrl(array $context): string {
+    return $this->oauth->authorizationUrl(
+      (string) ($context['client_id'] ?? ''),
+      (string) ($context['redirect_uri'] ?? ''),
+      (string) ($context['state'] ?? ''),
+    );
+  }
+
+  /**
+   * Exchange an OAuth code and normalize the Envato identity.
+   *
+   * @param array<string, mixed> $context
+   */
+  public function authenticateOAuth(
+    string $code,
+    array $context,
+  ): OAuthLoginData {
+    $token = $this->oauth->exchangeCode(
+      (string) ($context['client_id'] ?? ''),
+      (string) ($context['client_secret'] ?? ''),
+      (string) ($context['redirect_uri'] ?? ''),
+      $code,
+    );
+
+    $accessToken = sanitize_text_field(
+      (string) ($token['access_token'] ?? '')
+    );
+
+    if ($accessToken === '') {
+      throw new RuntimeException(
+        'Envato did not return an access token.'
+      );
+    }
+
+    $account = $this->customers->account($accessToken);
+    $accountId = $this->customers->id($account);
+    $username = $this->sanitizeNullable(
+      $this->customers->username($account)
+    );
+
+    if ($accountId === null || $username === null) {
+      throw new RuntimeException(
+        'Envato did not return a valid customer identity.'
+      );
+    }
+
+    return new OAuthLoginData(
+      identity: new OAuthIdentityData(
+        provider: $this->slug(),
+        providerReference: (string) $accountId,
+        username: $username,
+        email: $this->sanitizeEmail(
+          $this->customers->email($account)
+        ),
+        displayName: $username,
+        avatarUrl: $this->sanitizeUrl(
+          $this->customers->avatar($account)
+        ),
+        country: $this->sanitizeNullable(
+          $this->customers->country($account)
+        ),
+        snapshot: $account,
+      ),
+      token: new OAuthTokenData(
+        accessToken: $accessToken,
+        refreshToken: $this->sanitizeNullable(
+          isset($token['refresh_token'])
+            ? (string) $token['refresh_token']
+            : null
+        ),
+        tokenType: sanitize_text_field(
+          (string) ($token['token_type'] ?? 'Bearer')
+        ),
+        expiresIn: isset($token['expires_in'])
+          ? (int) $token['expires_in']
+          : null,
+      ),
+    );
   }
 
   /**
@@ -127,6 +221,26 @@ final class EnvatoProvider implements
     }
 
     $value = sanitize_text_field($value);
+
+    return $value !== '' ? $value : null;
+  }
+
+  private function sanitizeEmail(?string $value): ?string {
+    if ($value === null) {
+      return null;
+    }
+
+    $value = sanitize_email($value);
+
+    return $value !== '' ? $value : null;
+  }
+
+  private function sanitizeUrl(?string $value): ?string {
+    if ($value === null) {
+      return null;
+    }
+
+    $value = esc_url_raw($value);
 
     return $value !== '' ? $value : null;
   }

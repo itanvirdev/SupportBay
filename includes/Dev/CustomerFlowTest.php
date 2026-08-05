@@ -27,12 +27,25 @@ final class CustomerFlowTest extends FlowTest {
 
     echo "🚀 Starting SupportBay Customer Flow Test...\n\n";
 
+    $userId = wp_insert_user([
+      'user_login' => 'sbay-customer-' . strtolower(
+        wp_generate_password(12, false, false)
+      ),
+      'user_pass'  => wp_generate_password(32, true, true),
+      'role'       => 'subscriber',
+    ]);
+
+    Assert::true(
+      is_int($userId) && $userId > 0,
+      'Temporary WordPress user created.'
+    );
+
     // -------------------------------------------------
     // Create Customer
     // -------------------------------------------------
 
     $customerId = $customerService->create([
-      'user_id' => 1,
+      'user_id' => $userId,
       'state'   => CustomerState::REGISTERED->value,
       'source'  => CustomerSource::REGISTRATION->value,
     ]);
@@ -60,7 +73,7 @@ final class CustomerFlowTest extends FlowTest {
     );
 
     Assert::equals(
-      1,
+      $userId,
       $customer->userId(),
       'WordPress user linked.'
     );
@@ -91,6 +104,11 @@ final class CustomerFlowTest extends FlowTest {
     Assert::notNull(
       $customer->updatedAt(),
       'Updated timestamp generated.'
+    );
+
+    Assert::true(
+      $customerService->deleteWithUser($customerId),
+      'Test customer and WordPress user deleted.'
     );
   }
 }
