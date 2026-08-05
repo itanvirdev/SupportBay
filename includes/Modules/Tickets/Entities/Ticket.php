@@ -109,6 +109,10 @@ final class Ticket extends Entity {
     return $this->customerId;
   }
 
+  public function purchaseVerificationId(): ?int {
+    return $this->purchaseVerificationId;
+  }
+
   public function departmentId(): int {
     return $this->departmentId;
   }

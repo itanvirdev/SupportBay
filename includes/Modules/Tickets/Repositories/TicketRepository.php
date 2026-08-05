@@ -108,6 +108,20 @@ final class TicketRepository extends Repository {
   }
 
   /**
+   * Get tickets linked to a purchase verification.
+   *
+   * @return Ticket[]
+   */
+  public function findByVerification(
+    int $verificationId,
+  ): array {
+    /** @var Ticket[] */
+    return $this->findWhere([
+      'purchase_verification_id' => $verificationId,
+    ], 'id', 'DESC');
+  }
+
+  /**
    * Update ticket
    */
   public function update(int $id, array $data): bool {

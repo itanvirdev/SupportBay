@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Tickets\Services;
 
+use RuntimeException;
 use SupportBay\Common\Enums\AuthorType;
 use SupportBay\Common\Enums\SourceType;
 use SupportBay\Modules\Tickets\Entities\Ticket;
@@ -11,10 +12,12 @@ use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
+use SupportBay\Modules\Verifications\Services\VerificationService;
 
 final class TicketService {
   public function __construct(
-    private TicketRepository $repository
+    private readonly TicketRepository $repository,
+    private readonly VerificationService $verifications,
   ) {
   }
 
@@ -22,6 +25,8 @@ final class TicketService {
    * Create a ticket
    */
   public function create(array $data): int {
+    $this->validateVerification($data);
+
     $data['track_id'] = $data['track_id'] ?? $this->generateTrackId();
 
     $data['status']          = $data['status'] ?? TicketStatus::default()->value;
@@ -52,6 +57,62 @@ final class TicketService {
    */
   public function all(): array {
     return $this->repository->all();
+  }
+
+  /**
+   * Find tickets related through the same purchase verification.
+   *
+   * @return Ticket[]
+   */
+  public function findByVerification(
+    int $verificationId,
+  ): array {
+    $this->verifications->findOrFail($verificationId);
+
+    return $this->repository->findByVerification(
+      $verificationId
+    );
+  }
+
+  /**
+   * Delete a ticket.
+   */
+  public function delete(int $id): bool {
+    return $this->repository->delete($id);
+  }
+
+  /**
+   * Validate an optional purchase verification relationship.
+   *
+   * @param array<string, mixed> $data
+   */
+  private function validateVerification(array $data): void {
+    if (empty($data['purchase_verification_id'])) {
+      return;
+    }
+
+    $verification = $this->verifications->findOrFail(
+      (int) $data['purchase_verification_id']
+    );
+
+    if (! $verification->isValid()) {
+      throw new RuntimeException(
+        'Tickets can only be linked to a valid purchase verification.'
+      );
+    }
+
+    $customerId = isset($data['customer_id'])
+      ? (int) $data['customer_id']
+      : null;
+
+    if (
+      $customerId === null ||
+      $verification->customerId() !== $customerId
+    ) {
+      throw new RuntimeException(
+        'Purchase verification does not belong to the ticket customer.'
+      );
+    }
   }
 
   /**

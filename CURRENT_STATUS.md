@@ -322,31 +322,31 @@ VerificationService verifies purchases through registered integrations without k
 
 1.
 
-Integrate
+Design
 
 ```
-Ticket ↔ Verification relationship
+Provider-independent OAuth contract
 ```
 
 2.
 
-Expose
+Connect
 
 ```
-Related Tickets
+Envato OAuth login
 ```
 
 3.
 
-Create
+Link
 
 ```
-Ticket Verification Flow Test
+Authenticated provider identity to Customer
 ```
 
 4.
 
-Begin OAuth login after ticket verification passes.
+Create OAuth Login Flow Test.
 
 ---
 
@@ -549,11 +549,11 @@ Status
 ```
 Current Sprint
 
-Ticket Verification
+OAuth Login and Customer Linking
 
 Next Target
 
-TicketVerificationFlowTest
+OAuthFlowTest
 ```
 
 ---

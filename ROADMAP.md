@@ -453,7 +453,7 @@ Pending
 Current Focus
 
 ```
-Ticket Verification Integration
+OAuth Login and Customer Linking
 ```
 
 Workflow
@@ -484,6 +484,10 @@ Provider Verification Flow Test
 ↓
 
 Ticket Integration
+
+↓
+
+Ticket Verification Flow Test
 ```
 
 Goal
@@ -494,13 +498,9 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Purchase Verification
+After Ticket Verification
 
 ```
-Ticket Verification
-
-↓
-
 OAuth Login
 
 ↓
@@ -1321,38 +1321,6 @@ Current
 Current Sprint
 
 ```
-Ticket Verification
-
-↓
-
-Ticket ↔ Verification Relationship
-
-↓
-
-Related Tickets
-```
-
-↓
-
-Next Sprint
-
-```
-Ticket Verification
-
-↓
-
-Ticket ↔ Verification Relationship
-
-↓
-
-Related Tickets
-```
-
-↓
-
-Sprint 3
-
-```
 OAuth Login
 
 ↓
@@ -1362,15 +1330,11 @@ Envato Login
 ↓
 
 Customer Linking
-
-↓
-
-Magic Login Improvements
 ```
 
 ↓
 
-Sprint 4
+Next Sprint
 
 ```
 Customer Portal
