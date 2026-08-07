@@ -8,6 +8,8 @@ use InvalidArgumentException;
 use RuntimeException;
 use SupportBay\Common\Enums\AuthorType;
 use SupportBay\Common\Enums\SourceType;
+use SupportBay\Modules\Attachments\Entities\Attachment;
+use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Departments\Entities\Department;
@@ -27,6 +29,7 @@ final class PortalService {
     private readonly VerificationService $verifications,
     private readonly MessageService $messages,
     private readonly DepartmentService $departments,
+    private readonly AttachmentService $attachments,
   ) {
   }
 
@@ -223,6 +226,54 @@ final class PortalService {
       'author_type' => AuthorType::CUSTOMER->value,
       'type'        => MessageType::REPLY->value,
       'content'     => $content,
+    ]);
+  }
+
+  /**
+   * Get active attachments belonging to a customer-visible message.
+   *
+   * @return Attachment[]
+   */
+  public function messageAttachments(Message $message): array {
+    return array_values(array_filter(
+      $this->attachments->findByMessage($message->id()),
+      fn(Attachment $attachment): bool => $attachment->isActive(),
+    ));
+  }
+
+  /**
+   * Upload a file to a customer-owned, customer-visible message.
+   *
+   * @param array<string, mixed> $file
+   */
+  public function uploadAttachment(
+    int $ticketId,
+    int $messageId,
+    array $file,
+  ): Attachment {
+    $ticket = $this->ticket($ticketId);
+    $message = $this->messages->find($messageId);
+    $customer = $this->currentCustomer();
+
+    if (
+      ! $message ||
+      $message->ticketId() !== $ticket->id() ||
+      ! $message->isVisibleToCustomer()
+    ) {
+      throw new RuntimeException('Message was not found.');
+    }
+
+    if (count($this->messageAttachments($message)) >= 5) {
+      throw new InvalidArgumentException(
+        'A message can have up to five attachments.'
+      );
+    }
+
+    return $this->attachments->storeUploadedFile($file, [
+      'message_id'       => $message->id(),
+      'ticket_id'        => $ticket->id(),
+      'uploaded_by_id'   => $customer->userId(),
+      'uploaded_by_type' => AuthorType::CUSTOMER->value,
     ]);
   }
 }

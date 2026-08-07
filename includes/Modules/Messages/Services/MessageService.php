@@ -56,6 +56,13 @@ final class MessageService {
   }
 
   /**
+   * Find a message by ID.
+   */
+  public function find(int $id): ?Message {
+    return $this->repository->find($id);
+  }
+
+  /**
    * Delete a message.
    */
   public function delete(int $id): bool {

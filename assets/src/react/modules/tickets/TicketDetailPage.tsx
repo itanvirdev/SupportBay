@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
 import type { PortalTicketDetail } from '../../api/types';
 import { formatDate, formatDateTime } from '../../core/date';
+import { FilePicker } from '../../components/FilePicker';
 
 interface TicketDetailPageProps {
   ticketId: number;
@@ -14,6 +15,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
   const [reply, setReply] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
 
   useEffect(() => {
     portalApi.ticket(ticketId).then(setDetail).catch(() => setMissing(true));
@@ -36,8 +38,15 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
 
     try {
       const message = await portalApi.reply(ticketId, reply);
-      setDetail({ ...detail, messages: [...detail.messages, message] });
+      const attachments = await Promise.all(
+        files.map((file) => portalApi.uploadAttachment(ticketId, message.id, file)),
+      );
+      setDetail({
+        ...detail,
+        messages: [...detail.messages, { ...message, attachments }],
+      });
       setReply('');
+      setFiles([]);
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Reply could not be added.');
     } finally {
@@ -75,6 +84,16 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
                 <time>{formatDateTime(message.created_at)}</time>
               </div>
               <p>{message.content}</p>
+              {message.attachments.length > 0 ? (
+                <ul className="sbay-attachments" aria-label="Attachments">
+                  {message.attachments.map((attachment) => (
+                    <li key={attachment.id}>
+                      <strong>{attachment.original_name}</strong>
+                      <small>{Math.max(1, Math.round(attachment.file_size / 1024))} KB</small>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </article>
           ))}
           {canReply ? (
@@ -87,6 +106,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
                 rows={5}
                 required
               />
+              <FilePicker files={files} onChange={setFiles} disabled={submitting} />
               {error ? <p className="sbay-form-error" role="alert">{error}</p> : null}
               <button className="sbay-primary-button" type="submit" disabled={submitting}>
                 {submitting ? 'Sending…' : 'Send reply'}

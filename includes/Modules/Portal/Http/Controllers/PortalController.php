@@ -7,6 +7,7 @@ namespace SupportBay\Modules\Portal\Http\Controllers;
 use InvalidArgumentException;
 use RuntimeException;
 use SupportBay\Core\Http\RestResponse;
+use SupportBay\Modules\Attachments\Entities\Attachment;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Messages\Entities\Message;
@@ -56,6 +57,28 @@ final class PortalController {
         'permission_callback' => [$this, 'permissions'],
         'args'                => [
           'id' => [
+            'sanitize_callback' => 'absint',
+            'validate_callback' => static fn(mixed $value): bool =>
+              is_numeric($value) && (int) $value > 0,
+          ],
+        ],
+      ]
+    );
+
+    register_rest_route(
+      self::NAMESPACE,
+      '/portal/tickets/(?P<ticket_id>\d+)/messages/(?P<message_id>\d+)/attachments',
+      [
+        'methods'             => 'POST',
+        'callback'            => [$this, 'uploadAttachment'],
+        'permission_callback' => [$this, 'permissions'],
+        'args'                => [
+          'ticket_id' => [
+            'sanitize_callback' => 'absint',
+            'validate_callback' => static fn(mixed $value): bool =>
+              is_numeric($value) && (int) $value > 0,
+          ],
+          'message_id' => [
             'sanitize_callback' => 'absint',
             'validate_callback' => static fn(mixed $value): bool =>
               is_numeric($value) && (int) $value > 0,
@@ -259,6 +282,47 @@ final class PortalController {
   }
 
   /**
+   * Upload one attachment to a customer-visible message.
+   */
+  public function uploadAttachment(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    $files = $request->get_file_params();
+    $file = $files['file'] ?? null;
+
+    if (! is_array($file)) {
+      return RestResponse::error(
+        'An attachment file is required.',
+        'ATTACHMENT_REQUIRED',
+        [],
+        422,
+      );
+    }
+
+    try {
+      $attachment = $this->portal->uploadAttachment(
+        (int) $request->get_param('ticket_id'),
+        (int) $request->get_param('message_id'),
+        $file,
+      );
+    } catch (InvalidArgumentException|RuntimeException $exception) {
+      return RestResponse::error(
+        $exception->getMessage(),
+        'ATTACHMENT_UPLOAD_FAILED',
+        [],
+        422,
+      );
+    }
+
+    return RestResponse::success(
+      $this->attachmentData($attachment),
+      'Attachment uploaded.',
+      [],
+      201,
+    );
+  }
+
+  /**
    * Return active departments available to customers.
    */
   public function departments(
@@ -350,6 +414,30 @@ final class PortalController {
       'content'     => wp_strip_all_tags($message->content()),
       'edited_at'   => $message->editedAt(),
       'created_at'  => $message->createdAt(),
+      'attachments' => array_map(
+        fn(Attachment $attachment): array => $this
+          ->attachmentData($attachment),
+        $this->portal->messageAttachments($message),
+      ),
+    ];
+  }
+
+  /**
+   * Customer-safe attachment fields. Physical paths are never exposed.
+   *
+   * @return array<string, mixed>
+   */
+  private function attachmentData(Attachment $attachment): array {
+    return [
+      'id'             => $attachment->id(),
+      'message_id'     => $attachment->messageId(),
+      'original_name'  => $attachment->originalName(),
+      'file_size'      => $attachment->fileSize(),
+      'extension'      => $attachment->extension(),
+      'mime_type'      => $attachment->mimeType(),
+      'category'       => $attachment->category()->value,
+      'is_previewable' => $attachment->canPreview(),
+      'created_at'     => $attachment->createdAt(),
     ];
   }
 

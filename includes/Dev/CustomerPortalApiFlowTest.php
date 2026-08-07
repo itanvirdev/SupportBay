@@ -6,6 +6,8 @@ namespace SupportBay\Dev;
 
 use SupportBay\Core\Testing\Assert;
 use SupportBay\Core\Testing\FlowTest;
+use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
@@ -28,7 +30,15 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     /** @var VerificationService $verifications */
     /** @var MessageService $messages */
     /** @var DepartmentService $departments */
-    [$customers, $tickets, $verifications, $messages, $departments] = $services;
+    /** @var AttachmentService $attachments */
+    [
+      $customers,
+      $tickets,
+      $verifications,
+      $messages,
+      $departments,
+      $attachments,
+    ] = $services;
 
     $userId = wp_insert_user([
       'user_login' => 'sbay-portal-' . strtolower(
@@ -219,6 +229,62 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Portal returns the created ticket.'
     );
 
+    $openingMessage = $messages->findByTicket($createdTicketId)[0] ?? null;
+
+    Assert::notNull(
+      $openingMessage,
+      'Portal-created ticket contains an opening message.'
+    );
+
+    $attachmentPath = wp_tempnam('portal-attachment.txt');
+    file_put_contents($attachmentPath, 'Portal attachment test.');
+    $attachmentId = $attachments->upload([
+      'message_id'       => $openingMessage->id(),
+      'ticket_id'        => $createdTicketId,
+      'uploaded_by_id'   => $userId,
+      'uploaded_by_type' => AuthorType::CUSTOMER->value,
+      'original_name'    => 'portal-attachment.txt',
+      'path'             => $attachmentPath,
+      'file_size'        => filesize($attachmentPath),
+      'extension'        => 'txt',
+      'mime_type'        => 'text/plain',
+    ]);
+
+    $attachmentDetail = rest_do_request(
+      new WP_REST_Request(
+        'GET',
+        '/sbay/v1/portal/tickets/' . $createdTicketId
+      )
+    )->get_data();
+
+    Assert::equals(
+      $attachmentId,
+      $attachmentDetail['data']['messages'][0]['attachments'][0]['id'] ?? null,
+      'Portal exposes attachment metadata on visible messages.'
+    );
+
+    Assert::false(
+      array_key_exists(
+        'path',
+        $attachmentDetail['data']['messages'][0]['attachments'][0] ?? []
+      ),
+      'Portal never exposes physical attachment paths.'
+    );
+
+    $missingUpload = rest_do_request(
+      new WP_REST_Request(
+        'POST',
+        '/sbay/v1/portal/tickets/' . $createdTicketId
+          . '/messages/' . $openingMessage->id() . '/attachments'
+      )
+    );
+
+    Assert::equals(
+      422,
+      $missingUpload->get_status(),
+      'Portal rejects attachment requests without a file.'
+    );
+
     $replyRequest = new WP_REST_Request(
       'POST',
       '/sbay/v1/portal/tickets/' . $createdTicketId . '/replies'
@@ -255,6 +321,11 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     foreach ($messages->findByTicket($createdTicketId) as $createdMessage) {
       $messages->delete($createdMessage->id());
     }
+
+    Assert::true(
+      $attachments->permanentlyDelete($attachmentId),
+      'Test attachment and local file deleted.'
+    );
 
     Assert::true(
       $tickets->delete($createdTicketId),

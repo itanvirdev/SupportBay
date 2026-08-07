@@ -44,6 +44,19 @@ export interface PortalMessage {
   content: string;
   edited_at: string | null;
   created_at: string;
+  attachments: PortalAttachment[];
+}
+
+export interface PortalAttachment {
+  id: number;
+  message_id: number;
+  original_name: string;
+  file_size: number;
+  extension: string;
+  mime_type: string;
+  category: string;
+  is_previewable: boolean;
+  created_at: string;
 }
 
 export interface PortalTicketDetail {

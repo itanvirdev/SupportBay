@@ -550,6 +550,10 @@ Customer Ticket Creation
 ↓
 
 Customer Replies
+
+↓
+
+Customer Attachment Uploads
 ```
 
 Goal
@@ -560,14 +564,14 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Customer Ticket Creation and Replies
+After Customer Attachment Uploads
 
 ```
-Attachment Uploads
+Ticket Close and Reopen Actions
 
 ↓
 
-Ticket Close and Reopen Actions
+Secure Attachment Downloads
 ```
 
 ---
@@ -904,7 +908,7 @@ Features
 - Reply ✅
 - Close
 - Reopen
-- Attachments
+- Attachments ✅
 - Public Ticket
 - Ticket Timeline
 

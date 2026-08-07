@@ -198,6 +198,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Departments\Services\DepartmentService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Attachments\Services\AttachmentService::class
           )
         );
         break;
@@ -300,6 +303,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Departments\Services\DepartmentService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Attachments\Services\AttachmentService::class
           )
         );
 

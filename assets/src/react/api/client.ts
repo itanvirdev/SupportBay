@@ -24,19 +24,31 @@ export async function apiPost<T>(
   });
 }
 
+export async function apiUpload<T>(path: string, file: File): Promise<T> {
+  const body = new FormData();
+  body.append('file', file);
+
+  return apiRequest<T>(path, { method: 'POST', body });
+}
+
 async function apiRequest<T>(
   path: string,
   options: RequestInit,
 ): Promise<T> {
   const config = getConfig();
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'X-WP-Nonce': config.restNonce,
+  };
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const response = await fetch(`${config.restUrl}${path}`, {
     ...options,
     credentials: 'same-origin',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'X-WP-Nonce': config.restNonce,
-    },
+    headers,
   });
   const payload = (await response.json()) as Partial<ApiResponse<T>> & {
     message?: string;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
 import type { PortalDepartment, PortalVerification } from '../../api/types';
+import { FilePicker } from '../../components/FilePicker';
 
 interface NewTicketPageProps {
   navigate: (path: string) => void;
@@ -16,6 +17,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
 
   useEffect(() => {
     Promise.all([portalApi.departments(), portalApi.verifications()])
@@ -40,6 +42,18 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
         department_id: departmentId,
         purchase_verification_id: purchaseId || null,
       });
+      const detail = await portalApi.ticket(ticket.id);
+      const openingMessage = detail.messages[0];
+
+      if (openingMessage) {
+        await Promise.all(
+          files.map((file) => portalApi.uploadAttachment(
+            ticket.id,
+            openingMessage.id,
+            file,
+          )),
+        );
+      }
       navigate(`/support/tickets/${ticket.id}/`);
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Ticket could not be created.');
@@ -66,6 +80,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
             <span>Subject</span>
             <input value={subject} onChange={(event) => setSubject(event.target.value)} required maxLength={255} />
           </label>
+          <FilePicker files={files} onChange={setFiles} disabled={submitting} />
           <label>
             <span>Department</span>
             <select value={departmentId} onChange={(event) => setDepartmentId(Number(event.target.value))} required>

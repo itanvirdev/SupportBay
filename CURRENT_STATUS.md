@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Customer Portal — Attachment Uploads
+Customer Portal — Ticket Lifecycle Actions
 
 Current Objective
 
-Add secure message attachment uploads to the completed customer ticket workflow.
+Add customer-safe close and reopen actions to the completed ticket conversation workflow.
 
 ---
 
@@ -316,13 +316,13 @@ VerificationService verifies purchases through registered integrations without k
 
 # Immediate Next Tasks
 
-1. Add customer-safe attachment upload endpoints.
+1. Add customer-safe ticket close and reopen endpoints.
 
-2. Validate attachment type, size, and ticket ownership.
+2. Enforce valid ticket status transitions in the service layer.
 
-3. Connect uploads to opening messages and replies.
+3. Add close and reopen controls to ticket detail.
 
-4. Add attachment coverage to the portal Flow Test.
+4. Add lifecycle transition coverage to the portal Flow Test.
 
 ---
 
@@ -442,14 +442,14 @@ Never
 
 # Next Milestone
 
-After Ticket Creation and Replies
+After Attachment Uploads
 
 ```
-Attachment Uploads
+Ticket Close and Reopen Actions
 
 ↓
 
-Ticket Close and Reopen Actions
+Secure Attachment Downloads
 ```
 
 ---
@@ -505,11 +505,11 @@ Status
 ```
 Current Sprint
 
-Customer Portal Attachment Uploads
+Customer Portal Ticket Lifecycle Actions
 
 Next Target
 
-Customer Attachment Uploads
+Ticket Close and Reopen Actions
 ```
 
 ---
