@@ -25,6 +25,13 @@ final class PortalServiceProvider extends ServiceProvider {
       [$controller, 'registerRoutes']
     );
 
+    add_filter(
+      'rest_pre_serve_request',
+      [$controller, 'serveDownload'],
+      10,
+      4,
+    );
+
     $container->get(PortalPage::class)->register();
   }
 }

@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiUpload } from './client';
+import { apiDownload, apiGet, apiPost, apiUpload } from './client';
 import type {
   CreateTicketInput,
   PortalDepartment,
@@ -28,6 +28,8 @@ export const portalApi = {
       `portal/tickets/${ticketId}/messages/${messageId}/attachments`,
       file,
     ),
+  downloadAttachment: (attachmentId: number) =>
+    apiDownload(`portal/attachments/${attachmentId}/download`),
   departments: () => apiGet<PortalDepartment[]>('portal/departments'),
   verifications: () =>
     apiGet<PortalVerification[]>('portal/verifications'),

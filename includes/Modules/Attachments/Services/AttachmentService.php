@@ -126,7 +126,7 @@ final class AttachmentService {
   /**
    * Find attachment.
    */
-  public function find(int $id) {
+  public function find(int $id): ?Attachment {
     return $this->attachments->find($id);
   }
 

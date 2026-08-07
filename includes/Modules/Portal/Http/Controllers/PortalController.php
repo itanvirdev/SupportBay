@@ -17,6 +17,7 @@ use SupportBay\Modules\Verifications\Entities\Verification;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
+use WP_REST_Server;
 
 final class PortalController {
   private const NAMESPACE = 'sbay/v1';
@@ -134,6 +135,23 @@ final class PortalController {
       'callback'            => [$this, 'verifications'],
       'permission_callback' => [$this, 'permissions'],
     ]);
+
+    register_rest_route(
+      self::NAMESPACE,
+      '/portal/attachments/(?P<id>\d+)/download',
+      [
+        'methods'             => 'GET',
+        'callback'            => [$this, 'downloadAttachment'],
+        'permission_callback' => [$this, 'permissions'],
+        'args'                => [
+          'id' => [
+            'sanitize_callback' => 'absint',
+            'validate_callback' => static fn(mixed $value): bool =>
+              is_numeric($value) && (int) $value > 0,
+          ],
+        ],
+      ]
+    );
   }
 
   /**
@@ -357,6 +375,91 @@ final class PortalController {
       [],
       201,
     );
+  }
+
+  /**
+   * Authorize an attachment for the REST streaming hook.
+   */
+  public function downloadAttachment(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    try {
+      $attachment = $this->portal->downloadableAttachment(
+        (int) $request->get_param('id')
+      );
+    } catch (RuntimeException) {
+      return RestResponse::error(
+        'Attachment was not found.',
+        'ATTACHMENT_NOT_FOUND',
+        [],
+        404,
+      );
+    }
+
+    return RestResponse::success([
+      'attachment_id' => $attachment->id(),
+    ], 'Attachment authorized.');
+  }
+
+  /**
+   * Stream an authorized attachment instead of serializing a REST response.
+   */
+  public function serveDownload(
+    bool $served,
+    mixed $result,
+    WP_REST_Request $request,
+    WP_REST_Server $server,
+  ): bool {
+    if (
+      $served ||
+      ! preg_match(
+        '#^/sbay/v1/portal/attachments/(?P<id>\d+)/download$#',
+        $request->get_route(),
+        $matches,
+      ) ||
+      ! $result instanceof WP_REST_Response ||
+      $result->get_status() !== 200
+    ) {
+      return $served;
+    }
+
+    try {
+      $attachment = $this->portal->downloadableAttachment(
+        (int) $matches['id']
+      );
+    } catch (RuntimeException) {
+      return $served;
+    }
+
+    $handle = fopen($attachment->path(), 'rb');
+
+    if ($handle === false) {
+      return $served;
+    }
+
+    $filename = sanitize_file_name($attachment->originalName());
+
+    if ($filename === '') {
+      $filename = 'attachment.' . $attachment->extension();
+    }
+
+    while (ob_get_level() > 0) {
+      ob_end_clean();
+    }
+
+    header('Content-Type: ' . $attachment->mimeType());
+    header('Content-Length: ' . (string) filesize($attachment->path()));
+    header('Content-Disposition: attachment; filename="' . $filename
+      . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
+    header('Cache-Control: private, no-store, max-age=0');
+    header('X-Content-Type-Options: nosniff');
+
+    fpassthru($handle);
+    fclose($handle);
+
+    $this->portal->recordAttachmentDownload($attachment->id());
+
+    return true;
   }
 
   /**

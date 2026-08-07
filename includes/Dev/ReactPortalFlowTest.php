@@ -50,6 +50,11 @@ final class ReactPortalFlowTest extends FlowTest {
       'React bootstrap includes REST authentication configuration.'
     );
 
+    Assert::true(
+      has_filter('rest_pre_serve_request') !== false,
+      'Secure attachment streaming hook is registered.'
+    );
+
     if ($previousValue === null) {
       unset($wp_query->query_vars['sbay_customer_portal']);
     } else {

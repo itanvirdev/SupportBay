@@ -133,9 +133,12 @@ body.supportbay-portal { padding-top: 0 !important; }
 .sbay-file-picker input[type="file"] { width: 100%; padding: 11px; border: 1px dashed #b8c8be; border-radius: 10px; background: #fff; }
 .sbay-file-picker ul, .sbay-attachments { display: grid; gap: 7px; margin: 10px 0 0; padding: 0; list-style: none; }
 .sbay-file-picker li, .sbay-attachments li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 11px; border-radius: 9px; background: #edf3ef; font-size: 12px; }
-.sbay-file-picker li span, .sbay-attachments strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbay-file-picker li span, .sbay-attachments li > span { min-width: 0; overflow: hidden; }
+.sbay-attachments strong, .sbay-attachments small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sbay-file-picker li button { border: 0; padding: 0; color: #9c342d; background: transparent; font: inherit; font-weight: 700; cursor: pointer; }
 .sbay-attachments small { flex: 0 0 auto; color: var(--sbay-muted); }
+.sbay-attachments button { flex: 0 0 auto; border: 0; padding: 5px 7px; color: var(--sbay-green); background: transparent; font: inherit; font-weight: 750; cursor: pointer; }
+.sbay-attachments button:disabled { color: var(--sbay-muted); cursor: wait; }
 .sbay-form-page { max-width: 780px; }
 .sbay-ticket-form { display: grid; gap: 19px; padding: 26px; border: 1px solid var(--sbay-line); border-radius: 18px; background: #fff; }
 .sbay-ticket-form label > span { display: block; margin-bottom: 8px; font-weight: 750; }

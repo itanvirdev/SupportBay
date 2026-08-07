@@ -31,6 +31,32 @@ export async function apiUpload<T>(path: string, file: File): Promise<T> {
   return apiRequest<T>(path, { method: 'POST', body });
 }
 
+export async function apiDownload(path: string): Promise<Blob> {
+  const config = getConfig();
+  const response = await fetch(`${config.restUrl}${path}`, {
+    credentials: 'same-origin',
+    headers: {
+      Accept: 'application/octet-stream',
+      'X-WP-Nonce': config.restNonce,
+    },
+  });
+
+  if (!response.ok) {
+    let message = 'Attachment could not be downloaded.';
+
+    try {
+      const payload = (await response.json()) as { message?: string };
+      message = payload.message ?? message;
+    } catch {
+      // Preserve the safe fallback for non-JSON server errors.
+    }
+
+    throw new ApiError(message, response.status);
+  }
+
+  return response.blob();
+}
+
 async function apiRequest<T>(
   path: string,
   options: RequestInit,

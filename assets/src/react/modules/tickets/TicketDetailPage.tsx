@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
-import type { PortalTicketDetail } from '../../api/types';
+import type { PortalAttachment, PortalTicketDetail } from '../../api/types';
 import { formatDate, formatDateTime } from '../../core/date';
 import { FilePicker } from '../../components/FilePicker';
 
@@ -18,6 +18,8 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
   const [files, setFiles] = useState<File[]>([]);
   const [transitioning, setTransitioning] = useState(false);
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   useEffect(() => {
     portalApi.ticket(ticketId).then(setDetail).catch(() => setMissing(true));
@@ -87,6 +89,29 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
     }
   };
 
+  const downloadAttachment = async (attachment: PortalAttachment) => {
+    setDownloadingId(attachment.id);
+    setDownloadError(null);
+
+    try {
+      const blob = await portalApi.downloadAttachment(attachment.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.original_name;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch (exception) {
+      setDownloadError(
+        exception instanceof Error
+          ? exception.message
+          : 'Attachment could not be downloaded.',
+      );
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   return (
     <section className="sbay-page">
       <button className="sbay-back" type="button" onClick={() => navigate('/support/tickets/')}>
@@ -135,14 +160,24 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
                 <ul className="sbay-attachments" aria-label="Attachments">
                   {message.attachments.map((attachment) => (
                     <li key={attachment.id}>
-                      <strong>{attachment.original_name}</strong>
-                      <small>{Math.max(1, Math.round(attachment.file_size / 1024))} KB</small>
+                      <span>
+                        <strong>{attachment.original_name}</strong>
+                        <small>{Math.max(1, Math.round(attachment.file_size / 1024))} KB</small>
+                      </span>
+                      <button
+                        type="button"
+                        disabled={downloadingId === attachment.id}
+                        onClick={() => downloadAttachment(attachment)}
+                      >
+                        {downloadingId === attachment.id ? 'Downloading…' : 'Download'}
+                      </button>
                     </li>
                   ))}
                 </ul>
               ) : null}
             </article>
           ))}
+          {downloadError ? <p className="sbay-form-error" role="alert">{downloadError}</p> : null}
           {canReply ? (
             <form className="sbay-reply-form" onSubmit={submitReply}>
               <label htmlFor="sbay-ticket-reply">Add a reply</label>

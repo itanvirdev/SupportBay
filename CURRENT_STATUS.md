@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Customer Portal — Secure Attachment Downloads
+Customer Portal — Customer Profile
 
 Current Objective
 
-Add authorized attachment download streaming without exposing physical storage paths.
+Add authenticated customer profile viewing and account-safe profile updates.
 
 ---
 
@@ -316,13 +316,13 @@ VerificationService verifies purchases through registered integrations without k
 
 # Immediate Next Tasks
 
-1. Add an authorized attachment download endpoint.
+1. Add customer profile REST endpoints.
 
-2. Validate ticket ownership and message visibility before streaming.
+2. Define editable customer identity and preference fields.
 
-3. Add download controls to visible attachment metadata.
+3. Add the React customer profile screen and navigation.
 
-4. Add secure download authorization coverage to the portal Flow Test.
+4. Add customer profile coverage to the portal Flow Test.
 
 ---
 
@@ -442,14 +442,14 @@ Never
 
 # Next Milestone
 
-After Ticket Close and Reopen Actions
+After Secure Attachment Downloads
 
 ```
-Secure Attachment Downloads
+Customer Profile
 
 ↓
 
-Customer Profile
+Portal Authentication Experience
 ```
 
 ---
@@ -505,11 +505,11 @@ Status
 ```
 Current Sprint
 
-Customer Portal Secure Attachment Downloads
+Customer Portal Customer Profile
 
 Next Target
 
-Secure Attachment Downloads
+Customer Profile
 ```
 
 ---

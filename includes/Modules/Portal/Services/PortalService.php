@@ -298,4 +298,49 @@ final class PortalService {
 
     return $this->tickets->reopen($ticketId);
   }
+
+  /**
+   * Resolve an attachment the current customer may download.
+   */
+  public function downloadableAttachment(int $attachmentId): Attachment {
+    $attachment = $this->attachments->find($attachmentId);
+
+    if (
+      ! $attachment ||
+      ! $attachment->isActive() ||
+      ! $attachment->isStoredLocally() ||
+      $attachment->isInfected()
+    ) {
+      throw new RuntimeException('Attachment was not found.');
+    }
+
+    $ticket = $this->ticket($attachment->ticketId());
+    $message = $this->messages->find($attachment->messageId());
+
+    if (
+      ! $message ||
+      $message->ticketId() !== $ticket->id() ||
+      ! $message->isVisibleToCustomer() ||
+      ! is_file($attachment->path()) ||
+      ! is_readable($attachment->path()) ||
+      (
+        $attachment->hasChecksum() &&
+        ! hash_equals(
+          (string) $attachment->checksum(),
+          (string) hash_file('sha256', $attachment->path()),
+        )
+      )
+    ) {
+      throw new RuntimeException('Attachment was not found.');
+    }
+
+    return $attachment;
+  }
+
+  /**
+   * Record a successful customer attachment download.
+   */
+  public function recordAttachmentDownload(int $attachmentId): void {
+    $this->attachments->recordDownload($attachmentId);
+  }
 }

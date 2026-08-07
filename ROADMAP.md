@@ -558,6 +558,10 @@ Customer Attachment Uploads
 ↓
 
 Ticket Close and Reopen Actions
+
+↓
+
+Secure Attachment Downloads
 ```
 
 Goal
@@ -568,14 +572,14 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Ticket Close and Reopen Actions
+After Secure Attachment Downloads
 
 ```
-Secure Attachment Downloads
+Customer Profile
 
 ↓
 
-Customer Profile
+Portal Authentication Experience
 ```
 
 ---

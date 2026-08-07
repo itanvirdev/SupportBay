@@ -250,6 +250,20 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'mime_type'        => 'text/plain',
     ]);
 
+    $internalAttachmentPath = wp_tempnam('private-note.txt');
+    file_put_contents($internalAttachmentPath, 'Private note attachment.');
+    $internalAttachmentId = $attachments->upload([
+      'message_id'       => $internalNote->id(),
+      'ticket_id'        => $ticketId,
+      'uploaded_by_id'   => 1,
+      'uploaded_by_type' => AuthorType::AGENT->value,
+      'original_name'    => 'private-note.txt',
+      'path'             => $internalAttachmentPath,
+      'file_size'        => filesize($internalAttachmentPath),
+      'extension'        => 'txt',
+      'mime_type'        => 'text/plain',
+    ]);
+
     $attachmentDetail = rest_do_request(
       new WP_REST_Request(
         'GET',
@@ -270,6 +284,50 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       ),
       'Portal never exposes physical attachment paths.'
     );
+
+    $downloadResponse = rest_do_request(
+      new WP_REST_Request(
+        'GET',
+        '/sbay/v1/portal/attachments/' . $attachmentId . '/download'
+      )
+    );
+    $downloadData = $downloadResponse->get_data();
+
+    Assert::equals(
+      $attachmentId,
+      $downloadData['data']['attachment_id'] ?? null,
+      'Customer can authorize a visible attachment download.'
+    );
+
+    $privateDownload = rest_do_request(
+      new WP_REST_Request(
+        'GET',
+        '/sbay/v1/portal/attachments/' . $internalAttachmentId . '/download'
+      )
+    );
+
+    Assert::equals(
+      404,
+      $privateDownload->get_status(),
+      'Customer cannot download an internal-note attachment.'
+    );
+
+    wp_set_current_user(0);
+
+    $unauthenticatedDownload = rest_do_request(
+      new WP_REST_Request(
+        'GET',
+        '/sbay/v1/portal/attachments/' . $attachmentId . '/download'
+      )
+    );
+
+    Assert::equals(
+      401,
+      $unauthenticatedDownload->get_status(),
+      'Attachment downloads require authentication.'
+    );
+
+    wp_set_current_user($userId);
 
     $missingUpload = rest_do_request(
       new WP_REST_Request(
@@ -368,6 +426,11 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::true(
       $attachments->permanentlyDelete($attachmentId),
       'Test attachment and local file deleted.'
+    );
+
+    Assert::true(
+      $attachments->permanentlyDelete($internalAttachmentId),
+      'Test internal attachment and local file deleted.'
     );
 
     Assert::true(
