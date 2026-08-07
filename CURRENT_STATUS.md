@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Admin API Expansion
+Admin API Mutations and Capability Model
 
 Current Objective
 
-Extend the REST foundation to customers, departments, providers, and purchase verifications.
+Define SupportBay administrator capabilities and safe mutation endpoints for operational records.
 
 ---
 
@@ -428,15 +428,45 @@ Knowledge Base remains deferred until its documentation is provided.
 
 ---
 
+# Completed Admin API Expansion
+
+```
+Customer API
+
+↓
+
+Department API
+
+↓
+
+Secret-safe Provider API
+
+↓
+
+Purchase Verification API
+
+↓
+
+Filtering and Pagination
+
+↓
+
+Expanded ApiWebhookFlowTest
+```
+
+All administrator resource routes are read-only in this milestone.
+
+---
+
 # Immediate Next Tasks
 
-1. Add administrator customer and department endpoints.
+1. Define SupportBay-specific administrator and agent capabilities.
 
-2. Add provider and purchase-verification endpoints.
+2. Add safe customer state and department mutation endpoints.
 
-3. Add filtering and repository-backed pagination.
+3. Add provider enable/disable endpoints without exposing settings.
 
-4. Define persistent webhook destinations, signing, HTTP delivery, and retries.
+4. Add verification revoke/refresh actions and mutation Flow Tests.
 
 ---
 
@@ -556,10 +586,10 @@ Never
 
 # Next Milestone
 
-After REST API and Webhooks Foundation
+After Admin API Expansion
 
 ```
-Admin API Expansion
+Admin API Mutations and Capability Model
 ```
 
 ---
@@ -615,11 +645,11 @@ Status
 ```
 Current Sprint
 
-Admin API Expansion
+Admin API Mutations and Capability Model
 
 Next Target
 
-Admin API Expansion
+Admin API Mutations and Capability Model
 ```
 
 ---

@@ -24,6 +24,8 @@ final class ProviderService {
    */
   public function create(array $data): int {
     $slug = trim($data['slug']);
+    $category = $data['category'] ?? ProviderCategory::OTHER;
+    $status = $data['status'] ?? ProviderStatus::DISABLED;
 
     if ($this->repository->slugExists($slug)) {
       throw new RuntimeException(
@@ -37,13 +39,13 @@ final class ProviderService {
     return $this->repository->create([
       'slug'              => $slug,
       'name'              => $data['name'],
-      'category'          => ($data['category'] ?? ProviderCategory::OTHER) instanceof ProviderCategory
-        ? $data['category']->value
-        : ($data['category'] ?? ProviderCategory::OTHER->value),
+      'category'          => $category instanceof ProviderCategory
+        ? $category->value
+        : $category,
       'version'           => $data['version'] ?? null,
-      'status'            => ($data['status'] ?? ProviderStatus::DISABLED) instanceof ProviderStatus
-        ? $data['status']->value
-        : ($data['status'] ?? ProviderStatus::DISABLED->value),
+      'status'            => $status instanceof ProviderStatus
+        ? $status->value
+        : $status,
       'settings'          => isset($data['settings'])
         ? wp_json_encode($data['settings'])
         : null,

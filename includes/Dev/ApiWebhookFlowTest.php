@@ -14,6 +14,8 @@ use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Http\Controllers\TicketController;
 use SupportBay\Modules\Tickets\Services\TicketService;
+use SupportBay\Modules\Providers\Services\ProviderService;
+use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Modules\Webhooks\Data\WebhookData;
 use WP_Error;
 use WP_REST_Request;
@@ -29,7 +31,9 @@ final class ApiWebhookFlowTest extends FlowTest {
     /** @var MessageService $messages */
     /** @var CustomerService $customers */
     /** @var DepartmentService $departments */
-    [$controller, $tickets, $messages, $customers, $departments] = $services;
+    /** @var ProviderService $providers */
+    /** @var VerificationService $verifications */
+    [$controller, $tickets, $messages, $customers, $departments, $providers, $verifications] = $services;
 
     echo "🚀 Starting SupportBay API and Webhook Flow Test...\n\n";
 
@@ -51,6 +55,13 @@ final class ApiWebhookFlowTest extends FlowTest {
       isset($routes['/sbay/v1/tickets']),
       'Versioned administrator ticket route is registered.'
     );
+
+    foreach (['customers', 'departments', 'providers', 'verifications'] as $resource) {
+      Assert::true(
+        isset($routes['/sbay/v1/' . $resource]),
+        sprintf('Administrator %s route is registered.', $resource)
+      );
+    }
 
     wp_set_current_user(0);
 
@@ -96,6 +107,16 @@ final class ApiWebhookFlowTest extends FlowTest {
       'author_type' => AuthorType::CUSTOMER->value,
       'content'     => 'Webhook message payload.',
     ]);
+    $providerId = $providers->create([
+      'slug'     => 'api-test-' . $suffix,
+      'name'     => 'API Test Provider',
+      'settings' => ['client_secret' => 'must-not-leak'],
+    ]);
+    $verificationId = $verifications->create([
+      'provider'           => 'api-test-' . $suffix,
+      'provider_reference' => 'purchase-' . $suffix,
+      'customer_id'        => $customerId,
+    ]);
 
     $request = new WP_REST_Request('GET', '/sbay/v1/tickets');
     $request->set_param('page', 1);
@@ -106,6 +127,27 @@ final class ApiWebhookFlowTest extends FlowTest {
     Assert::equals(200, $response->get_status(), 'Ticket API returns HTTP 200.');
     Assert::true($body['success'] === true, 'Ticket API uses the standard response envelope.');
     Assert::true(isset($body['meta']['total_pages']), 'Ticket API includes pagination metadata.');
+
+    $customerResponse = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/customers/' . $customerId)
+    );
+    Assert::equals(200, $customerResponse->get_status(), 'Customer detail API is available.');
+
+    $providerResponse = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/providers/' . $providerId)
+    );
+    $providerData = $providerResponse->get_data()['data'];
+    Assert::false(isset($providerData['settings']), 'Provider credentials are excluded from API output.');
+    Assert::true($providerData['configured'] === true, 'Provider API reports configuration state safely.');
+
+    $verificationRequest = new WP_REST_Request('GET', '/sbay/v1/verifications');
+    $verificationRequest->set_param('provider', 'api-test-' . $suffix);
+    $verificationResponse = rest_do_request($verificationRequest);
+    Assert::equals(
+      1,
+      $verificationResponse->get_data()['meta']['total'],
+      'Verification API applies provider filters.'
+    );
 
     $tickets->close($ticketId);
     $tickets->reopen($ticketId);
@@ -131,6 +173,8 @@ final class ApiWebhookFlowTest extends FlowTest {
     );
 
     remove_action('supportbay_webhook_dispatch', $captureWebhook);
+    $verifications->delete($verificationId);
+    $providers->delete($providerId);
     $messages->delete($message->id());
     $tickets->delete($ticketId);
     $departments->delete($departmentId);

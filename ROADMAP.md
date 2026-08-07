@@ -588,10 +588,10 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After REST API and Webhooks Foundation
+After Admin API Expansion
 
 ```
-Admin API Expansion
+Admin API Mutations and Capability Model
 ```
 
 ---
@@ -1065,6 +1065,10 @@ Completed
 - Administrator ticket list and detail
 - Administrator ticket messages and replies
 - Administrator ticket close and reopen
+- Administrator customer list and detail
+- Administrator department list and detail
+- Secret-safe provider list and detail
+- Administrator purchase verification list and detail
 - WordPress capability enforcement
 - Standard response envelope and pagination metadata
 
@@ -1428,7 +1432,7 @@ Current
 Current Sprint
 
 ```
-Admin API Expansion
+Admin API Mutations and Capability Model
 ```
 
 ↓

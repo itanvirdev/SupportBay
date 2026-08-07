@@ -8,6 +8,7 @@ use SupportBay\Core\Container\Container;
 use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Verifications\Repositories\VerificationRepository;
 use SupportBay\Modules\Verifications\Services\VerificationService;
+use SupportBay\Modules\Verifications\Http\Controllers\VerificationController;
 
 final class VerificationServiceProvider extends ServiceProvider {
   /**
@@ -17,5 +18,16 @@ final class VerificationServiceProvider extends ServiceProvider {
     $container->singleton(VerificationRepository::class);
 
     $container->singleton(VerificationService::class);
+
+    $container->singleton(VerificationController::class);
+  }
+
+  public function boot(Container $container): void {
+    parent::boot($container);
+
+    add_action('rest_api_init', [
+      $container->get(VerificationController::class),
+      'registerRoutes',
+    ]);
   }
 }

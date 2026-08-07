@@ -47,6 +47,11 @@ final class CustomerService {
     return $this->customers->findByUserId($userId);
   }
 
+  /** @return Customer[] */
+  public function all(): array {
+    return $this->customers->all();
+  }
+
   /**
    * Get customers by state.
    *

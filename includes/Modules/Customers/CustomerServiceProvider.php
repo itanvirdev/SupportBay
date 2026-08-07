@@ -9,6 +9,7 @@ use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Customers\Repositories\CustomerRepository;
 use SupportBay\Modules\Customers\Repositories\WordPressUserRepository;
 use SupportBay\Modules\Customers\Services\CustomerService;
+use SupportBay\Modules\Customers\Http\Controllers\CustomerController;
 
 final class CustomerServiceProvider extends ServiceProvider {
   /**
@@ -20,17 +21,19 @@ final class CustomerServiceProvider extends ServiceProvider {
     $container->singleton(WordPressUserRepository::class);
 
     $container->singleton(CustomerService::class);
+
+    $container->singleton(CustomerController::class);
   }
 
   /**
    * Boot services.
    */
   public function boot(Container $container): void {
-    // Reserved for future:
-    // - Customer events
-    // - REST routes
-    // - Rewrite rules
-    // - WP hooks
-    // - Scheduled tasks
+    parent::boot($container);
+
+    add_action('rest_api_init', [
+      $container->get(CustomerController::class),
+      'registerRoutes',
+    ]);
   }
 }

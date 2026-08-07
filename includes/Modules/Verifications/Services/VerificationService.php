@@ -207,6 +207,11 @@ final class VerificationService {
     return $this->repository->find($id);
   }
 
+  /** @return Verification[] */
+  public function all(): array {
+    return $this->repository->all();
+  }
+
   /**
    * Find verification or throw an exception.
    */
