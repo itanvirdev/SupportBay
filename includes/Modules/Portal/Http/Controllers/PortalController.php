@@ -104,6 +104,25 @@ final class PortalController {
       ]
     );
 
+    foreach (['close', 'reopen'] as $action) {
+      register_rest_route(
+        self::NAMESPACE,
+        '/portal/tickets/(?P<id>\d+)/' . $action,
+        [
+          'methods'             => 'POST',
+          'callback'            => [$this, $action . 'Ticket'],
+          'permission_callback' => [$this, 'permissions'],
+          'args'                => [
+            'id' => [
+              'sanitize_callback' => 'absint',
+              'validate_callback' => static fn(mixed $value): bool =>
+                is_numeric($value) && (int) $value > 0,
+            ],
+          ],
+        ]
+      );
+    }
+
     register_rest_route(self::NAMESPACE, '/portal/departments', [
       'methods'             => 'GET',
       'callback'            => [$this, 'departments'],
@@ -282,6 +301,24 @@ final class PortalController {
   }
 
   /**
+   * Close a customer-owned ticket.
+   */
+  public function closeTicket(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    return $this->transitionTicket($request, 'close');
+  }
+
+  /**
+   * Reopen a customer-owned ticket.
+   */
+  public function reopenTicket(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    return $this->transitionTicket($request, 'reopen');
+  }
+
+  /**
    * Upload one attachment to a customer-visible message.
    */
   public function uploadAttachment(
@@ -439,6 +476,32 @@ final class PortalController {
       'is_previewable' => $attachment->canPreview(),
       'created_at'     => $attachment->createdAt(),
     ];
+  }
+
+  /**
+   * Apply a customer ticket lifecycle transition.
+   */
+  private function transitionTicket(
+    WP_REST_Request $request,
+    string $action,
+  ): WP_REST_Response {
+    try {
+      $ticket = $action === 'close'
+        ? $this->portal->closeTicket((int) $request->get_param('id'))
+        : $this->portal->reopenTicket((int) $request->get_param('id'));
+    } catch (RuntimeException $exception) {
+      return RestResponse::error(
+        $exception->getMessage(),
+        'TICKET_TRANSITION_FAILED',
+        [],
+        409,
+      );
+    }
+
+    return RestResponse::success(
+      $this->ticketData($ticket),
+      $action === 'close' ? 'Ticket closed.' : 'Ticket reopened.',
+    );
   }
 
   /**

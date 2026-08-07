@@ -100,7 +100,11 @@ final class PortalService {
     $ticket = $this->tickets->find($ticketId);
     $customer = $this->currentCustomer();
 
-    if (! $ticket || $ticket->customerId() !== $customer->id()) {
+    if (
+      ! $ticket ||
+      $ticket->customerId() !== $customer->id() ||
+      ! $ticket->state()->isAccessible()
+    ) {
       throw new RuntimeException(
         'Ticket was not found.'
       );
@@ -275,5 +279,23 @@ final class PortalService {
       'uploaded_by_id'   => $customer->userId(),
       'uploaded_by_type' => AuthorType::CUSTOMER->value,
     ]);
+  }
+
+  /**
+   * Close a ticket owned by the current customer.
+   */
+  public function closeTicket(int $ticketId): Ticket {
+    $this->ticket($ticketId);
+
+    return $this->tickets->close($ticketId);
+  }
+
+  /**
+   * Reopen a closed ticket owned by the current customer.
+   */
+  public function reopenTicket(int $ticketId): Ticket {
+    $this->ticket($ticketId);
+
+    return $this->tickets->reopen($ticketId);
   }
 }

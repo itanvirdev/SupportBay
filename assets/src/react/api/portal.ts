@@ -19,6 +19,10 @@ export const portalApi = {
     apiGet<PortalTicketDetail>(`portal/tickets/${ticketId}`),
   reply: (ticketId: number, content: string) =>
     apiPost<PortalMessage>(`portal/tickets/${ticketId}/replies`, { content }),
+  closeTicket: (ticketId: number) =>
+    apiPost<PortalTicket>(`portal/tickets/${ticketId}/close`, {}),
+  reopenTicket: (ticketId: number) =>
+    apiPost<PortalTicket>(`portal/tickets/${ticketId}/reopen`, {}),
   uploadAttachment: (ticketId: number, messageId: number, file: File) =>
     apiUpload<PortalAttachment>(
       `portal/tickets/${ticketId}/messages/${messageId}/attachments`,

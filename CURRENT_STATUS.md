@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Customer Portal — Ticket Lifecycle Actions
+Customer Portal — Secure Attachment Downloads
 
 Current Objective
 
-Add customer-safe close and reopen actions to the completed ticket conversation workflow.
+Add authorized attachment download streaming without exposing physical storage paths.
 
 ---
 
@@ -316,13 +316,13 @@ VerificationService verifies purchases through registered integrations without k
 
 # Immediate Next Tasks
 
-1. Add customer-safe ticket close and reopen endpoints.
+1. Add an authorized attachment download endpoint.
 
-2. Enforce valid ticket status transitions in the service layer.
+2. Validate ticket ownership and message visibility before streaming.
 
-3. Add close and reopen controls to ticket detail.
+3. Add download controls to visible attachment metadata.
 
-4. Add lifecycle transition coverage to the portal Flow Test.
+4. Add secure download authorization coverage to the portal Flow Test.
 
 ---
 
@@ -442,14 +442,14 @@ Never
 
 # Next Milestone
 
-After Attachment Uploads
+After Ticket Close and Reopen Actions
 
 ```
-Ticket Close and Reopen Actions
+Secure Attachment Downloads
 
 ↓
 
-Secure Attachment Downloads
+Customer Profile
 ```
 
 ---
@@ -505,11 +505,11 @@ Status
 ```
 Current Sprint
 
-Customer Portal Ticket Lifecycle Actions
+Customer Portal Secure Attachment Downloads
 
 Next Target
 
-Ticket Close and Reopen Actions
+Secure Attachment Downloads
 ```
 
 ---

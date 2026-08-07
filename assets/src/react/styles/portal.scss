@@ -80,6 +80,9 @@ body.supportbay-portal { padding-top: 0 !important; }
 .sbay-primary-button { border: 0; border-radius: 10px; padding: 11px 17px; color: #fff; background: var(--sbay-green); font: inherit; font-weight: 750; cursor: pointer; }
 .sbay-primary-button:hover { background: #195b42; }
 .sbay-primary-button:disabled { opacity: .55; cursor: not-allowed; }
+.sbay-secondary-button { border: 1px solid #cbd7d0; border-radius: 10px; padding: 10px 16px; color: var(--sbay-ink); background: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+.sbay-secondary-button:hover { border-color: #aebdb4; background: #f8faf8; }
+.sbay-secondary-button:disabled { opacity: .55; cursor: not-allowed; }
 .sbay-table-card { overflow: hidden; border: 1px solid var(--sbay-line); border-radius: 18px; background: #fff; }
 .sbay-table { width: 100%; display: grid; grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(95px, .7fr)); align-items: center; gap: 18px; padding: 18px 22px; border: 0; border-top: 1px solid var(--sbay-line); color: inherit; background: #fff; font: inherit; text-align: left; cursor: pointer; }
 .sbay-table:first-child { border-top: 0; }
@@ -94,6 +97,7 @@ body.supportbay-portal { padding-top: 0 !important; }
 
 .sbay-back { margin-bottom: 25px; }
 .sbay-ticket-header { align-items: center; }
+.sbay-ticket-actions { display: flex; align-items: center; gap: 10px; }
 .sbay-badge { padding: 8px 12px; border-radius: 999px; background: #fff0d8; color: #98631f; font-size: 12px; font-weight: 800; text-transform: capitalize; }
 .sbay-badge--open { color: var(--sbay-green); background: #e4f0e8; }
 .sbay-badge--closed { color: #66736c; background: #e7ece9; }

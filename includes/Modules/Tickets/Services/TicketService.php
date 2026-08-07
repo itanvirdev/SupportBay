@@ -12,12 +12,16 @@ use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
+use SupportBay\Modules\Tickets\Events\TicketClosed;
+use SupportBay\Modules\Tickets\Events\TicketReopened;
 use SupportBay\Modules\Verifications\Services\VerificationService;
+use SupportBay\Core\Events\EventDispatcher;
 
 final class TicketService {
   public function __construct(
     private readonly TicketRepository $repository,
     private readonly VerificationService $verifications,
+    private readonly EventDispatcher $events,
   ) {
   }
 
@@ -91,6 +95,49 @@ final class TicketService {
   }
 
   /**
+   * Close a ticket.
+   */
+  public function close(int $id): Ticket {
+    $ticket = $this->findOrFail($id);
+
+    if ($ticket->isClosed()) {
+      throw new RuntimeException('Ticket is already closed.');
+    }
+
+    $this->repository->update($id, [
+      'status'    => TicketStatus::CLOSED->value,
+      'closed_at' => current_time('mysql'),
+    ]);
+
+    $closed = $this->findOrFail($id);
+    $this->events->dispatch(new TicketClosed($closed));
+
+    return $closed;
+  }
+
+  /**
+   * Reopen a closed ticket.
+   */
+  public function reopen(int $id): Ticket {
+    $ticket = $this->findOrFail($id);
+
+    if (! $ticket->isClosed()) {
+      throw new RuntimeException('Only closed tickets can be reopened.');
+    }
+
+    $this->repository->update($id, [
+      'status'      => TicketStatus::OPEN->value,
+      'closed_at'   => null,
+      'reopened_at' => current_time('mysql'),
+    ]);
+
+    $reopened = $this->findOrFail($id);
+    $this->events->dispatch(new TicketReopened($reopened));
+
+    return $reopened;
+  }
+
+  /**
    * Validate an optional purchase verification relationship.
    *
    * @param array<string, mixed> $data
@@ -122,6 +169,19 @@ final class TicketService {
         'Purchase verification does not belong to the ticket customer.'
       );
     }
+  }
+
+  /**
+   * Find a ticket or fail the workflow.
+   */
+  private function findOrFail(int $id): Ticket {
+    $ticket = $this->repository->find($id);
+
+    if (! $ticket) {
+      throw new RuntimeException('Ticket was not found.');
+    }
+
+    return $ticket;
   }
 
   /**

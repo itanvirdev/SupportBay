@@ -16,6 +16,8 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [transitioning, setTransitioning] = useState(false);
+  const [transitionError, setTransitionError] = useState<string | null>(null);
 
   useEffect(() => {
     portalApi.ticket(ticketId).then(setDetail).catch(() => setMissing(true));
@@ -54,6 +56,37 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
     }
   };
 
+  const transitionTicket = async () => {
+    const closing = detail.ticket.status !== 'closed';
+    const confirmed = window.confirm(
+      closing
+        ? 'Close this ticket? You will not be able to reply until it is reopened.'
+        : 'Reopen this ticket and continue the conversation?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setTransitioning(true);
+    setTransitionError(null);
+
+    try {
+      const ticket = closing
+        ? await portalApi.closeTicket(ticketId)
+        : await portalApi.reopenTicket(ticketId);
+      setDetail({ ...detail, ticket });
+    } catch (exception) {
+      setTransitionError(
+        exception instanceof Error
+          ? exception.message
+          : 'Ticket status could not be changed.',
+      );
+    } finally {
+      setTransitioning(false);
+    }
+  };
+
   return (
     <section className="sbay-page">
       <button className="sbay-back" type="button" onClick={() => navigate('/support/tickets/')}>
@@ -65,10 +98,24 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
           <h1>{detail.ticket.subject}</h1>
           <p>Opened {formatDate(detail.ticket.created_at)}</p>
         </div>
-        <span className={`sbay-badge sbay-badge--${detail.ticket.status}`}>
-          {detail.ticket.status}
-        </span>
+        <div className="sbay-ticket-actions">
+          <span className={`sbay-badge sbay-badge--${detail.ticket.status}`}>
+            {detail.ticket.status}
+          </span>
+          <button
+            className={detail.ticket.status === 'closed' ? 'sbay-primary-button' : 'sbay-secondary-button'}
+            type="button"
+            onClick={transitionTicket}
+            disabled={transitioning}
+          >
+            {transitioning
+              ? 'Updating…'
+              : detail.ticket.status === 'closed' ? 'Reopen ticket' : 'Close ticket'}
+          </button>
+        </div>
       </header>
+
+      {transitionError ? <p className="sbay-form-error" role="alert">{transitionError}</p> : null}
 
       <div className="sbay-detail-grid">
         <section className="sbay-thread" aria-label="Ticket conversation">

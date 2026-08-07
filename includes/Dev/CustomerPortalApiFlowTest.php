@@ -285,6 +285,49 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Portal rejects attachment requests without a file.'
     );
 
+    $closeResponse = rest_do_request(
+      new WP_REST_Request(
+        'POST',
+        '/sbay/v1/portal/tickets/' . $createdTicketId . '/close'
+      )
+    );
+    $closeData = $closeResponse->get_data();
+
+    Assert::equals(
+      'closed',
+      $closeData['data']['status'] ?? null,
+      'Customer can close an owned ticket.'
+    );
+
+    $closedReplyRequest = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/portal/tickets/' . $createdTicketId . '/replies'
+    );
+    $closedReplyRequest->set_body_params([
+      'content' => 'This reply must be rejected while closed.',
+    ]);
+    $closedReplyResponse = rest_do_request($closedReplyRequest);
+
+    Assert::equals(
+      422,
+      $closedReplyResponse->get_status(),
+      'Closed tickets reject customer replies.'
+    );
+
+    $reopenResponse = rest_do_request(
+      new WP_REST_Request(
+        'POST',
+        '/sbay/v1/portal/tickets/' . $createdTicketId . '/reopen'
+      )
+    );
+    $reopenData = $reopenResponse->get_data();
+
+    Assert::equals(
+      'open',
+      $reopenData['data']['status'] ?? null,
+      'Customer can reopen a closed ticket.'
+    );
+
     $replyRequest = new WP_REST_Request(
       'POST',
       '/sbay/v1/portal/tickets/' . $createdTicketId . '/replies'
