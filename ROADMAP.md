@@ -570,6 +570,10 @@ Customer Profile
 ↓
 
 Portal Authentication Experience
+
+↓
+
+Email Notification Foundation
 ```
 
 Goal
@@ -580,10 +584,10 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Portal Authentication Experience
+After Email Notifications
 
 ```
-Email Notifications
+Knowledge Base Foundation
 ```
 
 ---
@@ -1112,20 +1116,28 @@ Customer Registered
 Status
 
 ```
-❌ Not Started
+🟡 Foundation Complete
 ```
 
 Features
 
-Email Templates
+Immediate WordPress Email Delivery ✅
 
-Queue
+Provider-independent Channel Contract ✅
 
-Retry
+Ticket and Reply Event Listeners ✅
 
-Provider Abstraction
+Deterministic Notification Flow Test ✅
 
-SMTP
+Email Templates ⏳
+
+Queue ⏳
+
+Retry ⏳
+
+Delivery Logs ⏳
+
+SMTP ⏳
 
 Future
 
@@ -1392,7 +1404,7 @@ Current
 Current Sprint
 
 ```
-Email Notifications
+Knowledge Base Foundation
 ```
 
 ↓
@@ -1400,7 +1412,7 @@ Email Notifications
 Next Sprint
 
 ```
-Knowledge Base
+REST API and Webhooks
 ```
 
 ↓

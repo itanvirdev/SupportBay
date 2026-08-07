@@ -214,6 +214,15 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'notification':
+        \SupportBay\Dev\NotificationFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
+          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
+          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
+        );
+        break;
+
       case 'all':
         \SupportBay\Dev\TicketFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
@@ -316,6 +325,13 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
             \SupportBay\Modules\Portal\Http\PortalPage::class
           )
         );
+
+        \SupportBay\Dev\NotificationFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
+          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
+          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
+        );
         break;
 
       default:
@@ -336,6 +352,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- oauth\n";
         echo "- portal-api\n";
         echo "- portal-react\n";
+        echo "- notification\n";
         echo "- all\n";
         echo '</pre>';
     }

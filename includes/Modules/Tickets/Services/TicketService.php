@@ -13,6 +13,7 @@ use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 use SupportBay\Modules\Tickets\Events\TicketClosed;
+use SupportBay\Modules\Tickets\Events\TicketCreated;
 use SupportBay\Modules\Tickets\Events\TicketReopened;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Core\Events\EventDispatcher;
@@ -39,7 +40,16 @@ final class TicketService {
     $data['source']          = $data['source'] ?? SourceType::default()->value;
     $data['created_by_type'] = $data['created_by_type'] ?? AuthorType::default()->value;
 
-    return $this->repository->create($data);
+    $ticketId = $this->repository->create($data);
+    $ticket = $this->find($ticketId);
+
+    if (! $ticket) {
+      throw new RuntimeException('Unable to load created ticket.');
+    }
+
+    $this->events->dispatch(new TicketCreated($ticket));
+
+    return $ticketId;
   }
 
   /**

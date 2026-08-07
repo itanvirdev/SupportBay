@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Email Notifications
+Knowledge Base Foundation
 
 Current Objective
 
-Deliver ticket and reply notifications through event listeners and a provider-independent notification boundary.
+Establish provider-independent knowledge base categories and articles with customer-facing read APIs.
 
 ---
 
@@ -134,6 +134,8 @@ The following modules have passing Flow Tests.
 ✅ Providers
 
 ✅ Verifications
+
+✅ Notification Foundation
 ```
 
 Unless a bug exists,
@@ -342,13 +344,55 @@ Auth and React Portal Flow Tests
 
 ---
 
+# Completed Email Notification Foundation
+
+```
+TicketCreated / MessageCreated Events
+
+↓
+
+Notification Listeners
+
+↓
+
+NotificationService
+
+↓
+
+NotificationChannel Contract
+
+↓
+
+WordPress Email Channel
+
+↓
+
+NotificationFlowTest
+```
+
+Current behavior
+
+- Ticket creation emails the administrator and customer.
+- Customer follow-up replies email the administrator.
+- Agent replies email the customer.
+- Initial ticket content and internal notes do not create duplicate or private emails.
+
+Future notification work
+
+- Delivery logs
+- Queue and retries
+- Editable templates and preview
+- SMTP and external notification providers
+
+---
+
 # Immediate Next Tasks
 
-1. Define the provider-independent notification contract and data object.
+1. Define knowledge base category and article schemas.
 
-2. Add ticket-created and customer-reply email listeners.
+2. Add repositories, entities, and services.
 
-3. Add deterministic notification Flow Test coverage.
+3. Add customer-facing read APIs and Flow Test coverage.
 
 ---
 
@@ -468,10 +512,10 @@ Never
 
 # Next Milestone
 
-After Portal Authentication Experience
+After Email Notifications
 
 ```
-Email Notifications
+Knowledge Base Foundation
 ```
 
 ---
@@ -527,11 +571,11 @@ Status
 ```
 Current Sprint
 
-Email Notifications
+Knowledge Base Foundation
 
 Next Target
 
-Email Notifications
+Knowledge Base Foundation
 ```
 
 ---
