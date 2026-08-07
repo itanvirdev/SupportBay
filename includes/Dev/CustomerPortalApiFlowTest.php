@@ -45,6 +45,10 @@ final class CustomerPortalApiFlowTest extends FlowTest {
         wp_generate_password(12, false, false)
       ),
       'user_pass'  => wp_generate_password(32, true, true),
+      'user_email' => 'portal-test-' . strtolower(
+        wp_generate_password(8, false, false)
+      ) . '@example.com',
+      'display_name' => 'Portal Test Customer',
       'role'       => 'subscriber',
     ]);
 
@@ -74,7 +78,9 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     ]);
 
     $departmentId = $departments->create([
-      'name' => 'Portal Test Department',
+      'name' => 'Portal Test Department ' . strtoupper(
+        wp_generate_password(6, false, false)
+      ),
     ]);
 
     $ticketId = $tickets->create([
@@ -135,6 +141,59 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       1,
       $overviewData['data']['summary']['tickets'] ?? null,
       'Portal summary includes customer ticket count.'
+    );
+
+    $profileResponse = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/portal/profile')
+    );
+    $profileData = $profileResponse->get_data();
+    $originalEmail = $profileData['data']['email'] ?? null;
+
+    Assert::equals(
+      'Portal Test Customer',
+      $profileData['data']['display_name'] ?? null,
+      'Portal exposes the linked account identity.'
+    );
+
+    $invalidProfile = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/portal/profile'
+    );
+    $invalidProfile->set_body_params([
+      'timezone' => 'Not/A_Timezone',
+    ]);
+
+    Assert::equals(
+      422,
+      rest_do_request($invalidProfile)->get_status(),
+      'Portal rejects invalid profile values.'
+    );
+
+    $profileUpdate = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/portal/profile'
+    );
+    $profileUpdate->set_body_params([
+      'company'  => 'SupportBay Test Company',
+      'phone'    => '+880 1000 000000',
+      'country'  => 'Bangladesh',
+      'timezone' => 'Asia/Dhaka',
+      'language' => 'en_US',
+      'email'    => 'attempted-change@example.com',
+    ]);
+    $profileUpdateResponse = rest_do_request($profileUpdate);
+    $updatedProfile = $profileUpdateResponse->get_data();
+
+    Assert::equals(
+      'SupportBay Test Company',
+      $updatedProfile['data']['company'] ?? null,
+      'Customer can update editable profile fields.'
+    );
+
+    Assert::equals(
+      $originalEmail,
+      $updatedProfile['data']['email'] ?? null,
+      'Profile updates cannot change account identity fields.'
     );
 
     $ticketResponse = rest_do_request(
@@ -198,9 +257,12 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     );
     $departmentData = $departmentResponse->get_data();
 
-    Assert::equals(
-      $departmentId,
-      $departmentData['data'][0]['id'] ?? null,
+    Assert::true(
+      in_array(
+        $departmentId,
+        array_column($departmentData['data'] ?? [], 'id'),
+        true,
+      ),
       'Portal exposes active ticket departments.'
     );
 

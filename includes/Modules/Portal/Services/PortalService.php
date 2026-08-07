@@ -11,6 +11,7 @@ use SupportBay\Common\Enums\SourceType;
 use SupportBay\Modules\Attachments\Entities\Attachment;
 use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Customers\Entities\Customer;
+use SupportBay\Modules\Customers\Data\CustomerProfileData;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Departments\Services\DepartmentService;
@@ -54,6 +55,27 @@ final class PortalService {
     }
 
     return $customer;
+  }
+
+  /**
+   * Get the authenticated customer's profile.
+   */
+  public function profile(): CustomerProfileData {
+    return $this->customers->profile(
+      $this->currentCustomer()->id()
+    );
+  }
+
+  /**
+   * Update the authenticated customer's editable profile fields.
+   *
+   * @param array<string, mixed> $data
+   */
+  public function updateProfile(array $data): CustomerProfileData {
+    return $this->customers->updateProfile(
+      $this->currentCustomer()->id(),
+      $data,
+    );
   }
 
   /**

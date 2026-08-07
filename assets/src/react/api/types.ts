@@ -25,6 +25,28 @@ export interface PortalOverview {
   };
 }
 
+export interface PortalProfile {
+  id: number;
+  display_name: string;
+  email: string;
+  avatar_url: string | null;
+  company: string | null;
+  phone: string | null;
+  country: string | null;
+  timezone: string | null;
+  language: string | null;
+  state: string;
+  source: string;
+}
+
+export interface UpdateProfileInput {
+  company: string;
+  phone: string;
+  country: string;
+  timezone: string;
+  language: string;
+}
+
 export interface PortalTicket {
   id: number;
   track_id: string;

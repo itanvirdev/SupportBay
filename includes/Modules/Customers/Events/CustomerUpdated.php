@@ -9,8 +9,9 @@ use SupportBay\Modules\Customers\Entities\Customer;
 
 final class CustomerUpdated extends AbstractEvent {
   public function __construct(
-    private Customer $customer,
+    private readonly Customer $customer,
   ) {
+    parent::__construct();
   }
 
   public function customer(): Customer {

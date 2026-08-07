@@ -8,8 +8,18 @@ use RuntimeException;
 use SupportBay\Core\Integrations\Data\OAuthIdentityData;
 use SupportBay\Core\Integrations\Data\OAuthTokenData;
 use WP_Error;
+use WP_User;
 
 final class WordPressUserRepository {
+  /**
+   * Find a WordPress user by ID.
+   */
+  public function find(int $userId): ?WP_User {
+    $user = get_userdata($userId);
+
+    return $user instanceof WP_User ? $user : null;
+  }
+
   /**
    * Find a WordPress user by provider identity.
    */

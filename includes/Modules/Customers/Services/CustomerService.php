@@ -4,18 +4,23 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Customers\Services;
 
+use InvalidArgumentException;
 use RuntimeException;
+use SupportBay\Core\Events\EventDispatcher;
 use SupportBay\Core\Integrations\Data\OAuthLoginData;
+use SupportBay\Modules\Customers\Data\CustomerProfileData;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Repositories\CustomerRepository;
 use SupportBay\Modules\Customers\Repositories\WordPressUserRepository;
+use SupportBay\Modules\Customers\Events\CustomerUpdated;
 
 final class CustomerService {
   public function __construct(
     private readonly CustomerRepository $customers,
     private readonly WordPressUserRepository $users,
+    private readonly EventDispatcher $events,
   ) {
   }
 
@@ -185,6 +190,95 @@ final class CustomerService {
    */
   public function update(int $id, array $data): bool {
     return $this->customers->update($id, $data);
+  }
+
+  /**
+   * Load customer and linked WordPress identity profile data.
+   */
+  public function profile(int $id): CustomerProfileData {
+    $customer = $this->find($id);
+
+    if (! $customer) {
+      throw new RuntimeException('Customer not found.');
+    }
+
+    $user = $this->users->find($customer->userId());
+
+    if (! $user) {
+      throw new RuntimeException('Customer account not found.');
+    }
+
+    return new CustomerProfileData(
+      customer: $customer,
+      displayName: (string) $user->display_name,
+      email: (string) $user->user_email,
+    );
+  }
+
+  /**
+   * Update customer-editable profile fields.
+   *
+   * @param array<string, mixed> $data
+   */
+  public function updateProfile(
+    int $id,
+    array $data,
+  ): CustomerProfileData {
+    $this->profile($id);
+    $allowed = [
+      'company'  => 150,
+      'phone'    => 50,
+      'country'  => 100,
+      'timezone' => 100,
+      'language' => 20,
+    ];
+    $updates = [];
+
+    foreach ($allowed as $field => $maximumLength) {
+      if (! array_key_exists($field, $data)) {
+        continue;
+      }
+
+      $value = trim((string) $data[$field]);
+
+      $length = function_exists('mb_strlen')
+        ? mb_strlen($value)
+        : strlen($value);
+
+      if ($length > $maximumLength) {
+        throw new InvalidArgumentException(
+          sprintf('%s is too long.', ucfirst($field))
+        );
+      }
+
+      $updates[$field] = $value !== '' ? $value : null;
+    }
+
+    if (
+      isset($updates['timezone']) &&
+      ! in_array($updates['timezone'], timezone_identifiers_list(), true)
+    ) {
+      throw new InvalidArgumentException('Please select a valid timezone.');
+    }
+
+    if (
+      isset($updates['language']) &&
+      ! preg_match('/^[A-Za-z]{2,3}(?:[_-][A-Za-z]{2})?$/', $updates['language'])
+    ) {
+      throw new InvalidArgumentException('Please enter a valid language code.');
+    }
+
+    if ($updates === []) {
+      throw new InvalidArgumentException('No profile changes were provided.');
+    }
+
+    $this->customers->update($id, $updates);
+    $profile = $this->profile($id);
+    $this->events->dispatch(
+      new CustomerUpdated($profile->customer())
+    );
+
+    return $profile;
   }
 
   /**

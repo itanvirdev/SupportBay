@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Customer Portal — Customer Profile
+Customer Portal — Authentication Experience
 
 Current Objective
 
-Add authenticated customer profile viewing and account-safe profile updates.
+Complete the customer-facing login, logout, and unauthenticated portal experience.
 
 ---
 
@@ -316,13 +316,13 @@ VerificationService verifies purchases through registered integrations without k
 
 # Immediate Next Tasks
 
-1. Add customer profile REST endpoints.
+1. Add customer portal logout handling.
 
-2. Define editable customer identity and preference fields.
+2. Add an unauthenticated portal entry experience.
 
-3. Add the React customer profile screen and navigation.
+3. Connect existing OAuth and magic-login flows to portal redirects.
 
-4. Add customer profile coverage to the portal Flow Test.
+4. Add authentication experience Flow Test coverage.
 
 ---
 
@@ -442,14 +442,14 @@ Never
 
 # Next Milestone
 
-After Secure Attachment Downloads
+After Customer Profile
 
 ```
-Customer Profile
+Portal Authentication Experience
 
 ↓
 
-Portal Authentication Experience
+Email Notifications
 ```
 
 ---
@@ -505,11 +505,11 @@ Status
 ```
 Current Sprint
 
-Customer Portal Customer Profile
+Customer Portal Authentication Experience
 
 Next Target
 
-Customer Profile
+Portal Authentication Experience
 ```
 
 ---

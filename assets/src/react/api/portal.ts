@@ -5,13 +5,18 @@ import type {
   PortalAttachment,
   PortalMessage,
   PortalOverview,
+  PortalProfile,
   PortalTicket,
   PortalTicketDetail,
   PortalVerification,
+  UpdateProfileInput,
 } from './types';
 
 export const portalApi = {
   overview: () => apiGet<PortalOverview>('portal'),
+  profile: () => apiGet<PortalProfile>('portal/profile'),
+  updateProfile: (input: UpdateProfileInput) =>
+    apiPost<PortalProfile>('portal/profile', input),
   tickets: () => apiGet<PortalTicket[]>('portal/tickets'),
   createTicket: (input: CreateTicketInput) =>
     apiPost<PortalTicket>('portal/tickets', input),

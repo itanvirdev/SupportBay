@@ -562,6 +562,10 @@ Ticket Close and Reopen Actions
 ↓
 
 Secure Attachment Downloads
+
+↓
+
+Customer Profile
 ```
 
 Goal
@@ -572,14 +576,14 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Secure Attachment Downloads
+After Customer Profile
 
 ```
-Customer Profile
+Portal Authentication Experience
 
 ↓
 
-Portal Authentication Experience
+Email Notifications
 ```
 
 ---
@@ -927,17 +931,18 @@ Features
 Status
 
 ```
-❌ Not Started
+🚧 In Progress
 ```
 
 Features
 
 - Avatar
-- Display Name
-- Email
+- Display Name ✅ Read-only
+- Email ✅ Read-only
 - Connected Providers
 - Password
 - Notification Preferences
+- Company, phone, country, timezone, and language ✅
 
 ---
 

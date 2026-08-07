@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { PortalOverview } from '../api/types';
 
-export type PortalRoute = 'overview' | 'tickets' | 'purchases';
+export type PortalRoute = 'overview' | 'tickets' | 'purchases' | 'profile';
 
 interface PortalLayoutProps {
   overview: PortalOverview;
@@ -50,6 +50,7 @@ export function PortalLayout({
           {link('overview', '/support/', 'Overview')}
           {link('tickets', '/support/tickets/', 'Tickets')}
           {link('purchases', '/support/purchases/', 'Purchases')}
+          {link('profile', '/support/profile/', 'Profile')}
         </nav>
         <div className="sbay-sidebar__help">
           <span>Need a hand?</span>

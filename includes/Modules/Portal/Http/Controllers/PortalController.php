@@ -9,6 +9,7 @@ use RuntimeException;
 use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Attachments\Entities\Attachment;
 use SupportBay\Modules\Customers\Entities\Customer;
+use SupportBay\Modules\Customers\Data\CustomerProfileData;
 use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Portal\Services\PortalService;
@@ -34,6 +35,18 @@ final class PortalController {
     register_rest_route(self::NAMESPACE, '/portal', [
       'methods'             => 'GET',
       'callback'            => [$this, 'overview'],
+      'permission_callback' => [$this, 'permissions'],
+    ]);
+
+    register_rest_route(self::NAMESPACE, '/portal/profile', [
+      'methods'             => 'GET',
+      'callback'            => [$this, 'profile'],
+      'permission_callback' => [$this, 'permissions'],
+    ]);
+
+    register_rest_route(self::NAMESPACE, '/portal/profile', [
+      'methods'             => 'POST',
+      'callback'            => [$this, 'updateProfile'],
       'permission_callback' => [$this, 'permissions'],
     ]);
 
@@ -196,6 +209,51 @@ final class PortalController {
         'verifications' => count($verifications),
       ],
     ], 'Customer portal loaded.');
+  }
+
+  /**
+   * Return the authenticated customer's profile.
+   */
+  public function profile(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    return RestResponse::success(
+      $this->profileData($this->portal->profile()),
+      'Customer profile retrieved.',
+    );
+  }
+
+  /**
+   * Update customer-editable profile fields.
+   */
+  public function updateProfile(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    $data = [];
+
+    foreach (['company', 'phone', 'country', 'timezone', 'language'] as $field) {
+      if ($request->has_param($field)) {
+        $data[$field] = sanitize_text_field(
+          wp_unslash((string) $request->get_param($field))
+        );
+      }
+    }
+
+    try {
+      $profile = $this->portal->updateProfile($data);
+    } catch (InvalidArgumentException|RuntimeException $exception) {
+      return RestResponse::error(
+        $exception->getMessage(),
+        'PROFILE_UPDATE_FAILED',
+        [],
+        422,
+      );
+    }
+
+    return RestResponse::success(
+      $this->profileData($profile),
+      'Customer profile updated.',
+    );
   }
 
   /**
@@ -519,6 +577,29 @@ final class PortalController {
       'timezone'      => $customer->timezone(),
       'language'      => $customer->language(),
       'last_login_at' => $customer->lastLoginAt(),
+    ];
+  }
+
+  /**
+   * Customer profile fields safe for the authenticated account.
+   *
+   * @return array<string, mixed>
+   */
+  private function profileData(CustomerProfileData $profile): array {
+    $customer = $profile->customer();
+
+    return [
+      'id'           => $customer->id(),
+      'display_name' => $profile->displayName(),
+      'email'        => $profile->email(),
+      'avatar_url'   => $customer->avatarUrl(),
+      'company'      => $customer->company(),
+      'phone'        => $customer->phone(),
+      'country'      => $customer->country(),
+      'timezone'     => $customer->timezone(),
+      'language'     => $customer->language(),
+      'state'        => $customer->state()->value,
+      'source'       => $customer->source()->value,
     ];
   }
 

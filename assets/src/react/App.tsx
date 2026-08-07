@@ -6,6 +6,7 @@ import { PortalLayout, type PortalRoute } from './components/PortalLayout';
 import { PortalState } from './components/PortalState';
 import { DashboardPage } from './modules/dashboard/DashboardPage';
 import { PurchasesPage } from './modules/purchases/PurchasesPage';
+import { ProfilePage } from './modules/profile/ProfilePage';
 import { TicketDetailPage } from './modules/tickets/TicketDetailPage';
 import { NewTicketPage } from './modules/tickets/NewTicketPage';
 import { TicketsPage } from './modules/tickets/TicketsPage';
@@ -34,6 +35,10 @@ function matchRoute(pathname: string): RouteMatch {
 
   if (/^\/support\/purchases\/?$/.test(pathname)) {
     return { active: 'purchases' };
+  }
+
+  if (/^\/support\/profile\/?$/.test(pathname)) {
+    return { active: 'profile' };
   }
 
   return { active: 'overview' };
@@ -79,6 +84,22 @@ function App() {
       : <TicketsPage navigate={navigate} />;
   } else if (route.active === 'purchases') {
     page = <PurchasesPage />;
+  } else if (route.active === 'profile') {
+    page = (
+      <ProfilePage
+        onUpdated={(profile) => setOverview({
+          ...overview,
+          customer: {
+            ...overview.customer,
+            avatar_url: profile.avatar_url,
+            company: profile.company,
+            country: profile.country,
+            timezone: profile.timezone,
+            language: profile.language,
+          },
+        })}
+      />
+    );
   }
 
   return (
