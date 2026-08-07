@@ -12,7 +12,7 @@ final class PortalPage {
    */
   public static function registerRewriteRule(): void {
     add_rewrite_rule(
-      '^support/?$',
+      '^support(?:/.*)?$',
       'index.php?' . self::QUERY_VAR . '=1',
       'top'
     );

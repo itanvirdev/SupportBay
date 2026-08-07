@@ -9,6 +9,8 @@ use SupportBay\Core\Testing\FlowTest;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
+use SupportBay\Modules\Messages\Enums\MessageType;
+use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Verifications\Enums\VerificationStatus;
 use SupportBay\Modules\Verifications\Services\VerificationService;
@@ -23,7 +25,8 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     /** @var CustomerService $customers */
     /** @var TicketService $tickets */
     /** @var VerificationService $verifications */
-    [$customers, $tickets, $verifications] = $services;
+    /** @var MessageService $messages */
+    [$customers, $tickets, $verifications, $messages] = $services;
 
     $userId = wp_insert_user([
       'user_login' => 'sbay-portal-' . strtolower(
@@ -63,6 +66,22 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'department_id'            => 1,
       'subject'                  => 'Portal Test Ticket',
       'purchase_verification_id' => $verificationId,
+    ]);
+
+    $reply = $messages->create([
+      'ticket_id'  => $ticketId,
+      'author_id'  => $userId,
+      'author_type' => 'customer',
+      'type'       => MessageType::REPLY->value,
+      'content'    => 'Customer-visible portal reply.',
+    ]);
+
+    $internalNote = $messages->create([
+      'ticket_id'  => $ticketId,
+      'author_id'  => 1,
+      'author_type' => 'agent',
+      'type'       => MessageType::INTERNAL_NOTE->value,
+      'content'    => 'Private staff note.',
     ]);
 
     wp_set_current_user(0);
@@ -113,6 +132,32 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Portal exposes only the current customer tickets.'
     );
 
+    $detailResponse = rest_do_request(
+      new WP_REST_Request(
+        'GET',
+        '/sbay/v1/portal/tickets/' . $ticketId
+      )
+    );
+    $detailData = $detailResponse->get_data();
+
+    Assert::equals(
+      200,
+      $detailResponse->get_status(),
+      'Customer can load an owned ticket detail.'
+    );
+
+    Assert::equals(
+      $reply->id(),
+      $detailData['data']['messages'][0]['id'] ?? null,
+      'Ticket detail exposes customer-visible messages.'
+    );
+
+    Assert::count(
+      1,
+      $detailData['data']['messages'] ?? [],
+      'Ticket detail excludes internal notes.'
+    );
+
     $verificationResponse = rest_do_request(
       new WP_REST_Request('GET', '/sbay/v1/portal/verifications')
     );
@@ -133,6 +178,16 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     );
 
     wp_set_current_user(0);
+
+    Assert::true(
+      $messages->delete($reply->id()),
+      'Test reply deleted.'
+    );
+
+    Assert::true(
+      $messages->delete($internalNote->id()),
+      'Test internal note deleted.'
+    );
 
     Assert::true(
       $tickets->delete($ticketId),

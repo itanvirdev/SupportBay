@@ -7,6 +7,7 @@ namespace SupportBay\Modules\Portal\Http\Controllers;
 use RuntimeException;
 use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Customers\Entities\Customer;
+use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Portal\Services\PortalService;
 use SupportBay\Modules\Tickets\Entities\Ticket;
 use SupportBay\Modules\Verifications\Entities\Verification;
@@ -37,6 +38,23 @@ final class PortalController {
       'callback'            => [$this, 'tickets'],
       'permission_callback' => [$this, 'permissions'],
     ]);
+
+    register_rest_route(
+      self::NAMESPACE,
+      '/portal/tickets/(?P<id>\d+)',
+      [
+        'methods'             => 'GET',
+        'callback'            => [$this, 'ticket'],
+        'permission_callback' => [$this, 'permissions'],
+        'args'                => [
+          'id' => [
+            'sanitize_callback' => 'absint',
+            'validate_callback' => static fn(mixed $value): bool =>
+              is_numeric($value) && (int) $value > 0,
+          ],
+        ],
+      ]
+    );
 
     register_rest_route(self::NAMESPACE, '/portal/verifications', [
       'methods'             => 'GET',
@@ -108,6 +126,42 @@ final class PortalController {
   }
 
   /**
+   * Return one customer-owned ticket and its visible conversation.
+   */
+  public function ticket(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    try {
+      $ticket = $this->portal->ticket(
+        (int) $request->get_param('id')
+      );
+      $messages = array_map(
+        fn(Message $message): array => $this->messageData($message),
+        $this->portal->ticketMessages($ticket->id()),
+      );
+    } catch (RuntimeException) {
+      return RestResponse::error(
+        'Ticket was not found.',
+        'TICKET_NOT_FOUND',
+        [],
+        404,
+      );
+    }
+
+    $verification = $ticket->purchaseVerificationId() !== null
+      ? $this->portal->verification($ticket->purchaseVerificationId())
+      : null;
+
+    return RestResponse::success([
+      'ticket'       => $this->ticketData($ticket),
+      'messages'     => $messages,
+      'verification' => $verification
+        ? $this->verificationData($verification)
+        : null,
+    ], 'Ticket retrieved.');
+  }
+
+  /**
    * Return the current customer's purchase verifications.
    */
   public function verifications(
@@ -153,6 +207,7 @@ final class PortalController {
   private function ticketData(Ticket $ticket): array {
     return [
       'id'                       => $ticket->id(),
+      'track_id'                 => $ticket->trackId(),
       'subject'                  => $ticket->subject(),
       'status'                   => $ticket->status()->value,
       'priority'                 => $ticket->priority()->value,
@@ -160,6 +215,22 @@ final class PortalController {
       'purchase_verification_id' => $ticket->purchaseVerificationId(),
       'created_at'               => $ticket->createdAt(),
       'updated_at'               => $ticket->updatedAt(),
+    ];
+  }
+
+  /**
+   * Customer-safe message fields.
+   *
+   * @return array<string, mixed>
+   */
+  private function messageData(Message $message): array {
+    return [
+      'id'          => $message->id(),
+      'author_type' => $message->authorType()->value,
+      'type'        => $message->type()->value,
+      'content'     => wp_strip_all_tags($message->content()),
+      'edited_at'   => $message->editedAt(),
+      'created_at'  => $message->createdAt(),
     ];
   }
 

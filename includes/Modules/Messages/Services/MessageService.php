@@ -47,6 +47,22 @@ final class MessageService {
   }
 
   /**
+   * Get messages belonging to a ticket.
+   *
+   * @return Message[]
+   */
+  public function findByTicket(int $ticketId): array {
+    return $this->repository->getByTicket($ticketId);
+  }
+
+  /**
+   * Delete a message.
+   */
+  public function delete(int $id): bool {
+    return $this->repository->delete($id);
+  }
+
+  /**
    * Validation layer
    */
   private function validate(array $data): void {

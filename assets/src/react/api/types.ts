@@ -27,6 +27,7 @@ export interface PortalOverview {
 
 export interface PortalTicket {
   id: number;
+  track_id: string;
   subject: string;
   status: string;
   priority: string;
@@ -34,6 +35,21 @@ export interface PortalTicket {
   purchase_verification_id: number | null;
   created_at: string;
   updated_at: string | null;
+}
+
+export interface PortalMessage {
+  id: number;
+  author_type: string;
+  type: string;
+  content: string;
+  edited_at: string | null;
+  created_at: string;
+}
+
+export interface PortalTicketDetail {
+  ticket: PortalTicket;
+  messages: PortalMessage[];
+  verification: PortalVerification | null;
 }
 
 export interface PortalVerification {

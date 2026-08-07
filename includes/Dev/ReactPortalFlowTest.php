@@ -22,7 +22,7 @@ final class ReactPortalFlowTest extends FlowTest {
     PortalPage::registerRewriteRule();
 
     Assert::true(
-      isset($wp_rewrite->extra_rules_top['^support/?$']),
+      isset($wp_rewrite->extra_rules_top['^support(?:/.*)?$']),
       'Customer portal rewrite is registered.'
     );
 

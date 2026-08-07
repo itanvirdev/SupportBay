@@ -82,9 +82,7 @@ final class MessageRepository extends Repository {
   public function getByTicket(int $ticketId): array {
     return $this->findWhere([
       'ticket_id' => $ticketId,
-      'id',
-      'ASC'
-    ]);
+    ], 'id', 'ASC');
   }
 
   /**

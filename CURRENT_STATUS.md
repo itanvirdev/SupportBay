@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Customer Portal — Purchases and Tickets
+Customer Portal — Ticket Creation and Replies
 
 Current Objective
 
-Build the authenticated Customer Portal on the completed provider-independent verification and OAuth foundations.
+Add customer ticket creation and replies to the completed authenticated React portal.
 
 ---
 
@@ -462,18 +462,18 @@ Never
 
 # Next Milestone
 
-After OAuth Login
+After Ticket and Purchase Screens
 
 ```
-Customer Dashboard
+Customer Ticket Creation
 
 ↓
 
-Downloads
+Customer Replies
 
 ↓
 
-Licenses
+Attachment Uploads
 ```
 
 ---
@@ -529,11 +529,11 @@ Status
 ```
 Current Sprint
 
-Customer Portal Purchases and Tickets
+Customer Portal Ticket Creation and Replies
 
 Next Target
 
-Ticket and Purchase Screens
+Customer Ticket Creation
 ```
 
 ---

@@ -105,6 +105,10 @@ final class Ticket extends Entity {
     return $this->id;
   }
 
+  public function trackId(): string {
+    return $this->trackId;
+  }
+
   public function customerId(): int {
     return $this->customerId;
   }

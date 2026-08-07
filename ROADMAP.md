@@ -450,7 +450,7 @@ Pending
 
 ---
 
-# Current Milestone
+# Completed Milestone
 
 Current Focus
 
@@ -530,6 +530,18 @@ Authenticated Dashboard
 ↓
 
 React Portal Flow Test
+
+↓
+
+Ticket List and Detail Screens
+
+↓
+
+Customer-visible Message Thread
+
+↓
+
+Verified Purchases Screen
 ```
 
 Goal
@@ -540,14 +552,18 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After React Portal Foundation
+After Purchases and Tickets UI
 
 ```
-Purchases and Tickets UI
+Customer Ticket Creation
 
 ↓
 
-Broader REST API
+Customer Replies
+
+↓
+
+Attachment Uploads
 ```
 
 ---
