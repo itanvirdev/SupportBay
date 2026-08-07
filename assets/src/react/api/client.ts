@@ -11,11 +11,30 @@ export class ApiError extends Error {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
+  return apiRequest<T>(path, { method: 'GET' });
+}
+
+export async function apiPost<T>(
+  path: string,
+  body: object,
+): Promise<T> {
+  return apiRequest<T>(path, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+async function apiRequest<T>(
+  path: string,
+  options: RequestInit,
+): Promise<T> {
   const config = getConfig();
   const response = await fetch(`${config.restUrl}${path}`, {
+    ...options,
     credentials: 'same-origin',
     headers: {
       Accept: 'application/json',
+      'Content-Type': 'application/json',
       'X-WP-Nonce': config.restNonce,
     },
   });

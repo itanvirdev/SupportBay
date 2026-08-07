@@ -11,6 +11,9 @@ interface TicketDetailPageProps {
 export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) {
   const [detail, setDetail] = useState<PortalTicketDetail | null>(null);
   const [missing, setMissing] = useState(false);
+  const [reply, setReply] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     portalApi.ticket(ticketId).then(setDetail).catch(() => setMissing(true));
@@ -23,6 +26,24 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
   if (!detail) {
     return <p className="sbay-empty">Loading ticket conversation…</p>;
   }
+
+  const canReply = ['open', 'pending', 'answered'].includes(detail.ticket.status);
+
+  const submitReply = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const message = await portalApi.reply(ticketId, reply);
+      setDetail({ ...detail, messages: [...detail.messages, message] });
+      setReply('');
+    } catch (exception) {
+      setError(exception instanceof Error ? exception.message : 'Reply could not be added.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <section className="sbay-page">
@@ -56,6 +77,24 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
               <p>{message.content}</p>
             </article>
           ))}
+          {canReply ? (
+            <form className="sbay-reply-form" onSubmit={submitReply}>
+              <label htmlFor="sbay-ticket-reply">Add a reply</label>
+              <textarea
+                id="sbay-ticket-reply"
+                value={reply}
+                onChange={(event) => setReply(event.target.value)}
+                rows={5}
+                required
+              />
+              {error ? <p className="sbay-form-error" role="alert">{error}</p> : null}
+              <button className="sbay-primary-button" type="submit" disabled={submitting}>
+                {submitting ? 'Sending…' : 'Send reply'}
+              </button>
+            </form>
+          ) : (
+            <p className="sbay-reply-closed">This ticket is closed to new replies.</p>
+          )}
         </section>
 
         <aside className="sbay-ticket-aside">

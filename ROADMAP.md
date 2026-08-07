@@ -542,6 +542,14 @@ Customer-visible Message Thread
 ↓
 
 Verified Purchases Screen
+
+↓
+
+Customer Ticket Creation
+
+↓
+
+Customer Replies
 ```
 
 Goal
@@ -552,18 +560,14 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Purchases and Tickets UI
+After Customer Ticket Creation and Replies
 
 ```
-Customer Ticket Creation
-
-↓
-
-Customer Replies
-
-↓
-
 Attachment Uploads
+
+↓
+
+Ticket Close and Reopen Actions
 ```
 
 ---
@@ -769,7 +773,7 @@ Status Legend
 Status
 
 ```
-❌ Not Started
+🚧 In Progress
 ```
 
 Purpose
@@ -806,7 +810,7 @@ Future
 Status
 
 ```
-❌ Not Started
+✅ Complete
 ```
 
 Features
@@ -826,7 +830,7 @@ Features
 Status
 
 ```
-❌ Not Started
+✅ Complete
 ```
 
 Features
@@ -891,13 +895,13 @@ Features
 Status
 
 ```
-⏳ Planned
+🚧 In Progress
 ```
 
 Features
 
-- Create Ticket
-- Reply
+- Create Ticket ✅
+- Reply ✅
 - Close
 - Reopen
 - Attachments

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Portal\Http\Controllers;
 
+use InvalidArgumentException;
 use RuntimeException;
 use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Customers\Entities\Customer;
+use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Portal\Services\PortalService;
 use SupportBay\Modules\Tickets\Entities\Ticket;
@@ -39,6 +41,12 @@ final class PortalController {
       'permission_callback' => [$this, 'permissions'],
     ]);
 
+    register_rest_route(self::NAMESPACE, '/portal/tickets', [
+      'methods'             => 'POST',
+      'callback'            => [$this, 'createTicket'],
+      'permission_callback' => [$this, 'permissions'],
+    ]);
+
     register_rest_route(
       self::NAMESPACE,
       '/portal/tickets/(?P<id>\d+)',
@@ -55,6 +63,29 @@ final class PortalController {
         ],
       ]
     );
+
+    register_rest_route(
+      self::NAMESPACE,
+      '/portal/tickets/(?P<id>\d+)/replies',
+      [
+        'methods'             => 'POST',
+        'callback'            => [$this, 'reply'],
+        'permission_callback' => [$this, 'permissions'],
+        'args'                => [
+          'id' => [
+            'sanitize_callback' => 'absint',
+            'validate_callback' => static fn(mixed $value): bool =>
+              is_numeric($value) && (int) $value > 0,
+          ],
+        ],
+      ]
+    );
+
+    register_rest_route(self::NAMESPACE, '/portal/departments', [
+      'methods'             => 'GET',
+      'callback'            => [$this, 'departments'],
+      'permission_callback' => [$this, 'permissions'],
+    ]);
 
     register_rest_route(self::NAMESPACE, '/portal/verifications', [
       'methods'             => 'GET',
@@ -126,6 +157,42 @@ final class PortalController {
   }
 
   /**
+   * Create a customer ticket and opening message.
+   */
+  public function createTicket(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    try {
+      $ticket = $this->portal->createTicket([
+        'subject' => sanitize_text_field(
+          wp_unslash((string) $request->get_param('subject'))
+        ),
+        'content' => sanitize_textarea_field(
+          wp_unslash((string) $request->get_param('content'))
+        ),
+        'department_id' => absint($request->get_param('department_id')),
+        'purchase_verification_id' => absint(
+          $request->get_param('purchase_verification_id')
+        ) ?: null,
+      ]);
+    } catch (InvalidArgumentException|RuntimeException $exception) {
+      return RestResponse::error(
+        $exception->getMessage(),
+        'TICKET_CREATION_FAILED',
+        [],
+        422,
+      );
+    }
+
+    return RestResponse::success(
+      $this->ticketData($ticket),
+      'Ticket created.',
+      [],
+      201,
+    );
+  }
+
+  /**
    * Return one customer-owned ticket and its visible conversation.
    */
   public function ticket(
@@ -159,6 +226,58 @@ final class PortalController {
         ? $this->verificationData($verification)
         : null,
     ], 'Ticket retrieved.');
+  }
+
+  /**
+   * Add a customer reply to a ticket.
+   */
+  public function reply(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    try {
+      $message = $this->portal->reply(
+        (int) $request->get_param('id'),
+        sanitize_textarea_field(
+          wp_unslash((string) $request->get_param('content'))
+        ),
+      );
+    } catch (InvalidArgumentException|RuntimeException $exception) {
+      return RestResponse::error(
+        $exception->getMessage(),
+        'TICKET_REPLY_FAILED',
+        [],
+        422,
+      );
+    }
+
+    return RestResponse::success(
+      $this->messageData($message),
+      'Reply added.',
+      [],
+      201,
+    );
+  }
+
+  /**
+   * Return active departments available to customers.
+   */
+  public function departments(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    $departments = array_map(
+      fn(Department $department): array => [
+        'id'          => $department->id(),
+        'name'        => $department->name(),
+        'description' => $department->description(),
+      ],
+      $this->portal->departments(),
+    );
+
+    return RestResponse::success(
+      $departments,
+      'Departments retrieved.',
+      ['total' => count($departments)],
+    );
   }
 
   /**

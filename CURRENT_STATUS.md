@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Customer Portal — Ticket Creation and Replies
+Customer Portal — Attachment Uploads
 
 Current Objective
 
-Add customer ticket creation and replies to the completed authenticated React portal.
+Add secure message attachment uploads to the completed customer ticket workflow.
 
 ---
 
@@ -316,33 +316,13 @@ VerificationService verifies purchases through registered integrations without k
 
 # Immediate Next Tasks
 
-1.
+1. Add customer-safe attachment upload endpoints.
 
-Add
+2. Validate attachment type, size, and ticket ownership.
 
-```
-Dedicated ticket list route and screen
-```
+3. Connect uploads to opening messages and replies.
 
-2.
-
-Add
-
-```
-Dedicated verified purchases screen
-```
-
-3.
-
-Expose
-
-```
-Ticket detail API and page
-```
-
-4.
-
-Add accessible portal navigation and empty states.
+4. Add attachment coverage to the portal Flow Test.
 
 ---
 
@@ -462,18 +442,14 @@ Never
 
 # Next Milestone
 
-After Ticket and Purchase Screens
+After Ticket Creation and Replies
 
 ```
-Customer Ticket Creation
-
-↓
-
-Customer Replies
-
-↓
-
 Attachment Uploads
+
+↓
+
+Ticket Close and Reopen Actions
 ```
 
 ---
@@ -529,11 +505,11 @@ Status
 ```
 Current Sprint
 
-Customer Portal Ticket Creation and Replies
+Customer Portal Attachment Uploads
 
 Next Target
 
-Customer Ticket Creation
+Customer Attachment Uploads
 ```
 
 ---

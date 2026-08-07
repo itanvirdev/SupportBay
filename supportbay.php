@@ -195,6 +195,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Messages\Services\MessageService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Departments\Services\DepartmentService::class
           )
         );
         break;
@@ -294,6 +297,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Messages\Services\MessageService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Departments\Services\DepartmentService::class
           )
         );
 

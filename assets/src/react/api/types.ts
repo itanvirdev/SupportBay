@@ -52,6 +52,19 @@ export interface PortalTicketDetail {
   verification: PortalVerification | null;
 }
 
+export interface PortalDepartment {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
+export interface CreateTicketInput {
+  subject: string;
+  content: string;
+  department_id: number;
+  purchase_verification_id: number | null;
+}
+
 export interface PortalVerification {
   id: number;
   provider: string;

@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Portal\Services;
 
+use InvalidArgumentException;
 use RuntimeException;
+use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Common\Enums\SourceType;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Services\CustomerService;
+use SupportBay\Modules\Departments\Entities\Department;
+use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Entities\Message;
+use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Entities\Ticket;
 use SupportBay\Modules\Tickets\Services\TicketService;
@@ -20,6 +26,7 @@ final class PortalService {
     private readonly TicketService $tickets,
     private readonly VerificationService $verifications,
     private readonly MessageService $messages,
+    private readonly DepartmentService $departments,
   ) {
   }
 
@@ -111,5 +118,111 @@ final class PortalService {
       $this->messages->findByTicket($ticketId),
       fn(Message $message): bool => $message->isVisibleToCustomer(),
     ));
+  }
+
+  /**
+   * Get departments available for customer tickets.
+   *
+   * @return Department[]
+   */
+  public function departments(): array {
+    return $this->departments->active();
+  }
+
+  /**
+   * Create a customer ticket with its opening message.
+   *
+   * @param array<string, mixed> $data
+   */
+  public function createTicket(array $data): Ticket {
+    $customer = $this->currentCustomer();
+    $departmentId = (int) ($data['department_id'] ?? 0);
+    $department = $this->departments->find($departmentId);
+
+    if (! $department || ! $department->isActive()) {
+      throw new InvalidArgumentException(
+        'Please select an available department.'
+      );
+    }
+
+    $subject = trim((string) ($data['subject'] ?? ''));
+    $content = trim((string) ($data['content'] ?? ''));
+
+    if ($subject === '') {
+      throw new InvalidArgumentException('Ticket subject is required.');
+    }
+
+    if ($content === '') {
+      throw new InvalidArgumentException('Opening message is required.');
+    }
+
+    $verificationId = ! empty($data['purchase_verification_id'])
+      ? (int) $data['purchase_verification_id']
+      : null;
+
+    if ($verificationId !== null && ! $this->verification($verificationId)) {
+      throw new InvalidArgumentException(
+        'The selected purchase is unavailable.'
+      );
+    }
+
+    $ticketId = $this->tickets->create([
+      'customer_id'              => $customer->id(),
+      'created_by_id'            => $customer->userId(),
+      'created_by_type'          => AuthorType::CUSTOMER->value,
+      'purchase_verification_id' => $verificationId,
+      'department_id'            => $departmentId,
+      'subject'                  => $subject,
+      'priority'                 => $department->defaultPriority()->value,
+      'source'                   => SourceType::WEB->value,
+    ]);
+
+    try {
+      $this->messages->create([
+        'ticket_id'   => $ticketId,
+        'author_id'   => $customer->userId(),
+        'author_type' => AuthorType::CUSTOMER->value,
+        'type'        => MessageType::REPLY->value,
+        'content'     => $content,
+      ]);
+    } catch (RuntimeException $exception) {
+      $this->tickets->delete($ticketId);
+
+      throw $exception;
+    }
+
+    $ticket = $this->tickets->find($ticketId);
+
+    if (! $ticket) {
+      throw new RuntimeException('Failed to create ticket.');
+    }
+
+    return $ticket;
+  }
+
+  /**
+   * Add a customer reply to an owned ticket.
+   */
+  public function reply(int $ticketId, string $content): Message {
+    $ticket = $this->ticket($ticketId);
+    $customer = $this->currentCustomer();
+
+    if (! $ticket->status()->canReceiveReplies()) {
+      throw new RuntimeException(
+        'This ticket cannot receive new replies.'
+      );
+    }
+
+    if (trim($content) === '') {
+      throw new InvalidArgumentException('Reply content is required.');
+    }
+
+    return $this->messages->create([
+      'ticket_id'   => $ticket->id(),
+      'author_id'   => $customer->userId(),
+      'author_type' => AuthorType::CUSTOMER->value,
+      'type'        => MessageType::REPLY->value,
+      'content'     => $content,
+    ]);
   }
 }

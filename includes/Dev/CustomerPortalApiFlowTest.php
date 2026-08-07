@@ -9,6 +9,7 @@ use SupportBay\Core\Testing\FlowTest;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
+use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
@@ -26,7 +27,8 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     /** @var TicketService $tickets */
     /** @var VerificationService $verifications */
     /** @var MessageService $messages */
-    [$customers, $tickets, $verifications, $messages] = $services;
+    /** @var DepartmentService $departments */
+    [$customers, $tickets, $verifications, $messages, $departments] = $services;
 
     $userId = wp_insert_user([
       'user_login' => 'sbay-portal-' . strtolower(
@@ -61,9 +63,13 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       ],
     ]);
 
+    $departmentId = $departments->create([
+      'name' => 'Portal Test Department',
+    ]);
+
     $ticketId = $tickets->create([
       'customer_id'              => $customerId,
-      'department_id'            => 1,
+      'department_id'            => $departmentId,
       'subject'                  => 'Portal Test Ticket',
       'purchase_verification_id' => $verificationId,
     ]);
@@ -177,6 +183,63 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Portal does not expose provider snapshots.'
     );
 
+    $departmentResponse = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/portal/departments')
+    );
+    $departmentData = $departmentResponse->get_data();
+
+    Assert::equals(
+      $departmentId,
+      $departmentData['data'][0]['id'] ?? null,
+      'Portal exposes active ticket departments.'
+    );
+
+    $createRequest = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/portal/tickets'
+    );
+    $createRequest->set_body_params([
+      'subject'                  => 'Created from customer portal',
+      'content'                  => 'This is the opening portal message.',
+      'department_id'            => $departmentId,
+      'purchase_verification_id' => $verificationId,
+    ]);
+    $createResponse = rest_do_request($createRequest);
+    $createData = $createResponse->get_data();
+    $createdTicketId = (int) ($createData['data']['id'] ?? 0);
+
+    Assert::equals(
+      201,
+      $createResponse->get_status(),
+      'Customer can create a ticket through the portal.'
+    );
+
+    Assert::true(
+      $createdTicketId > 0,
+      'Portal returns the created ticket.'
+    );
+
+    $replyRequest = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/portal/tickets/' . $createdTicketId . '/replies'
+    );
+    $replyRequest->set_body_params([
+      'content' => 'A follow-up customer reply.',
+    ]);
+    $replyResponse = rest_do_request($replyRequest);
+
+    Assert::equals(
+      201,
+      $replyResponse->get_status(),
+      'Customer can reply to an owned ticket.'
+    );
+
+    Assert::count(
+      2,
+      $messages->findByTicket($createdTicketId),
+      'Created ticket contains its opening message and reply.'
+    );
+
     wp_set_current_user(0);
 
     Assert::true(
@@ -187,6 +250,15 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::true(
       $messages->delete($internalNote->id()),
       'Test internal note deleted.'
+    );
+
+    foreach ($messages->findByTicket($createdTicketId) as $createdMessage) {
+      $messages->delete($createdMessage->id());
+    }
+
+    Assert::true(
+      $tickets->delete($createdTicketId),
+      'Portal-created test ticket deleted.'
     );
 
     Assert::true(
@@ -202,6 +274,11 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::true(
       $customers->deleteWithUser($customerId),
       'Test customer and WordPress user deleted.'
+    );
+
+    Assert::true(
+      $departments->delete($departmentId),
+      'Test department deleted.'
     );
   }
 }

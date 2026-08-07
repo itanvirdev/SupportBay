@@ -22,7 +22,16 @@ export function TicketsPage({ navigate }: TicketsPageProps) {
           <h1>Your tickets</h1>
           <p>Track every conversation and its current status.</p>
         </div>
-        <span className="sbay-page__total">{tickets?.length ?? 0} total</span>
+        <div className="sbay-page__actions">
+          <span className="sbay-page__total">{tickets?.length ?? 0} total</span>
+          <button
+            className="sbay-primary-button"
+            type="button"
+            onClick={() => navigate('/support/tickets/new/')}
+          >
+            Create ticket
+          </button>
+        </div>
       </header>
 
       <div className="sbay-table-card">

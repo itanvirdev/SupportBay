@@ -7,15 +7,21 @@ import { PortalState } from './components/PortalState';
 import { DashboardPage } from './modules/dashboard/DashboardPage';
 import { PurchasesPage } from './modules/purchases/PurchasesPage';
 import { TicketDetailPage } from './modules/tickets/TicketDetailPage';
+import { NewTicketPage } from './modules/tickets/NewTicketPage';
 import { TicketsPage } from './modules/tickets/TicketsPage';
 import './styles/portal.scss';
 
 interface RouteMatch {
   active: PortalRoute;
   ticketId?: number;
+  newTicket?: boolean;
 }
 
 function matchRoute(pathname: string): RouteMatch {
+  if (/^\/support\/tickets\/new\/?$/.test(pathname)) {
+    return { active: 'tickets', newTicket: true };
+  }
+
   const ticketMatch = pathname.match(/^\/support\/tickets\/(\d+)\/?$/);
 
   if (ticketMatch) {
@@ -66,7 +72,9 @@ function App() {
   let page = <DashboardPage overview={overview} navigate={navigate} />;
 
   if (route.active === 'tickets') {
-    page = route.ticketId
+    page = route.newTicket
+      ? <NewTicketPage navigate={navigate} />
+      : route.ticketId
       ? <TicketDetailPage ticketId={route.ticketId} navigate={navigate} />
       : <TicketsPage navigate={navigate} />;
   } else if (route.active === 'purchases') {
