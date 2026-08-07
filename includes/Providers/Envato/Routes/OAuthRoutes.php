@@ -77,10 +77,7 @@ final class OAuthRoutes {
   }
 
   /**
-   * OAuth callback.
-   *
-   * Customer linking and authentication will be implemented
-   * in a later phase.
+   * Authenticate the customer after the OAuth callback.
    */
   private function callback(): void {
 
@@ -116,7 +113,7 @@ final class OAuthRoutes {
 
     wp_set_auth_cookie($customer->userId(), true);
 
-    wp_safe_redirect(home_url('/'));
+    wp_safe_redirect(home_url('/support/'));
 
     exit;
   }

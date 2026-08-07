@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { PortalOverview } from '../api/types';
+import { getConfig } from '../core/config';
 
 export type PortalRoute = 'overview' | 'tickets' | 'purchases' | 'profile';
 
@@ -17,6 +18,7 @@ export function PortalLayout({
   children,
 }: PortalLayoutProps) {
   const name = overview.customer.company ?? 'Customer';
+  const config = getConfig();
 
   const link = (route: PortalRoute, path: string, label: string) => (
     <a
@@ -68,6 +70,7 @@ export function PortalLayout({
             )}
             <strong>{name}</strong>
           </span>
+          <a className="sbay-logout" href={config.logoutUrl}>Sign out</a>
         </div>
         {children}
       </main>

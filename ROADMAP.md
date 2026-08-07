@@ -566,6 +566,10 @@ Secure Attachment Downloads
 ↓
 
 Customer Profile
+
+↓
+
+Portal Authentication Experience
 ```
 
 Goal
@@ -576,13 +580,9 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Customer Profile
+After Portal Authentication Experience
 
 ```
-Portal Authentication Experience
-
-↓
-
 Email Notifications
 ```
 
@@ -1392,13 +1392,7 @@ Current
 Current Sprint
 
 ```
-Purchases and Tickets UI
-
-Ticket List and Details
-
-Verified Purchases
-
-Portal Navigation
+Email Notifications
 ```
 
 ↓
@@ -1406,7 +1400,7 @@ Portal Navigation
 Next Sprint
 
 ```
-REST API and Webhooks
+Knowledge Base
 ```
 
 ↓

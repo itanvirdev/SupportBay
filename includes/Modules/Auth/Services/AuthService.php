@@ -85,7 +85,10 @@ final class AuthService {
   /**
    * Authenticate token.
    */
-  public function authenticate(string $plainToken): ?AuthToken {
+  public function authenticate(
+    string $plainToken,
+    ?AuthTokenType $expectedType = null,
+  ): ?AuthToken {
 
     $token = $this->findByToken($plainToken);
 
@@ -93,12 +96,9 @@ final class AuthService {
       return null;
     }
 
-    if ($token->state() !== AuthTokenState::ACTIVE) {
-      return null;
-    }
-
     if (
-      strtotime($token->expiresAt()) < time()
+      ! $token->canBeUsed()
+      || ($expectedType !== null && $token->type() !== $expectedType)
     ) {
       return null;
     }

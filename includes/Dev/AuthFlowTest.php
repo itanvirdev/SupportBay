@@ -9,6 +9,7 @@ use SupportBay\Core\Testing\FlowTest;
 use SupportBay\Modules\Auth\Enums\AuthTokenState;
 use SupportBay\Modules\Auth\Enums\AuthTokenType;
 use SupportBay\Modules\Auth\Services\AuthService;
+use SupportBay\Modules\Auth\Services\MagicLoginService;
 
 final class AuthFlowTest extends FlowTest {
   /**
@@ -23,7 +24,8 @@ final class AuthFlowTest extends FlowTest {
    */
   protected static function execute(...$services): void {
     /** @var AuthService $authService */
-    [$authService] = $services;
+    /** @var MagicLoginService $magicLogin */
+    [$authService, $magicLogin] = $services;
 
     echo "🚀 Starting SupportBay Auth Flow Test...\n\n";
 
@@ -116,6 +118,14 @@ final class AuthFlowTest extends FlowTest {
       'Last used timestamp updated.'
     );
 
+    Assert::null(
+      $authService->authenticate(
+        $plainToken,
+        AuthTokenType::API_ACCESS,
+      ),
+      'Token cannot authenticate as a different type.'
+    );
+
     // -------------------------------------------------
     // Revoke Token
     // -------------------------------------------------
@@ -145,6 +155,35 @@ final class AuthFlowTest extends FlowTest {
     Assert::notNull(
       $revoked->revokedAt(),
       'Revoked timestamp stored.'
+    );
+
+    // -------------------------------------------------
+    // Magic Login Session
+    // -------------------------------------------------
+
+    $magicToken = $authService->generate(
+      userId: 1,
+      type: AuthTokenType::MAGIC_LOGIN,
+      redirectTo: '/support/',
+      expiresAt: date('Y-m-d H:i:s', strtotime('+30 days')),
+    );
+
+    $login = $magicLogin->login($magicToken);
+
+    Assert::notNull(
+      $login,
+      'Magic login establishes a WordPress session.'
+    );
+
+    Assert::equals(
+      1,
+      get_current_user_id(),
+      'Magic login authenticates the linked WordPress user.'
+    );
+
+    Assert::null(
+      $magicLogin->login($magicToken),
+      'Magic login token is single-use.'
     );
   }
 }

@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Customer Portal — Authentication Experience
+Email Notifications
 
 Current Objective
 
-Complete the customer-facing login, logout, and unauthenticated portal experience.
+Deliver ticket and reply notifications through event listeners and a provider-independent notification boundary.
 
 ---
 
@@ -314,15 +314,41 @@ VerificationService verifies purchases through registered integrations without k
 
 ---
 
+# Completed Portal Authentication Experience
+
+```
+Unauthenticated Portal Entry
+
+↓
+
+WordPress Login Handoff
+
+↓
+
+Single-use Magic Login
+
+↓
+
+OAuth Portal Redirect
+
+↓
+
+Portal Logout
+
+↓
+
+Auth and React Portal Flow Tests
+```
+
+---
+
 # Immediate Next Tasks
 
-1. Add customer portal logout handling.
+1. Define the provider-independent notification contract and data object.
 
-2. Add an unauthenticated portal entry experience.
+2. Add ticket-created and customer-reply email listeners.
 
-3. Connect existing OAuth and magic-login flows to portal redirects.
-
-4. Add authentication experience Flow Test coverage.
+3. Add deterministic notification Flow Test coverage.
 
 ---
 
@@ -442,13 +468,9 @@ Never
 
 # Next Milestone
 
-After Customer Profile
+After Portal Authentication Experience
 
 ```
-Portal Authentication Experience
-
-↓
-
 Email Notifications
 ```
 
@@ -505,11 +527,11 @@ Status
 ```
 Current Sprint
 
-Customer Portal Authentication Experience
+Email Notifications
 
 Next Target
 
-Portal Authentication Experience
+Email Notifications
 ```
 
 ---

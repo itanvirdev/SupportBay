@@ -2,6 +2,7 @@ export interface SupportBayConfig {
   restUrl: string;
   restNonce: string;
   portalUrl: string;
+  logoutUrl: string;
   siteName: string;
 }
 

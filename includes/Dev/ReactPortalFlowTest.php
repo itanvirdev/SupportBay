@@ -46,7 +46,8 @@ final class ReactPortalFlowTest extends FlowTest {
 
     Assert::true(
       is_array($bootstrap) &&
-      str_contains(implode('', $bootstrap), 'restNonce'),
+      str_contains(implode('', $bootstrap), 'restNonce') &&
+      str_contains(implode('', $bootstrap), 'logoutUrl'),
       'React bootstrap includes REST authentication configuration.'
     );
 

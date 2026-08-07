@@ -128,7 +128,8 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 
       case 'auth':
         \SupportBay\Dev\AuthFlowTest::run(
-          $container->get(\SupportBay\Modules\Auth\Services\AuthService::class)
+          $container->get(\SupportBay\Modules\Auth\Services\AuthService::class),
+          $container->get(\SupportBay\Modules\Auth\Services\MagicLoginService::class)
         );
         break;
 
@@ -245,7 +246,8 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
 
         \SupportBay\Dev\AuthFlowTest::run(
-          $container->get(\SupportBay\Modules\Auth\Services\AuthService::class)
+          $container->get(\SupportBay\Modules\Auth\Services\AuthService::class),
+          $container->get(\SupportBay\Modules\Auth\Services\MagicLoginService::class)
         );
 
         \SupportBay\Dev\ProviderFlowTest::run(

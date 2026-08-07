@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Portal\Http;
 
+use SupportBay\Modules\Auth\Services\MagicLoginService;
+
 final class PortalPage {
   private const QUERY_VAR = 'sbay_customer_portal';
+
+  public function __construct(
+    private readonly MagicLoginService $magicLogin,
+  ) {
+  }
 
   /**
    * Register the public customer portal rewrite.
@@ -44,7 +51,7 @@ final class PortalPage {
    * Load the customer bundle only on the portal route.
    */
   public function enqueueAssets(): void {
-    if (! $this->isPortal()) {
+    if (! $this->isPortal() || ! is_user_logged_in()) {
       return;
     }
 
@@ -76,6 +83,7 @@ final class PortalPage {
         'restUrl'   => esc_url_raw(rest_url('sbay/v1/')),
         'restNonce' => wp_create_nonce('wp_rest'),
         'portalUrl' => esc_url_raw(home_url('/support/')),
+        'logoutUrl' => esc_url_raw(wp_logout_url(home_url('/support/'))),
         'siteName'  => sanitize_text_field(get_bloginfo('name')),
       ]) . ';',
       'before',
@@ -90,11 +98,14 @@ final class PortalPage {
       return;
     }
 
+    $loginError = null;
+
     if (! is_user_logged_in()) {
-      wp_safe_redirect(
-        wp_login_url(home_url('/support/'))
-      );
-      exit;
+      $loginError = $this->handleMagicLogin();
+
+      if (! is_user_logged_in()) {
+        $this->renderLogin($loginError);
+      }
     }
 
     status_header(200);
@@ -123,5 +134,75 @@ final class PortalPage {
 
   private function isPortal(): bool {
     return (string) get_query_var(self::QUERY_VAR) === '1';
+  }
+
+  private function handleMagicLogin(): ?string {
+    $plainToken = sanitize_text_field(
+      wp_unslash($_GET['sbay_magic_token'] ?? '')
+    );
+
+    if ($plainToken === '') {
+      return null;
+    }
+
+    $token = $this->magicLogin->login($plainToken);
+
+    if (! $token) {
+      return __('This sign-in link is invalid or has expired.', 'supportbay');
+    }
+
+    wp_safe_redirect(
+      $this->portalRedirect($token->redirectTo())
+    );
+    exit;
+  }
+
+  private function portalRedirect(?string $redirectTo): string {
+    $portalUrl = home_url('/support/');
+
+    if (! $redirectTo) {
+      return $portalUrl;
+    }
+
+    $path = wp_parse_url($redirectTo, PHP_URL_PATH);
+
+    if (! is_string($path) || ! preg_match('#^/support(?:/|$)#', $path)) {
+      return $portalUrl;
+    }
+
+    return home_url($path);
+  }
+
+  private function renderLogin(?string $error): never {
+    $loginUrl = wp_login_url(home_url('/support/'));
+
+    status_header(200);
+    nocache_headers();
+
+    ?><!doctype html>
+    <html <?php language_attributes(); ?>>
+      <head>
+        <meta charset="<?php bloginfo('charset'); ?>">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title><?php echo esc_html__('Sign in — SupportBay', 'supportbay'); ?></title>
+        <?php wp_head(); ?>
+      </head>
+      <body <?php body_class('supportbay-portal supportbay-portal-login'); ?>>
+        <?php wp_body_open(); ?>
+        <main class="sbay-login">
+          <h1><?php echo esc_html__('Customer support portal', 'supportbay'); ?></h1>
+          <p><?php echo esc_html__('Sign in to view your tickets, purchases, and profile.', 'supportbay'); ?></p>
+          <?php if ($error !== null) : ?>
+            <p role="alert"><?php echo esc_html($error); ?></p>
+          <?php endif; ?>
+          <a href="<?php echo esc_url($loginUrl); ?>">
+            <?php echo esc_html__('Sign in', 'supportbay'); ?>
+          </a>
+        </main>
+        <?php wp_footer(); ?>
+      </body>
+    </html><?php
+
+    exit;
   }
 }
