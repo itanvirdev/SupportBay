@@ -574,6 +574,10 @@ Portal Authentication Experience
 ↓
 
 Email Notification Foundation
+
+↓
+
+REST API and Webhooks Foundation
 ```
 
 Goal
@@ -584,10 +588,10 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Email Notifications
+After REST API and Webhooks Foundation
 
 ```
-Knowledge Base Foundation
+Admin API Expansion
 ```
 
 ---
@@ -1052,10 +1056,19 @@ AI
 Status
 
 ```
-❌ Not Started
+🟡 Foundation Complete
 ```
 
-Endpoints
+Completed
+
+- Customer portal endpoints
+- Administrator ticket list and detail
+- Administrator ticket messages and replies
+- Administrator ticket close and reopen
+- WordPress capability enforcement
+- Standard response envelope and pagination metadata
+
+Pending endpoints
 
 Authentication
 
@@ -1086,7 +1099,7 @@ GraphQL
 Status
 
 ```
-❌ Not Started
+🟡 Foundation Complete
 ```
 
 Incoming
@@ -1099,15 +1112,26 @@ Provider Events
 
 Outgoing
 
-Ticket Created
+Ticket Created ✅
 
-Ticket Closed
+Message Created ✅
+
+Ticket Closed ✅
+
+Ticket Reopened ✅
 
 Verification Created
 
 Verification Expired
 
 Customer Registered
+
+Pending
+
+- Persistent destinations
+- Signing secrets
+- HTTP delivery providers
+- Delivery logs and retries
 
 ---
 
@@ -1404,7 +1428,7 @@ Current
 Current Sprint
 
 ```
-Knowledge Base Foundation
+Admin API Expansion
 ```
 
 ↓
@@ -1412,7 +1436,7 @@ Knowledge Base Foundation
 Next Sprint
 
 ```
-REST API and Webhooks
+Admin Dashboard Foundation
 ```
 
 ↓

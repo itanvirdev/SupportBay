@@ -8,6 +8,7 @@ use SupportBay\Core\Container\Container;
 use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
+use SupportBay\Modules\Tickets\Http\Controllers\TicketController;
 
 final class TicketServiceProvider extends ServiceProvider {
 
@@ -30,12 +31,19 @@ final class TicketServiceProvider extends ServiceProvider {
     $container->singleton(TicketRepository::class);
 
     $container->singleton(TicketService::class);
+
+    $container->singleton(TicketController::class);
   }
 
   /**
    * Boot logic (reserved for future)
    */
   public function boot(Container $container): void {
-    // Future: hooks, cron, REST routes
+    parent::boot($container);
+
+    add_action(
+      'rest_api_init',
+      [$container->get(TicketController::class), 'registerRoutes'],
+    );
   }
 }

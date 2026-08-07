@@ -18,6 +18,7 @@ use SupportBay\Providers\Envato\EnvatoServiceProvider;
 use SupportBay\Modules\Verifications\VerificationServiceProvider;
 use SupportBay\Modules\Portal\PortalServiceProvider;
 use SupportBay\Modules\Notifications\NotificationServiceProvider;
+use SupportBay\Modules\Webhooks\WebhookServiceProvider;
 
 final class ServiceProviderRegistry {
   /**
@@ -56,6 +57,7 @@ final class ServiceProviderRegistry {
     self::addProvider(new ProviderServiceProvider());
     self::addProvider(new VerificationServiceProvider());
     self::addProvider(new NotificationServiceProvider());
+    self::addProvider(new WebhookServiceProvider());
     self::addProvider(new PortalServiceProvider());
   }
 

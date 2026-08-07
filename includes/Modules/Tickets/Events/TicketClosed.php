@@ -11,6 +11,7 @@ final class TicketClosed extends AbstractEvent {
   public function __construct(
     private readonly Ticket $ticket,
   ) {
+    parent::__construct();
   }
 
   /**

@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Knowledge Base Foundation
+Admin API Expansion
 
 Current Objective
 
-Establish provider-independent knowledge base categories and articles with customer-facing read APIs.
+Extend the REST foundation to customers, departments, providers, and purchase verifications.
 
 ---
 
@@ -386,13 +386,57 @@ Future notification work
 
 ---
 
+# Completed REST API and Webhooks Foundation
+
+```
+WordPress Capability Policy
+
+↓
+
+Versioned Admin Ticket Routes
+
+↓
+
+Standard Responses and Pagination
+
+↓
+
+Domain Events
+
+↓
+
+WebhookData
+
+↓
+
+WebhookDispatcher Contract
+
+↓
+
+ApiWebhookFlowTest
+```
+
+Current API behavior
+
+- Administrators can list and inspect tickets and messages.
+- Administrators can add replies or internal notes.
+- Administrators can close and reopen tickets.
+- Anonymous and unauthorized requests are rejected.
+- Ticket and message lifecycle events produce normalized webhook data.
+
+Knowledge Base remains deferred until its documentation is provided.
+
+---
+
 # Immediate Next Tasks
 
-1. Define knowledge base category and article schemas.
+1. Add administrator customer and department endpoints.
 
-2. Add repositories, entities, and services.
+2. Add provider and purchase-verification endpoints.
 
-3. Add customer-facing read APIs and Flow Test coverage.
+3. Add filtering and repository-backed pagination.
+
+4. Define persistent webhook destinations, signing, HTTP delivery, and retries.
 
 ---
 
@@ -512,10 +556,10 @@ Never
 
 # Next Milestone
 
-After Email Notifications
+After REST API and Webhooks Foundation
 
 ```
-Knowledge Base Foundation
+Admin API Expansion
 ```
 
 ---
@@ -571,11 +615,11 @@ Status
 ```
 Current Sprint
 
-Knowledge Base Foundation
+Admin API Expansion
 
 Next Target
 
-Knowledge Base Foundation
+Admin API Expansion
 ```
 
 ---
