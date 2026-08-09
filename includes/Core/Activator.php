@@ -6,6 +6,7 @@ namespace SupportBay\Core;
 
 use SupportBay\Core\Database\DatabaseInstaller;
 use SupportBay\Modules\Portal\Http\PortalPage;
+use SupportBay\Core\Authorization\CapabilityManager;
 
 final class Activator {
   /**
@@ -16,6 +17,7 @@ final class Activator {
 
     self::storeVersion();
     self::createDefaultOptions();
+    CapabilityManager::register();
     self::logActivation();
 
     PortalPage::registerRewriteRule();

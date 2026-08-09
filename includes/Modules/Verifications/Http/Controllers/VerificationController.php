@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Verifications\Http\Controllers;
 
 use SupportBay\Core\Http\RestResponse;
+use SupportBay\Core\Authorization\CapabilityManager;
 use SupportBay\Modules\Verifications\Entities\Verification;
 use SupportBay\Modules\Verifications\Enums\VerificationStatus;
 use SupportBay\Modules\Verifications\Services\VerificationService;
@@ -25,6 +26,12 @@ final class VerificationController {
       'methods' => 'GET', 'callback' => [$this, 'show'],
       'permission_callback' => [$this, 'permissions'],
     ]);
+    foreach (['refresh', 'revoke'] as $action) {
+      register_rest_route('sbay/v1', '/verifications/(?P<id>\d+)/' . $action, [
+        'methods' => 'POST', 'callback' => [$this, $action],
+        'permission_callback' => [$this, 'canRefresh'],
+      ]);
+    }
   }
 
   public function permissions(): bool|WP_Error {
@@ -32,9 +39,41 @@ final class VerificationController {
       return new WP_Error('sbay_authentication_required', 'Authentication is required.', ['status' => 401]);
     }
 
-    return current_user_can('manage_options')
+    return current_user_can(CapabilityManager::VIEW_VERIFICATIONS)
       ? true
       : new WP_Error('sbay_permission_denied', 'You are not allowed to view purchase verifications.', ['status' => 403]);
+  }
+
+  public function canRefresh(): bool|WP_Error {
+    if (! is_user_logged_in()) {
+      return new WP_Error('sbay_authentication_required', 'Authentication is required.', ['status' => 401]);
+    }
+
+    return current_user_can(CapabilityManager::REFRESH_VERIFICATION)
+      ? true
+      : new WP_Error('sbay_permission_denied', 'You are not allowed to modify purchase verifications.', ['status' => 403]);
+  }
+
+  public function refresh(WP_REST_Request $request): WP_REST_Response {
+    try {
+      $verification = $this->verifications->refreshPurchase(
+        absint($request->get_param('id')),
+      );
+    } catch (\RuntimeException $exception) {
+      return RestResponse::error($exception->getMessage(), 'VERIFICATION_REFRESH_FAILED', [], 409);
+    }
+
+    return RestResponse::success($verification->toArray(), 'Purchase verification refreshed.');
+  }
+
+  public function revoke(WP_REST_Request $request): WP_REST_Response {
+    try {
+      $verification = $this->verifications->revoke(absint($request->get_param('id')));
+    } catch (\RuntimeException $exception) {
+      return RestResponse::error($exception->getMessage(), 'VERIFICATION_REVOKE_FAILED', [], 404);
+    }
+
+    return RestResponse::success($verification->toArray(), 'Purchase verification revoked.');
   }
 
   public function index(WP_REST_Request $request): WP_REST_Response {

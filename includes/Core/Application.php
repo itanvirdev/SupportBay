@@ -9,6 +9,7 @@ use SupportBay\Core\Foundation\ServiceProviderRegistry;
 use SupportBay\Core\Integrations\IntegrationDiscovery;
 use SupportBay\Core\Integrations\IntegrationManager;
 use SupportBay\Core\Integrations\IntegrationRegistry;
+use SupportBay\Core\Authorization\CapabilityManager;
 
 final class Application {
   /**
@@ -45,6 +46,12 @@ final class Application {
     }
 
     $this->registerCoreBindings();
+
+    add_action(
+      'init',
+      [CapabilityManager::class, 'register'],
+      1,
+    );
 
     ServiceProviderRegistry::register($this->container);
 

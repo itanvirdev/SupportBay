@@ -588,10 +588,10 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Admin API Expansion
+After Admin API Mutations and Capability Model
 
 ```
-Admin API Mutations and Capability Model
+Admin Dashboard Foundation
 ```
 
 ---
@@ -1070,6 +1070,12 @@ Completed
 - Secret-safe provider list and detail
 - Administrator purchase verification list and detail
 - WordPress capability enforcement
+- Protected SupportBay customer, agent, and manager roles
+- Capability-specific administrator mutation policies
+- Customer state mutations
+- Department creation and updates
+- Provider enable and disable actions
+- Provider-backed verification refresh and revoke actions
 - Standard response envelope and pagination metadata
 
 Pending endpoints
@@ -1432,7 +1438,7 @@ Current
 Current Sprint
 
 ```
-Admin API Mutations and Capability Model
+Admin Dashboard Foundation
 ```
 
 ↓
@@ -1440,7 +1446,7 @@ Admin API Mutations and Capability Model
 Next Sprint
 
 ```
-Admin Dashboard Foundation
+Administrator Ticket Workspace
 ```
 
 ↓

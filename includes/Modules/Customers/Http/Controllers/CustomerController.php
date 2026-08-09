@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Customers\Http\Controllers;
 
 use RuntimeException;
+use SupportBay\Core\Authorization\CapabilityManager;
 use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
@@ -27,6 +28,10 @@ final class CustomerController {
       'methods' => 'GET', 'callback' => [$this, 'show'],
       'permission_callback' => [$this, 'permissions'],
     ]);
+    register_rest_route('sbay/v1', '/customers/(?P<id>\d+)/state', [
+      'methods' => 'POST', 'callback' => [$this, 'updateState'],
+      'permission_callback' => [$this, 'permissions'],
+    ]);
   }
 
   public function permissions(): bool|WP_Error {
@@ -34,9 +39,34 @@ final class CustomerController {
       return new WP_Error('sbay_authentication_required', 'Authentication is required.', ['status' => 401]);
     }
 
-    return current_user_can('manage_options')
+    return current_user_can(CapabilityManager::MANAGE_CUSTOMERS)
       ? true
       : new WP_Error('sbay_permission_denied', 'You are not allowed to manage customers.', ['status' => 403]);
+  }
+
+  public function updateState(WP_REST_Request $request): WP_REST_Response {
+    $customer = $this->customers->find(absint($request->get_param('id')));
+    $state = CustomerState::tryFrom(sanitize_key((string) $request->get_param('state')));
+
+    if (! $customer) {
+      return RestResponse::error('Customer was not found.', 'CUSTOMER_NOT_FOUND', [], 404);
+    }
+
+    if (! $state) {
+      return RestResponse::error('Invalid customer state.', 'INVALID_CUSTOMER_STATE', [], 422);
+    }
+
+    match ($state) {
+      CustomerState::REGISTERED => $this->customers->register($customer->id()),
+      CustomerState::VERIFIED => $this->customers->verify($customer->id()),
+      CustomerState::SUSPENDED => $this->customers->suspend($customer->id()),
+      CustomerState::GUEST => $this->customers->update($customer->id(), ['state' => $state->value]),
+    };
+
+    return RestResponse::success(
+      $this->data($this->customers->find($customer->id())),
+      'Customer state updated.',
+    );
   }
 
   public function index(WP_REST_Request $request): WP_REST_Response {

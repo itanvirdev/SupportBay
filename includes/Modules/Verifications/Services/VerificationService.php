@@ -430,6 +430,56 @@ final class VerificationService {
   }
 
   /**
+   * Refresh a verification through its registered purchase provider.
+   *
+   * @param array<string, mixed> $context
+   */
+  public function refreshPurchase(
+    int $id,
+    array $context = [],
+  ): Verification {
+    $verification = $this->findOrFail($id);
+
+    if (! $verification->canRefresh()) {
+      throw new RuntimeException(
+        'This verification cannot be refreshed.'
+      );
+    }
+
+    $integration = $this->integrations->integration(
+      $verification->provider()
+    );
+
+    if (! $integration instanceof PurchaseVerificationProvider) {
+      throw new RuntimeException(
+        sprintf(
+          'Integration "%s" does not support purchase verification.',
+          $verification->provider()
+        )
+      );
+    }
+
+    $data = $integration->verifyPurchase(
+      $verification->providerReference(),
+      $context,
+    );
+
+    if (
+      $data->provider() !== $verification->provider()
+      || $data->providerReference() !== $verification->providerReference()
+    ) {
+      throw new RuntimeException(
+        'Refreshed purchase data does not match the verification.'
+      );
+    }
+
+    $updates = $data->toArray();
+    $updates['last_checked_at'] = current_time('mysql');
+
+    return $this->refresh($id, $updates);
+  }
+
+  /**
    * Mark verification support as expired.
    */
   public function expire(int $id): Verification {

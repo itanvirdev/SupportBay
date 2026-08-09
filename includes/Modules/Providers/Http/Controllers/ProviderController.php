@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Providers\Http\Controllers;
 
 use SupportBay\Core\Http\RestResponse;
+use SupportBay\Core\Authorization\CapabilityManager;
 use SupportBay\Modules\Providers\Entities\Provider;
 use SupportBay\Modules\Providers\Enums\ProviderCategory;
 use SupportBay\Modules\Providers\Enums\ProviderStatus;
@@ -26,6 +27,12 @@ final class ProviderController {
       'methods' => 'GET', 'callback' => [$this, 'show'],
       'permission_callback' => [$this, 'permissions'],
     ]);
+    foreach (['enable', 'disable'] as $action) {
+      register_rest_route('sbay/v1', '/providers/(?P<id>\d+)/' . $action, [
+        'methods' => 'POST', 'callback' => [$this, $action],
+        'permission_callback' => [$this, 'permissions'],
+      ]);
+    }
   }
 
   public function permissions(): bool|WP_Error {
@@ -33,9 +40,32 @@ final class ProviderController {
       return new WP_Error('sbay_authentication_required', 'Authentication is required.', ['status' => 401]);
     }
 
-    return current_user_can('manage_options')
+    return current_user_can(CapabilityManager::MANAGE_PROVIDERS)
       ? true
       : new WP_Error('sbay_permission_denied', 'You are not allowed to manage providers.', ['status' => 403]);
+  }
+
+  public function enable(WP_REST_Request $request): WP_REST_Response {
+    return $this->transition($request, 'enable');
+  }
+
+  public function disable(WP_REST_Request $request): WP_REST_Response {
+    return $this->transition($request, 'disable');
+  }
+
+  private function transition(WP_REST_Request $request, string $action): WP_REST_Response {
+    $id = absint($request->get_param('id'));
+
+    if (! $this->providers->find($id)) {
+      return RestResponse::error('Provider was not found.', 'PROVIDER_NOT_FOUND', [], 404);
+    }
+
+    $this->providers->{$action}($id);
+
+    return RestResponse::success(
+      $this->data($this->providers->find($id)),
+      'Provider status updated.',
+    );
   }
 
   public function index(WP_REST_Request $request): WP_REST_Response {

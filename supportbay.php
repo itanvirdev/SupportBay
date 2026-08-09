@@ -232,6 +232,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
+          $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
         );
         break;
 
@@ -345,6 +346,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
+          $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
         );
 
         \SupportBay\Dev\ApiWebhookFlowTest::run(
@@ -355,6 +357,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
+          $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
         );
         break;
 

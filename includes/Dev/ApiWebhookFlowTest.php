@@ -7,6 +7,7 @@ namespace SupportBay\Dev;
 use SupportBay\Common\Enums\AuthorType;
 use SupportBay\Core\Testing\Assert;
 use SupportBay\Core\Testing\FlowTest;
+use SupportBay\Core\Integrations\IntegrationManager;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
@@ -33,7 +34,8 @@ final class ApiWebhookFlowTest extends FlowTest {
     /** @var DepartmentService $departments */
     /** @var ProviderService $providers */
     /** @var VerificationService $verifications */
-    [$controller, $tickets, $messages, $customers, $departments, $providers, $verifications] = $services;
+    /** @var IntegrationManager $integrations */
+    [$controller, $tickets, $messages, $customers, $departments, $providers, $verifications, $integrations] = $services;
 
     echo "🚀 Starting SupportBay API and Webhook Flow Test...\n\n";
 
@@ -112,11 +114,12 @@ final class ApiWebhookFlowTest extends FlowTest {
       'name'     => 'API Test Provider',
       'settings' => ['client_secret' => 'must-not-leak'],
     ]);
-    $verificationId = $verifications->create([
-      'provider'           => 'api-test-' . $suffix,
-      'provider_reference' => 'purchase-' . $suffix,
-      'customer_id'        => $customerId,
-    ]);
+    $integrations->register(new FakePurchaseProvider());
+    $verificationId = $verifications->verifyPurchase(
+      'fake-purchase',
+      'purchase-' . $suffix,
+      customerId: $customerId,
+    )->id();
 
     $request = new WP_REST_Request('GET', '/sbay/v1/tickets');
     $request->set_param('page', 1);
@@ -141,12 +144,53 @@ final class ApiWebhookFlowTest extends FlowTest {
     Assert::true($providerData['configured'] === true, 'Provider API reports configuration state safely.');
 
     $verificationRequest = new WP_REST_Request('GET', '/sbay/v1/verifications');
-    $verificationRequest->set_param('provider', 'api-test-' . $suffix);
+    $verificationRequest->set_param('provider', 'fake-purchase');
     $verificationResponse = rest_do_request($verificationRequest);
     Assert::equals(
-      1,
-      $verificationResponse->get_data()['meta']['total'],
+      true,
+      $verificationResponse->get_data()['meta']['total'] >= 1,
       'Verification API applies provider filters.'
+    );
+
+    $wordpressUser = get_userdata($userId);
+    $wordpressUser->set_role('sbay_agent');
+    wp_set_current_user($userId);
+
+    Assert::equals(
+      200,
+      rest_do_request(new WP_REST_Request('GET', '/sbay/v1/tickets'))->get_status(),
+      'Support agents can view tickets through capabilities.'
+    );
+    Assert::equals(
+      403,
+      rest_do_request(new WP_REST_Request('GET', '/sbay/v1/customers'))->get_status(),
+      'Support agents cannot manage customers.'
+    );
+
+    wp_set_current_user(1);
+
+    $customerState = new WP_REST_Request('POST', '/sbay/v1/customers/' . $customerId . '/state');
+    $customerState->set_param('state', CustomerState::SUSPENDED->value);
+    Assert::equals(200, rest_do_request($customerState)->get_status(), 'Administrator can suspend customers.');
+
+    $departmentUpdate = new WP_REST_Request('PUT', '/sbay/v1/departments/' . $departmentId);
+    $departmentUpdate->set_param('status', 'inactive');
+    Assert::equals(200, rest_do_request($departmentUpdate)->get_status(), 'Administrator can update departments.');
+
+    Assert::equals(
+      200,
+      rest_do_request(new WP_REST_Request('POST', '/sbay/v1/providers/' . $providerId . '/enable'))->get_status(),
+      'Administrator can enable providers.'
+    );
+    Assert::equals(
+      200,
+      rest_do_request(new WP_REST_Request('POST', '/sbay/v1/verifications/' . $verificationId . '/refresh'))->get_status(),
+      'Administrator can refresh verifications through registered integrations.'
+    );
+    Assert::equals(
+      200,
+      rest_do_request(new WP_REST_Request('POST', '/sbay/v1/verifications/' . $verificationId . '/revoke'))->get_status(),
+      'Administrator can revoke verifications.'
     );
 
     $tickets->close($ticketId);

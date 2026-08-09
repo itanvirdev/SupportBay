@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Admin API Mutations and Capability Model
+Admin Dashboard Foundation
 
 Current Objective
 
-Define SupportBay administrator capabilities and safe mutation endpoints for operational records.
+Create the React administrator application shell and connect it to the completed administrator APIs.
 
 ---
 
@@ -458,15 +458,49 @@ All administrator resource routes are read-only in this milestone.
 
 ---
 
+# Completed Admin API Mutations and Capability Model
+
+```
+Protected WordPress Roles
+
+↓
+
+SupportBay Capabilities
+
+↓
+
+Capability-specific REST Policies
+
+↓
+
+Customer and Department Mutations
+
+↓
+
+Provider Enable / Disable
+
+↓
+
+Provider-backed Verification Refresh / Revoke
+
+↓
+
+Expanded ApiWebhookFlowTest
+```
+
+Roles and capabilities are installed idempotently for both new and existing installations.
+
+---
+
 # Immediate Next Tasks
 
-1. Define SupportBay-specific administrator and agent capabilities.
+1. Create the React administrator application entry and WordPress admin page.
 
-2. Add safe customer state and department mutation endpoints.
+2. Add authenticated navigation and API configuration.
 
-3. Add provider enable/disable endpoints without exposing settings.
+3. Add dashboard summary cards using existing APIs.
 
-4. Add verification revoke/refresh actions and mutation Flow Tests.
+4. Add an administrator application Flow Test and production build.
 
 ---
 
@@ -586,10 +620,10 @@ Never
 
 # Next Milestone
 
-After Admin API Expansion
+After Admin API Mutations and Capability Model
 
 ```
-Admin API Mutations and Capability Model
+Admin Dashboard Foundation
 ```
 
 ---
@@ -645,11 +679,11 @@ Status
 ```
 Current Sprint
 
-Admin API Mutations and Capability Model
+Admin Dashboard Foundation
 
 Next Target
 
-Admin API Mutations and Capability Model
+Admin Dashboard Foundation
 ```
 
 ---

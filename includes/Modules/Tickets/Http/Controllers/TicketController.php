@@ -6,6 +6,7 @@ namespace SupportBay\Modules\Tickets\Http\Controllers;
 
 use RuntimeException;
 use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Core\Authorization\CapabilityManager;
 use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
@@ -48,7 +49,7 @@ final class TicketController {
     register_rest_route(self::NAMESPACE, '/tickets/(?P<id>\d+)/messages', [
       'methods'             => 'POST',
       'callback'            => [$this, 'reply'],
-      'permission_callback' => [$this, 'permissions'],
+      'permission_callback' => [$this, 'canReply'],
       'args'                => $this->idArgs(),
     ]);
 
@@ -59,7 +60,7 @@ final class TicketController {
         [
           'methods'             => 'POST',
           'callback'            => [$this, $action],
-          'permission_callback' => [$this, 'permissions'],
+          'permission_callback' => [$this, 'canChangeStatus'],
           'args'                => $this->idArgs(),
         ],
       );
@@ -75,7 +76,7 @@ final class TicketController {
       );
     }
 
-    if (! current_user_can('manage_options')) {
+    if (! current_user_can(CapabilityManager::VIEW_TICKETS)) {
       return new WP_Error(
         'sbay_permission_denied',
         'You are not allowed to manage support tickets.',
@@ -84,6 +85,29 @@ final class TicketController {
     }
 
     return true;
+  }
+
+  public function canReply(WP_REST_Request $request): bool|WP_Error {
+    $type = sanitize_key((string) $request->get_param('type'));
+    $capability = $type === MessageType::INTERNAL_NOTE->value
+      ? CapabilityManager::CREATE_INTERNAL_NOTE
+      : CapabilityManager::REPLY_TICKET;
+
+    return $this->requires($capability);
+  }
+
+  public function canChangeStatus(): bool|WP_Error {
+    return $this->requires(CapabilityManager::CHANGE_TICKET_STATUS);
+  }
+
+  private function requires(string $capability): bool|WP_Error {
+    if (! is_user_logged_in()) {
+      return new WP_Error('sbay_authentication_required', 'Authentication is required.', ['status' => 401]);
+    }
+
+    return current_user_can($capability)
+      ? true
+      : new WP_Error('sbay_permission_denied', 'You are not allowed to perform this ticket action.', ['status' => 403]);
   }
 
   public function index(WP_REST_Request $request): WP_REST_Response {
