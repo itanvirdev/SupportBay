@@ -236,6 +236,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'admin-react':
+        \SupportBay\Dev\ReactAdminFlowTest::run(
+          $container->get(\SupportBay\Modules\Admin\AdminPage::class),
+        );
+        break;
+
       case 'all':
         \SupportBay\Dev\TicketFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
@@ -359,6 +365,10 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
           $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
         );
+
+        \SupportBay\Dev\ReactAdminFlowTest::run(
+          $container->get(\SupportBay\Modules\Admin\AdminPage::class),
+        );
         break;
 
       default:
@@ -381,6 +391,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- portal-react\n";
         echo "- notification\n";
         echo "- api-webhook\n";
+        echo "- admin-react\n";
         echo "- all\n";
         echo '</pre>';
     }

@@ -4,6 +4,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 module.exports = {
   entry: {
     'supportbay-customer': './assets/src/react/app.tsx',
+    'supportbay-admin': './assets/src/admin/app.tsx',
   },
   output: {
     path: path.resolve(__dirname, 'assets/dist'),

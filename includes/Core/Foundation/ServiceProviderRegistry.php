@@ -19,6 +19,7 @@ use SupportBay\Modules\Verifications\VerificationServiceProvider;
 use SupportBay\Modules\Portal\PortalServiceProvider;
 use SupportBay\Modules\Notifications\NotificationServiceProvider;
 use SupportBay\Modules\Webhooks\WebhookServiceProvider;
+use SupportBay\Modules\Admin\AdminServiceProvider;
 
 final class ServiceProviderRegistry {
   /**
@@ -58,6 +59,7 @@ final class ServiceProviderRegistry {
     self::addProvider(new VerificationServiceProvider());
     self::addProvider(new NotificationServiceProvider());
     self::addProvider(new WebhookServiceProvider());
+    self::addProvider(new AdminServiceProvider());
     self::addProvider(new PortalServiceProvider());
   }
 

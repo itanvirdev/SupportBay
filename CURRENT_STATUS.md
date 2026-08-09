@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Admin Dashboard Foundation
+Administrator Ticket Workspace
 
 Current Objective
 
-Create the React administrator application shell and connect it to the completed administrator APIs.
+Build the administrator ticket list, conversation detail, replies, internal notes, and status actions.
 
 ---
 
@@ -492,15 +492,45 @@ Roles and capabilities are installed idempotently for both new and existing inst
 
 ---
 
+# Completed Admin Dashboard Foundation
+
+```
+WordPress Admin Menu
+
+↓
+
+Capability-gated Admin Page
+
+↓
+
+Isolated React Admin Bundle
+
+↓
+
+Authenticated API Bootstrap
+
+↓
+
+Dashboard Resource Totals
+
+↓
+
+ReactAdminFlowTest
+```
+
+The administrator UI is functional and intentionally uses foundation styling pending the later design pass.
+
+---
+
 # Immediate Next Tasks
 
-1. Create the React administrator application entry and WordPress admin page.
+1. Add the administrator ticket list with pagination and status indicators.
 
-2. Add authenticated navigation and API configuration.
+2. Add ticket conversation detail and internal-note visibility.
 
-3. Add dashboard summary cards using existing APIs.
+3. Add agent reply and internal-note forms.
 
-4. Add an administrator application Flow Test and production build.
+4. Add close/reopen actions and React Flow Test coverage.
 
 ---
 
@@ -620,10 +650,10 @@ Never
 
 # Next Milestone
 
-After Admin API Mutations and Capability Model
+After Admin Dashboard Foundation
 
 ```
-Admin Dashboard Foundation
+Administrator Ticket Workspace
 ```
 
 ---
@@ -679,11 +709,11 @@ Status
 ```
 Current Sprint
 
-Admin Dashboard Foundation
+Administrator Ticket Workspace
 
 Next Target
 
-Admin Dashboard Foundation
+Administrator Ticket Workspace
 ```
 
 ---

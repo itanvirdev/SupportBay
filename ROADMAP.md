@@ -588,10 +588,10 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Admin API Mutations and Capability Model
+After Admin Dashboard Foundation
 
 ```
-Admin Dashboard Foundation
+Administrator Ticket Workspace
 ```
 
 ---
@@ -959,7 +959,7 @@ Features
 Status
 
 ```
-❌ Not Started
+🚧 In Progress
 ```
 
 Purpose
@@ -969,6 +969,12 @@ Manage the complete SupportBay installation.
 ---
 
 ## Dashboard
+
+Status
+
+```
+✅ Foundation Complete
+```
 
 Features
 
@@ -1438,7 +1444,7 @@ Current
 Current Sprint
 
 ```
-Admin Dashboard Foundation
+Administrator Ticket Workspace
 ```
 
 ↓
@@ -1446,7 +1452,7 @@ Admin Dashboard Foundation
 Next Sprint
 
 ```
-Administrator Ticket Workspace
+Customer Management Workspace
 ```
 
 ↓
