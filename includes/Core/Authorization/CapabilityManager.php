@@ -14,6 +14,8 @@ final class CapabilityManager {
   public const CREATE_DEPARTMENT = 'sbay_create_department';
   public const EDIT_DEPARTMENT = 'sbay_edit_department';
   public const MANAGE_PROVIDERS = 'sbay_manage_providers';
+  public const VIEW_REPORTS = 'sbay_view_reports';
+  public const MANAGE_SETTINGS = 'sbay_manage_settings';
   public const VIEW_VERIFICATIONS = 'sbay_view_purchase_verification';
   public const REFRESH_VERIFICATION = 'sbay_refresh_verification';
 
@@ -35,14 +37,14 @@ final class CapabilityManager {
       'sbay_assign_ticket', 'sbay_reassign_ticket', 'sbay_escalate_ticket',
       self::MANAGE_DEPARTMENTS, self::CREATE_DEPARTMENT,
       self::EDIT_DEPARTMENT, 'sbay_disable_department',
-      'sbay_view_reports', self::REFRESH_VERIFICATION,
+      self::VIEW_REPORTS, self::REFRESH_VERIFICATION,
       'sbay_manage_agents', self::MANAGE_CUSTOMERS,
     ]);
     $administrator = array_values(array_unique(array_merge(
       $customer,
       $manager,
       [
-        self::MANAGE_PROVIDERS, 'sbay_manage_settings',
+        self::MANAGE_PROVIDERS, self::MANAGE_SETTINGS,
         'sbay_manage_roles', 'sbay_manage_capabilities',
         'sbay_export_reports', 'sbay_download_attachment',
         'sbay_delete_attachment', 'sbay_close_ticket', 'sbay_reopen_ticket',

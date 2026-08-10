@@ -14,6 +14,10 @@ export async function apiGet<T>(path: string): Promise<T> {
   return apiRequest<T>(path, { method: 'GET' });
 }
 
+export async function apiGetResponse<T>(path: string): Promise<ApiResponse<T>> {
+  return apiRequestEnvelope<T>(path, { method: 'GET' });
+}
+
 export async function apiPost<T>(
   path: string,
   body: object,
@@ -61,6 +65,13 @@ async function apiRequest<T>(
   path: string,
   options: RequestInit,
 ): Promise<T> {
+  return (await apiRequestEnvelope<T>(path, options)).data;
+}
+
+async function apiRequestEnvelope<T>(
+  path: string,
+  options: RequestInit,
+): Promise<ApiResponse<T>> {
   const config = getConfig();
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -87,5 +98,5 @@ async function apiRequest<T>(
     );
   }
 
-  return payload.data as T;
+  return payload as ApiResponse<T>;
 }

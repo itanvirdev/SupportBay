@@ -1,0 +1,39 @@
+.sbay-ticket-workspace { color: #202923; }
+.sbay-ticket-tabs { display: flex; align-items: stretch; gap: 28px; border-bottom: 1px solid #e2e8e4; }
+.sbay-ticket-tabs button { padding: 16px 2px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #303a34; font: inherit; font-weight: 650; cursor: pointer; }
+.sbay-ticket-tabs button.is-active { border-color: #216e52; color: #216e52; }
+.sbay-ticket-tabs__actions { display: flex; gap: 10px; margin-left: auto; }
+.sbay-ticket-tabs__actions button { align-self: center; padding: 10px 14px; border: 1px solid #216e52; border-radius: 8px; }
+.sbay-ticket-tabs__actions button.is-primary { padding-inline: 20px; background: #216e52; color: #fff; }
+.sbay-ticket-filters { margin: 28px 0 34px; padding: 18px; display: grid; grid-template-columns: 1fr auto; gap: 18px; border: 1px solid #e2e8e4; border-radius: 12px; background: #f8faf9; }
+.sbay-ticket-statuses { display: flex; }
+.sbay-ticket-statuses button, .sbay-ticket-filter-row button, .sbay-ticket-filter-row select { min-height: 42px; padding: 0 16px; border: 1px solid #d7dfda; background: #fff; color: #354039; }
+.sbay-ticket-statuses button:first-child { border-radius: 8px 0 0 8px; }
+.sbay-ticket-statuses button:last-child { border-radius: 0 8px 8px 0; }
+.sbay-ticket-statuses button.is-active { border-color: #216e52; background: #216e52; color: #fff; }
+.sbay-ticket-filters form { display: flex; }
+.sbay-ticket-filters input { width: min(300px, 32vw); padding: 0 14px; border: 1px solid #d7dfda; border-radius: 8px 0 0 8px; }
+.sbay-ticket-filters form button { width: 48px; border: 0; border-radius: 0 8px 8px 0; background: #216e52; color: #fff; font-size: 20px; }
+.sbay-ticket-filter-row { grid-column: 1 / -1; display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid #e2e8e4; }
+.sbay-ticket-filter-row select { border-radius: 8px; }
+.sbay-ticket-filter-row select:last-of-type { min-width: 250px; }
+.sbay-ticket-filter-row button { border-radius: 8px; }
+.sbay-ticket-table { overflow: hidden; border: 1px solid #e2e8e4; border-radius: 12px; background: #fff; }
+.sbay-ticket-row { min-height: 92px; padding: 16px 18px; display: grid; grid-template-columns: 36px minmax(260px, 1fr) 110px 120px 130px; align-items: center; gap: 14px; border-bottom: 1px solid #edf1ee; }
+.sbay-ticket-workspace--customer .sbay-ticket-row { grid-template-columns: 36px minmax(260px, 1fr) 110px 130px; }
+.sbay-ticket-row--header { min-height: 54px; background: #f8faf9; font-weight: 750; }
+.sbay-ticket-title { display: grid; gap: 8px; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+.sbay-ticket-title strong { font-size: 15px; }
+.sbay-ticket-title span { color: #78847d; }
+.sbay-ticket-title i, .sbay-ticket-priority { padding: 3px 7px; border-radius: 5px; background: #edf4ff; color: #315bb4; font-style: normal; text-transform: capitalize; }
+.sbay-ticket-priority { justify-self: start; background: #f2f4f3; color: #58645d; }
+.sbay-ticket-priority--high, .sbay-ticket-priority--urgent { background: #fff0ed; color: #b23b2f; }
+.sbay-ticket-avatar { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #e5ebe7; font-weight: 700; }
+.sbay-ticket-table footer { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; background: #f8faf9; }
+.sbay-ticket-table footer select, .sbay-ticket-table footer button { min-height: 38px; margin-right: 8px; border: 1px solid #d7dfda; border-radius: 7px; background: #fff; }
+.sbay-ticket-empty { margin: 0; padding: 46px; text-align: center; color: #78847d; }
+.sbay-ticket-pagination { margin-top: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.sbay-ticket-pagination button, .sbay-ticket-pagination span { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #d7dfda; border-radius: 8px; background: #fff; }
+.sbay-ticket-pagination span { border-color: #216e52; color: #216e52; font-weight: 750; }
+@media (max-width: 900px) { .sbay-ticket-filters { grid-template-columns: 1fr; } .sbay-ticket-filters form { grid-row: 2; } .sbay-ticket-filter-row { grid-column: 1; flex-wrap: wrap; } .sbay-ticket-row { grid-template-columns: 30px minmax(220px, 1fr) 100px; } .sbay-ticket-row > :nth-last-child(2) { display: none; } .sbay-ticket-row > :last-child { display: none; } }
+@media (max-width: 600px) { .sbay-ticket-tabs { gap: 14px; overflow-x: auto; } .sbay-ticket-tabs__actions { position: sticky; right: 0; background: #fff; } .sbay-ticket-filters input { width: 100%; } .sbay-ticket-filter-row select { width: 100%; } .sbay-ticket-row { grid-template-columns: 28px 1fr; } .sbay-ticket-row > :nth-child(n+3) { display: none; } }

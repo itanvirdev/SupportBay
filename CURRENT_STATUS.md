@@ -499,7 +499,15 @@ WordPress Admin Menu
 
 ↓
 
-Capability-gated Admin Page
+Native Support Tickets, Reports, and Settings Pages
+
+↓
+
+Shared PHP Header Navigation
+
+↓
+
+Capability-gated Page Access
 
 ↓
 
@@ -511,7 +519,7 @@ Authenticated API Bootstrap
 
 ↓
 
-Dashboard Resource Totals
+WordPress-controlled Active Workspace Bootstrap
 
 ↓
 
@@ -524,7 +532,7 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 # Immediate Next Tasks
 
-1. Add the administrator ticket list with pagination and status indicators.
+1. ✅ Add the shared administrator/customer ticket list with server-backed search, filters, sorting, selection, and pagination.
 
 2. Add ticket conversation detail and internal-note visibility.
 

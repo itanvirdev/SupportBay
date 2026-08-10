@@ -1,4 +1,4 @@
-import { apiDownload, apiGet, apiPost, apiUpload } from './client';
+import { apiDownload, apiGet, apiGetResponse, apiPost, apiUpload } from './client';
 import type {
   CreateTicketInput,
   PortalDepartment,
@@ -17,7 +17,7 @@ export const portalApi = {
   profile: () => apiGet<PortalProfile>('portal/profile'),
   updateProfile: (input: UpdateProfileInput) =>
     apiPost<PortalProfile>('portal/profile', input),
-  tickets: () => apiGet<PortalTicket[]>('portal/tickets'),
+  tickets: (query = '') => apiGetResponse<PortalTicket[]>(`portal/tickets${query ? `?${query}` : ''}`),
   createTicket: (input: CreateTicketInput) =>
     apiPost<PortalTicket>('portal/tickets', input),
   ticket: (ticketId: number) =>

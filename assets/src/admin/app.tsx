@@ -3,81 +3,95 @@ import { createRoot } from 'react-dom/client';
 import { adminGet } from './api';
 import { getAdminConfig } from './config';
 import './styles.scss';
+import { TicketWorkspace, type TicketPage, type TicketQueryParams, type WorkspaceTicket } from '../shared/tickets/TicketWorkspace';
+import '../shared/tickets/workspace.scss';
 
-interface DashboardSummary {
+interface TicketSummary {
   tickets: number;
-  customers: number;
-  departments: number;
-  providers: number;
-  verifications: number;
 }
 
-const resources = ['Tickets', 'Customers', 'Departments', 'Providers', 'Verifications'];
-
-function total(meta: Record<string, unknown>, data: unknown[]): number {
-  return typeof meta.total === 'number' ? meta.total : data.length;
+async function loadTickets(query: TicketQueryParams): Promise<TicketPage> {
+  const search = new URLSearchParams(Object.entries(query).map(([key, value]) => [key, String(value)]));
+  const response = await adminGet<WorkspaceTicket[]>(`tickets?${search.toString()}`);
+  return {
+    items: response.data,
+    page: Number(response.meta.page) || 1,
+    total: Number(response.meta.total) || 0,
+    totalPages: Number(response.meta.total_pages) || 1,
+  };
 }
+
+const sectionContent = {
+  tickets: {
+    eyebrow: 'Ticket workspace',
+    title: 'Support Tickets',
+    description: 'Review, filter, and manage customer conversations from one workspace.',
+  },
+  reports: {
+    eyebrow: 'Support performance',
+    title: 'Reports',
+    description: 'Reporting filters, summaries, tables, and charts will live in this workspace.',
+  },
+  settings: {
+    eyebrow: 'SupportBay configuration',
+    title: 'Settings',
+    description: 'Configure ticket behavior, access, notifications, providers, and integrations here.',
+  },
+} as const;
 
 function AdminApp() {
   const config = getAdminConfig();
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const content = sectionContent[config.section];
+  const [summary, setSummary] = useState<TicketSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      adminGet<unknown[]>('tickets?per_page=1'),
-      adminGet<unknown[]>('customers?per_page=1'),
-      adminGet<unknown[]>('departments'),
-      adminGet<unknown[]>('providers'),
-      adminGet<unknown[]>('verifications?per_page=1'),
-    ]).then(([tickets, customers, departments, providers, verifications]) => {
+    if (config.section === 'settings') {
+      return;
+    }
+
+    adminGet<unknown[]>('tickets?per_page=1').then((response) => {
       setSummary({
-        tickets: total(tickets.meta, tickets.data),
-        customers: total(customers.meta, customers.data),
-        departments: total(departments.meta, departments.data),
-        providers: total(providers.meta, providers.data),
-        verifications: total(verifications.meta, verifications.data),
+        tickets: typeof response.meta.total === 'number' ? response.meta.total : response.data.length,
       });
     }).catch((reason: unknown) => {
-      setError(reason instanceof Error ? reason.message : 'Dashboard data could not be loaded.');
+      setError(reason instanceof Error ? reason.message : 'Workspace data could not be loaded.');
     });
-  }, []);
+  }, [config.section]);
 
   return (
-    <div className="sbay-admin-shell">
-      <aside className="sbay-admin-sidebar">
-        <div className="sbay-admin-brand"><span>S</span>SupportBay</div>
-        <nav aria-label="SupportBay administration">
-          {resources.map((resource, index) => (
-            <a className={index === 0 ? 'is-active' : undefined} href="#" key={resource}>{resource}</a>
-          ))}
-        </nav>
-      </aside>
-      <main className="sbay-admin-main">
-        <header>
-          <div><small>{config.siteName}</small><h1>Support overview</h1></div>
-          <span>{config.userName || 'Administrator'}</span>
-        </header>
-        <p className="sbay-admin-intro">Monitor the support operation from one workspace.</p>
-        {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
-        <section className="sbay-admin-stats" aria-label="SupportBay totals">
-          {resources.map((resource) => {
-            const key = resource.toLowerCase() as keyof DashboardSummary;
-            return (
-              <article key={resource}>
-                <span>{resource}</span>
-                <strong>{summary ? summary[key] : '—'}</strong>
-                <small>{summary ? 'Current total' : 'Loading…'}</small>
-              </article>
-            );
-          })}
-        </section>
+    <main className={`sbay-admin-main sbay-admin-main--${config.section}`}>
+      <header className="sbay-admin-workspace-header">
+        <div><small>{content.eyebrow}</small><h1>{content.title}</h1></div>
+        <span>{config.userName || 'Administrator'}</span>
+      </header>
+      <p className="sbay-admin-intro">{content.description}</p>
+      {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
+
+      {config.section === 'tickets' ? (
+        <TicketWorkspace
+          mode="staff"
+          load={loadTickets}
+          openTicket={(ticket) => { window.location.href = `${config.adminUrl}&ticket=${ticket.id}`; }}
+        />
+      ) : null}
+
+      {config.section === 'reports' ? (
         <section className="sbay-admin-panel">
-          <div><small>Workspace status</small><h2>Administrator API connected</h2></div>
-          <p>Ticket operations, customer records, departments, providers, and purchase verifications are ready for the next workspace screens.</p>
+          <div><small>Report foundation</small><strong>{summary ? summary.tickets : '—'}</strong><span>Current tickets</span></div>
+          <p>This page is reserved for date-based ticket, response, need-reply, and closed-ticket reporting. No placeholder analytics are being presented as real data.</p>
         </section>
-      </main>
-    </div>
+      ) : null}
+
+      {config.section === 'settings' ? (
+        <section className="sbay-settings-foundation">
+          <nav aria-label="Settings sections">
+            <span className="is-active">General</span><span>Security</span><span>User Roles</span><span>Categories</span><span>Email Notifications</span><span>Integrations</span>
+          </nav>
+          <div><small>Settings foundation</small><h2>General</h2><p>Settings controls will be added as their configuration services and secure save endpoints are introduced.</p></div>
+        </section>
+      ) : null}
+    </main>
   );
 }
 

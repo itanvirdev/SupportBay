@@ -15,6 +15,7 @@ use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 use SupportBay\Modules\Tickets\Events\TicketClosed;
 use SupportBay\Modules\Tickets\Events\TicketCreated;
 use SupportBay\Modules\Tickets\Events\TicketReopened;
+use SupportBay\Modules\Tickets\Data\TicketQuery;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Core\Events\EventDispatcher;
 
@@ -71,6 +72,11 @@ final class TicketService {
    */
   public function all(): array {
     return $this->repository->all();
+  }
+
+  /** @return array{items: Ticket[], total: int} */
+  public function search(TicketQuery $query): array {
+    return $this->repository->search($query);
   }
 
   /**

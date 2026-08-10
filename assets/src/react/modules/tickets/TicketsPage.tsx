@@ -1,64 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { portalApi } from '../../api/portal';
-import type { PortalTicket } from '../../api/types';
-import { formatDate } from '../../core/date';
+import { TicketWorkspace, type TicketPage, type TicketQueryParams, type WorkspaceTicket } from '../../../shared/tickets/TicketWorkspace';
+import '../../../shared/tickets/workspace.scss';
 
 interface TicketsPageProps {
   navigate: (path: string) => void;
 }
 
-export function TicketsPage({ navigate }: TicketsPageProps) {
-  const [tickets, setTickets] = useState<PortalTicket[] | null>(null);
+function queryString(query: TicketQueryParams): string {
+  return new URLSearchParams(Object.entries(query).map(([key, value]) => [key, String(value)])).toString();
+}
 
-  useEffect(() => {
-    portalApi.tickets().then(setTickets);
+export function TicketsPage({ navigate }: TicketsPageProps) {
+  const load = useCallback(async (query: TicketQueryParams): Promise<TicketPage> => {
+    const response = await portalApi.tickets(queryString(query));
+    return {
+      items: response.data,
+      page: Number(response.meta.page) || 1,
+      total: Number(response.meta.total) || 0,
+      totalPages: Number(response.meta.total_pages) || 1,
+    };
   }, []);
 
   return (
     <section className="sbay-page">
-      <header className="sbay-page__header">
-        <div>
-          <span className="sbay-kicker">Support history</span>
-          <h1>Your tickets</h1>
-          <p>Track every conversation and its current status.</p>
-        </div>
-        <div className="sbay-page__actions">
-          <span className="sbay-page__total">{tickets?.length ?? 0} total</span>
-          <button
-            className="sbay-primary-button"
-            type="button"
-            onClick={() => navigate('/support/tickets/new/')}
-          >
-            Create ticket
-          </button>
-        </div>
-      </header>
-
-      <div className="sbay-table-card">
-        <div className="sbay-table sbay-table--head" aria-hidden="true">
-          <span>Ticket</span><span>Status</span><span>Priority</span><span>Updated</span>
-        </div>
-        {!tickets ? (
-          <p className="sbay-empty">Loading your tickets…</p>
-        ) : tickets.length === 0 ? (
-          <p className="sbay-empty">You haven&apos;t opened a ticket yet.</p>
-        ) : tickets.map((ticket) => (
-          <button
-            className="sbay-table"
-            type="button"
-            key={ticket.id}
-            onClick={() => navigate(`/support/tickets/${ticket.id}/`)}
-          >
-            <span>
-              <strong>{ticket.subject}</strong>
-              <small>#{ticket.track_id}</small>
-            </span>
-            <span><i className={`sbay-dot sbay-dot--${ticket.status}`} />{ticket.status}</span>
-            <span className="sbay-capitalize">{ticket.priority}</span>
-            <span>{formatDate(ticket.updated_at)}</span>
-          </button>
-        ))}
-      </div>
+      <TicketWorkspace
+        mode="customer"
+        load={load}
+        openTicket={(ticket: WorkspaceTicket) => navigate(`/support/tickets/${ticket.id}/`)}
+        createTicket={() => navigate('/support/tickets/new/')}
+      />
     </section>
   );
 }

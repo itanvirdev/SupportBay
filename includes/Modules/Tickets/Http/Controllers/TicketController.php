@@ -11,6 +11,10 @@ use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
+use SupportBay\Modules\Tickets\Data\TicketQuery;
+use SupportBay\Modules\Tickets\Enums\TicketPriority;
+use SupportBay\Modules\Tickets\Enums\TicketState;
+use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -29,7 +33,7 @@ final class TicketController {
       'methods'             => 'GET',
       'callback'            => [$this, 'index'],
       'permission_callback' => [$this, 'permissions'],
-      'args'                => $this->paginationArgs(),
+      'args'                => $this->queryArgs(),
     ]);
 
     register_rest_route(self::NAMESPACE, '/tickets/(?P<id>\d+)', [
@@ -113,12 +117,26 @@ final class TicketController {
   public function index(WP_REST_Request $request): WP_REST_Response {
     $page = max(1, (int) $request->get_param('page'));
     $perPage = min(100, max(1, (int) $request->get_param('per_page')));
-    $tickets = $this->tickets->all();
-    $total = count($tickets);
-    $items = array_slice($tickets, ($page - 1) * $perPage, $perPage);
+    $status = sanitize_key((string) $request->get_param('status'));
+    $state = sanitize_key((string) $request->get_param('state'));
+    $priority = sanitize_key((string) $request->get_param('priority'));
+    $assignment = sanitize_key((string) $request->get_param('assignment'));
+    $result = $this->tickets->search(new TicketQuery(
+      page: $page,
+      perPage: $perPage,
+      search: sanitize_text_field(wp_unslash((string) $request->get_param('search'))) ?: null,
+      status: TicketStatus::tryFrom($status)?->value,
+      state: TicketState::tryFrom($state)?->value,
+      priority: TicketPriority::tryFrom($priority)?->value,
+      assignedAgentId: $assignment === 'mine' ? get_current_user_id() : null,
+      unassigned: $assignment === 'unassigned',
+      orderBy: sanitize_key((string) $request->get_param('orderby')),
+      direction: sanitize_key((string) $request->get_param('order')),
+    ));
+    $total = $result['total'];
 
     return RestResponse::success(
-      array_map(static fn($ticket): array => $ticket->toArray(), $items),
+      array_map(static fn($ticket): array => $ticket->toArray(), $result['items']),
       'Tickets retrieved.',
       [
         'page'        => $page,
@@ -228,7 +246,7 @@ final class TicketController {
   }
 
   /** @return array<string, array<string, mixed>> */
-  private function paginationArgs(): array {
+  private function queryArgs(): array {
     return [
       'page' => [
         'default'           => 1,
@@ -238,6 +256,13 @@ final class TicketController {
         'default'           => 20,
         'sanitize_callback' => 'absint',
       ],
+      'search' => ['sanitize_callback' => 'sanitize_text_field'],
+      'status' => ['sanitize_callback' => 'sanitize_key'],
+      'state' => ['sanitize_callback' => 'sanitize_key'],
+      'priority' => ['sanitize_callback' => 'sanitize_key'],
+      'assignment' => ['sanitize_callback' => 'sanitize_key'],
+      'orderby' => ['default' => 'updated_at', 'sanitize_callback' => 'sanitize_key'],
+      'order' => ['default' => 'desc', 'sanitize_callback' => 'sanitize_key'],
     ];
   }
 }

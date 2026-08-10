@@ -12,6 +12,7 @@ use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use SupportBay\Modules\Tickets\Database\TicketSchema;
 use SupportBay\Modules\Tickets\Entities\Ticket;
+use SupportBay\Modules\Tickets\Data\TicketQuery;
 
 final class TicketRepository extends Repository {
 
@@ -105,6 +106,63 @@ final class TicketRepository extends Repository {
     return $this->findWhere([
       'customer_id' => $customerId,
     ], 'id', 'DESC');
+  }
+
+  /**
+   * Query a paginated ticket workspace.
+   *
+   * @return array{items: Ticket[], total: int}
+   */
+  public function search(TicketQuery $query): array {
+    $clauses = [];
+    $values = [];
+
+    foreach (['status', 'state', 'priority'] as $field) {
+      $value = $query->{$field};
+
+      if ($value !== null) {
+        $clauses[] = "{$field} = %s";
+        $values[] = $value;
+      }
+    }
+
+    if ($query->customerId !== null) {
+      $clauses[] = 'customer_id = %d';
+      $values[] = $query->customerId;
+    }
+
+    if ($query->unassigned) {
+      $clauses[] = 'assigned_agent_id IS NULL';
+    } elseif ($query->assignedAgentId !== null) {
+      $clauses[] = 'assigned_agent_id = %d';
+      $values[] = $query->assignedAgentId;
+    }
+
+    if ($query->search !== null && $query->search !== '') {
+      $like = '%' . $this->db->esc_like($query->search) . '%';
+      $clauses[] = '(subject LIKE %s OR track_id LIKE %s)';
+      $values[] = $like;
+      $values[] = $like;
+    }
+
+    $where = $clauses ? 'WHERE ' . implode(' AND ', $clauses) : '';
+    $countSql = "SELECT COUNT(*) FROM {$this->table()} {$where}";
+    $total = (int) ($values
+      ? $this->db->get_var($this->db->prepare($countSql, ...$values))
+      : $this->db->get_var($countSql));
+    $offset = ($query->page - 1) * $query->perPage;
+    $orderBy = in_array($query->orderBy, ['created_at', 'updated_at', 'last_reply_at', 'priority'], true)
+      ? $query->orderBy
+      : 'updated_at';
+    $direction = strtoupper($query->direction) === 'ASC' ? 'ASC' : 'DESC';
+    $itemSql = "SELECT * FROM {$this->table()} {$where} ORDER BY {$orderBy} {$direction}, id DESC LIMIT %d OFFSET %d";
+    $itemValues = [...$values, $query->perPage, $offset];
+    $rows = $this->db->get_results($this->db->prepare($itemSql, ...$itemValues), ARRAY_A);
+
+    return [
+      'items' => array_map(fn(array $row): Ticket => $this->hydrate($row), $rows),
+      'total' => $total,
+    ];
   }
 
   /**

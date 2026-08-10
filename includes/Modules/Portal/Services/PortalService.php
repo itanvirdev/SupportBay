@@ -20,6 +20,7 @@ use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Entities\Ticket;
 use SupportBay\Modules\Tickets\Services\TicketService;
+use SupportBay\Modules\Tickets\Data\TicketQuery;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Modules\Verifications\Entities\Verification;
 
@@ -87,6 +88,21 @@ final class PortalService {
     return $this->tickets->findByCustomer(
       $this->currentCustomer()->id()
     );
+  }
+
+  /** @return array{items: Ticket[], total: int} */
+  public function searchTickets(TicketQuery $query): array {
+    return $this->tickets->search(new TicketQuery(
+      page: $query->page,
+      perPage: $query->perPage,
+      search: $query->search,
+      status: $query->status,
+      state: $query->state,
+      priority: $query->priority,
+      customerId: $this->currentCustomer()->id(),
+      orderBy: $query->orderBy,
+      direction: $query->direction,
+    ));
   }
 
   /**

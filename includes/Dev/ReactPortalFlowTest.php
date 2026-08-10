@@ -28,6 +28,7 @@ final class ReactPortalFlowTest extends FlowTest {
 
     $previousValue = $wp_query->query_vars['sbay_customer_portal'] ?? null;
     $wp_query->query_vars['sbay_customer_portal'] = '1';
+    wp_set_current_user(1);
 
     $portalPage->enqueueAssets();
 

@@ -19,7 +19,7 @@ export function DashboardPage({ overview, navigate }: DashboardPageProps) {
   useEffect(() => {
     Promise.all([portalApi.tickets(), portalApi.verifications()]).then(
       ([ticketData, verificationData]) => {
-        setTickets(ticketData);
+        setTickets(ticketData.data);
         setVerifications(verificationData);
       },
     );

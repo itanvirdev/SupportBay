@@ -14,6 +14,10 @@ use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Portal\Services\PortalService;
 use SupportBay\Modules\Tickets\Entities\Ticket;
+use SupportBay\Modules\Tickets\Data\TicketQuery;
+use SupportBay\Modules\Tickets\Enums\TicketPriority;
+use SupportBay\Modules\Tickets\Enums\TicketState;
+use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use SupportBay\Modules\Verifications\Entities\Verification;
 use WP_Error;
 use WP_REST_Request;
@@ -262,15 +266,35 @@ final class PortalController {
   public function tickets(
     WP_REST_Request $request,
   ): WP_REST_Response {
+    $page = max(1, absint($request->get_param('page')) ?: 1);
+    $perPage = min(100, max(1, absint($request->get_param('per_page')) ?: 20));
+    $status = sanitize_key((string) $request->get_param('status'));
+    $state = sanitize_key((string) $request->get_param('state'));
+    $priority = sanitize_key((string) $request->get_param('priority'));
+    $result = $this->portal->searchTickets(new TicketQuery(
+      page: $page,
+      perPage: $perPage,
+      search: sanitize_text_field(wp_unslash((string) $request->get_param('search'))) ?: null,
+      status: TicketStatus::tryFrom($status)?->value,
+      state: TicketState::tryFrom($state)?->value,
+      priority: TicketPriority::tryFrom($priority)?->value,
+      orderBy: sanitize_key((string) $request->get_param('orderby')),
+      direction: sanitize_key((string) $request->get_param('order')),
+    ));
     $tickets = array_map(
       fn(Ticket $ticket): array => $this->ticketData($ticket),
-      $this->portal->tickets(),
+      $result['items'],
     );
 
     return RestResponse::success(
       $tickets,
       'Tickets retrieved.',
-      ['total' => count($tickets)]
+      [
+        'page' => $page,
+        'per_page' => $perPage,
+        'total' => $result['total'],
+        'total_pages' => (int) ceil($result['total'] / $perPage),
+      ]
     );
   }
 

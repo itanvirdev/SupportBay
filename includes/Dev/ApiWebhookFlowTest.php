@@ -131,6 +131,18 @@ final class ApiWebhookFlowTest extends FlowTest {
     Assert::true($body['success'] === true, 'Ticket API uses the standard response envelope.');
     Assert::true(isset($body['meta']['total_pages']), 'Ticket API includes pagination metadata.');
 
+    $filteredRequest = new WP_REST_Request('GET', '/sbay/v1/tickets');
+    $filteredRequest->set_param('search', 'API and webhook test');
+    $filteredRequest->set_param('state', 'active');
+    $filteredRequest->set_param('priority', 'normal');
+    $filteredResponse = rest_do_request($filteredRequest)->get_data();
+
+    Assert::true(
+      $filteredResponse['meta']['total'] >= 1
+      && $filteredResponse['data'][0]['id'] === $ticketId,
+      'Ticket workspace API applies search, state, and priority filters.'
+    );
+
     $customerResponse = rest_do_request(
       new WP_REST_Request('GET', '/sbay/v1/customers/' . $customerId)
     );

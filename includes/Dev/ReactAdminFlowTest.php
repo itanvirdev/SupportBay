@@ -27,6 +27,8 @@ final class ReactAdminFlowTest extends FlowTest {
     );
 
     $adminPage->enqueueAssets('toplevel_page_supportbay');
+    $adminPage->enqueueAssets('supportbay_page_supportbay-reports');
+    $adminPage->enqueueAssets('supportbay_page_supportbay-settings');
 
     Assert::true(
       wp_style_is('supportbay-admin', 'enqueued'),
@@ -42,8 +44,11 @@ final class ReactAdminFlowTest extends FlowTest {
     Assert::true(
       is_array($bootstrap)
       && str_contains(implode('', $bootstrap), 'restNonce')
-      && str_contains(implode('', $bootstrap), 'adminUrl'),
-      'Administrator bootstrap includes authenticated API configuration.'
+      && str_contains(implode('', $bootstrap), 'adminUrl')
+      && str_contains(implode('', $bootstrap), 'tickets')
+      && str_contains(implode('', $bootstrap), 'reports')
+      && str_contains(implode('', $bootstrap), 'settings'),
+      'Each administrator page receives authenticated API configuration and its active section.'
     );
 
     ob_start();
@@ -51,8 +56,11 @@ final class ReactAdminFlowTest extends FlowTest {
     $markup = (string) ob_get_clean();
 
     Assert::true(
-      str_contains($markup, 'supportbay-admin-app'),
-      'Administrator page renders the React mount point.'
+      str_contains($markup, 'supportbay-admin-app')
+      && str_contains($markup, 'Support Tickets')
+      && str_contains($markup, 'Reports')
+      && str_contains($markup, 'Settings'),
+      'Administrator page renders the shared PHP navigation and React mount point.'
     );
   }
 }
