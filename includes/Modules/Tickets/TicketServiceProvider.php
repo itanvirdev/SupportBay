@@ -11,11 +11,15 @@ use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 use SupportBay\Modules\Tickets\Http\Controllers\TicketController;
 use SupportBay\Modules\Tickets\Events\TicketChanged;
 use SupportBay\Modules\Activities\Listeners\LogTicketChangedActivity;
+use SupportBay\Modules\Tickets\Events\TicketMerged;
+use SupportBay\Modules\Activities\Listeners\LogTicketMergedActivity;
+use SupportBay\Modules\Tickets\Services\TicketMergeService;
 
 final class TicketServiceProvider extends ServiceProvider {
 
   protected array $listeners = [
     TicketChanged::class => [LogTicketChangedActivity::class],
+    TicketMerged::class => [LogTicketMergedActivity::class],
   ];
 
   // protected array $listeners = [
@@ -37,9 +41,11 @@ final class TicketServiceProvider extends ServiceProvider {
     $container->singleton(TicketRepository::class);
 
     $container->singleton(TicketService::class);
+    $container->singleton(TicketMergeService::class);
 
     $container->singleton(TicketController::class);
     $container->singleton(LogTicketChangedActivity::class);
+    $container->singleton(LogTicketMergedActivity::class);
   }
 
   /**

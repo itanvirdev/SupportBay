@@ -14,6 +14,7 @@ use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Tickets\Services\TicketService;
+use SupportBay\Modules\Tickets\Services\TicketMergeService;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
@@ -32,6 +33,7 @@ final class AdminTicketController {
     private readonly ActivityService $activities,
     private readonly MessageService $messages,
     private readonly AttachmentService $attachments,
+    private readonly TicketMergeService $ticketMerger,
   ) {
   }
 
@@ -44,6 +46,14 @@ final class AdminTicketController {
       'methods' => 'POST',
       'callback' => [$this, 'bulkChangeTickets'],
       'permission_callback' => [$this, 'permissions'],
+    ]);
+    register_rest_route('sbay/v1', '/admin/tickets/(?P<id>\d+)/merge', [
+      'methods' => 'POST',
+      'callback' => [$this, 'mergeTicket'],
+      'permission_callback' => static fn(): bool|WP_Error => current_user_can('sbay_merge_ticket')
+        ? true
+        : new WP_Error('sbay_permission_denied', 'You are not allowed to merge tickets.', ['status' => 403]),
+      'args' => ['id' => ['sanitize_callback' => 'absint']],
     ]);
     register_rest_route('sbay/v1', '/admin/tickets/(?P<id>\d+)/context', [
       'methods' => 'GET',
@@ -219,6 +229,20 @@ final class AdminTicketController {
       'updated' => count($result['updated']),
       'failed' => count($result['failed']),
     ]);
+  }
+
+  public function mergeTicket(WP_REST_Request $request): WP_REST_Response {
+    try {
+      $target = $this->ticketMerger->merge(
+        (int) $request->get_param('id'),
+        absint($request->get_param('target_id')),
+        get_current_user_id(),
+      );
+    } catch (RuntimeException $exception) {
+      return RestResponse::error($exception->getMessage(), 'TICKET_MERGE_FAILED', [], 422);
+    }
+
+    return RestResponse::success($target->toArray(), 'Tickets merged.');
   }
 
   public function uploadAttachment(WP_REST_Request $request): WP_REST_Response {

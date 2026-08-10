@@ -35,6 +35,7 @@ final class CapabilityManager {
     ];
     $manager = array_merge($agent, [
       'sbay_assign_ticket', 'sbay_reassign_ticket', 'sbay_escalate_ticket',
+      'sbay_merge_ticket',
       self::MANAGE_DEPARTMENTS, self::CREATE_DEPARTMENT,
       self::EDIT_DEPARTMENT, 'sbay_disable_department',
       self::VIEW_REPORTS, self::REFRESH_VERIFICATION,

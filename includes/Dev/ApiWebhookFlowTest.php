@@ -98,6 +98,10 @@ final class ApiWebhookFlowTest extends FlowTest {
       isset($routes['/sbay/v1/admin/tickets/bulk-actions']),
       'Capability-protected ticket bulk action route is registered.'
     );
+    Assert::true(
+      isset($routes['/sbay/v1/admin/tickets/(?P<id>\d+)/merge']),
+      'Manager ticket merge route is registered.'
+    );
 
     foreach (['customers', 'departments', 'providers', 'verifications'] as $resource) {
       Assert::true(
@@ -314,10 +318,39 @@ final class ApiWebhookFlowTest extends FlowTest {
       'Administrator bulk action updates selected tickets through the ticket service.'
     );
 
+    $targetTicketId = $tickets->create([
+      'customer_id' => $customerId,
+      'department_id' => $departmentId,
+      'subject' => 'API merge target',
+    ]);
+    $targetMessage = $messages->create([
+      'ticket_id' => $targetTicketId,
+      'author_id' => $customerId,
+      'author_type' => AuthorType::CUSTOMER->value,
+      'content' => 'Merge target opening message.',
+    ]);
+    $mergeRequest = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/' . $ticketId . '/merge');
+    $mergeRequest->set_param('target_id', $targetTicketId);
+    $mergeResponse = rest_do_request($mergeRequest);
+    $mergedSource = $tickets->find($ticketId);
+    $mergeContext = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/admin/tickets/' . $targetTicketId . '/context')
+    )->get_data()['data'];
+    Assert::true(
+      $mergeResponse->get_status() === 200
+      && $mergedSource?->state()->value === 'trash'
+      && $messages->findByTicket($ticketId) === []
+      && count($messages->findByTicket($targetTicketId)) === 2
+      && array_filter($mergeContext['activities'], static fn(array $activity): bool => $activity['label'] === 'Ticket Merged') !== [],
+      'Ticket merge preserves the conversation, retires the source, and records an audit activity.'
+    );
+
     $verifications->delete($verificationId);
     $providers->delete($providerId);
     $messages->delete($message->id());
+    $messages->delete($targetMessage->id());
     $tickets->delete($ticketId);
+    $tickets->delete($targetTicketId);
     $departments->delete($departmentId);
     $customers->deleteWithUser($customerId);
   }

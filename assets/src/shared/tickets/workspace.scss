@@ -77,4 +77,7 @@
 .sbay-ticket-controls { display:grid; gap:10px; }
 .sbay-ticket-controls label { display:grid; gap:5px; font-weight:700; }
 .sbay-ticket-controls select,.sbay-ticket-controls button { width:100%; min-height:38px; border:1px solid #d7dfda; border-radius:7px; background:#fff; }
+.sbay-ticket-merge { margin-top:6px; padding-top:12px; display:grid; gap:8px; border-top:1px solid #edf1ee; }
+.sbay-ticket-merge input { min-height:38px; padding:0 9px; border:1px solid #d7dfda; border-radius:7px; }
+.sbay-ticket-merge button { border-color:#b84a41; color:#a23a32; }
 @media (max-width:800px) { .sbay-conversation__grid { grid-template-columns:1fr; } }

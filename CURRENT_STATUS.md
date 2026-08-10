@@ -556,6 +556,8 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 12. ✅ Add capability-gated bulk assignment, unassignment, department, priority, trash, and restore actions with per-ticket events and partial-failure reporting.
 
+13. ✅ Add same-customer ticket merging with transactional message and attachment re-parenting, recoverable source retirement, target queue repair, and audit activities.
+
 ---
 
 # Current Workflow

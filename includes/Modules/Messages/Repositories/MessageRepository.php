@@ -119,6 +119,22 @@ final class MessageRepository extends Repository {
     return $this->deleteById($id);
   }
 
+  public function moveToTicket(int $sourceTicketId, int $targetTicketId): int {
+    $result = $this->db->update(
+      $this->table(),
+      ['ticket_id' => $targetTicketId, 'updated_at' => $this->now()],
+      ['ticket_id' => $sourceTicketId],
+      ['%d', '%s'],
+      ['%d'],
+    );
+
+    if ($result === false) {
+      throw new \RuntimeException('Ticket messages could not be moved.');
+    }
+
+    return $result;
+  }
+
   /**
    * Hydrate DB row → Message Entity
    */
