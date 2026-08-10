@@ -17,6 +17,7 @@ use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
+use SupportBay\Modules\Tickets\Enums\TicketBulkAction;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -37,6 +38,11 @@ final class AdminTicketController {
   public function registerRoutes(): void {
     register_rest_route('sbay/v1', '/admin/tickets/options', [
       'methods' => 'GET', 'callback' => [$this, 'options'],
+      'permission_callback' => [$this, 'permissions'],
+    ]);
+    register_rest_route('sbay/v1', '/admin/tickets/bulk-actions', [
+      'methods' => 'POST',
+      'callback' => [$this, 'bulkChangeTickets'],
       'permission_callback' => [$this, 'permissions'],
     ]);
     register_rest_route('sbay/v1', '/admin/tickets/(?P<id>\d+)/context', [
@@ -176,6 +182,43 @@ final class AdminTicketController {
       return RestResponse::error($exception->getMessage(), 'TICKET_ACTION_FAILED', [], 422);
     }
     return RestResponse::success($ticket->toArray(), 'Ticket updated.');
+  }
+
+  public function bulkChangeTickets(WP_REST_Request $request): WP_REST_Response {
+    $ids = array_slice(array_values(array_unique(array_filter(
+      array_map('absint', (array) $request->get_param('ticket_ids')),
+    ))), 0, 100);
+    $action = TicketBulkAction::tryFrom(sanitize_key((string) $request->get_param('action')));
+    $value = $request->get_param('value');
+
+    if ($ids === [] || ! $action) {
+      return RestResponse::error('Ticket IDs and a supported bulk action are required.', 'TICKET_BULK_ACTION_INVALID', [], 422);
+    }
+
+    $capability = match ($action) {
+      TicketBulkAction::ASSIGNMENT => 'sbay_assign_ticket',
+      TicketBulkAction::DEPARTMENT => 'sbay_move_ticket_department',
+      TicketBulkAction::PRIORITY => 'sbay_change_ticket_priority',
+      TicketBulkAction::STATE => CapabilityManager::CHANGE_TICKET_STATUS,
+    };
+
+    if (! current_user_can($capability)) {
+      return RestResponse::error('You are not allowed to perform this bulk action.', 'TICKET_BULK_ACTION_DENIED', [], 403);
+    }
+
+    $normalizedValue = $action === TicketBulkAction::ASSIGNMENT && $value === 'me'
+      ? get_current_user_id()
+      : $value;
+    $result = $this->tickets->bulkChange($ids, $action, $normalizedValue, get_current_user_id());
+
+    return RestResponse::success([
+      'updated' => array_map(static fn($ticket): array => $ticket->toArray(), $result['updated']),
+      'failed' => $result['failed'],
+    ], 'Bulk ticket action completed.', [
+      'requested' => count($ids),
+      'updated' => count($result['updated']),
+      'failed' => count($result['failed']),
+    ]);
   }
 
   public function uploadAttachment(WP_REST_Request $request): WP_REST_Response {

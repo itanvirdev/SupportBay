@@ -119,6 +119,14 @@ function AdminApp() {
     setDetail({ ...detail, ticket: response.data });
   };
 
+  const bulkTickets = async (ticketIds: number[], action: string, value: string) => {
+    await adminPost('admin/tickets/bulk-actions', {
+      ticket_ids: ticketIds,
+      action,
+      value,
+    });
+  };
+
   return (
     <main className={`sbay-admin-main sbay-admin-main--${config.section}`}>
       <header className="sbay-admin-workspace-header">
@@ -133,6 +141,7 @@ function AdminApp() {
           mode="staff"
           load={loadTickets}
           options={queueOptions}
+          bulk={bulkTickets}
           openTicket={(ticket) => { window.location.href = `${config.adminUrl}&ticket=${ticket.id}`; }}
         />
       ) : null}

@@ -554,6 +554,8 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 11. ✅ Add server-side Ticket Queue Intelligence with accurate public-reply counts, Need Reply detection, customer/agent/department context, agent and department filters, and smart sorting.
 
+12. ✅ Add capability-gated bulk assignment, unassignment, department, priority, trash, and restore actions with per-ticket events and partial-failure reporting.
+
 ---
 
 # Current Workflow

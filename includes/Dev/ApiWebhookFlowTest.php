@@ -94,6 +94,10 @@ final class ApiWebhookFlowTest extends FlowTest {
       isset($routes['/sbay/v1/admin/tickets/options']),
       'Agent queue filter options route is registered.'
     );
+    Assert::true(
+      isset($routes['/sbay/v1/admin/tickets/bulk-actions']),
+      'Capability-protected ticket bulk action route is registered.'
+    );
 
     foreach (['customers', 'departments', 'providers', 'verifications'] as $resource) {
       Assert::true(
@@ -241,6 +245,11 @@ final class ApiWebhookFlowTest extends FlowTest {
       rest_do_request(new WP_REST_Request('GET', '/sbay/v1/customers'))->get_status(),
       'Support agents cannot manage customers.'
     );
+    $deniedBulk = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/bulk-actions');
+    $deniedBulk->set_param('ticket_ids', [$ticketId]);
+    $deniedBulk->set_param('action', 'assignment');
+    $deniedBulk->set_param('value', 'me');
+    Assert::equals(403, rest_do_request($deniedBulk)->get_status(), 'Agents cannot use manager-only bulk assignment.');
 
     wp_set_current_user(1);
 
@@ -292,6 +301,19 @@ final class ApiWebhookFlowTest extends FlowTest {
     );
 
     remove_action('supportbay_webhook_dispatch', $captureWebhook);
+
+    $bulkPriority = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/bulk-actions');
+    $bulkPriority->set_param('ticket_ids', [$ticketId]);
+    $bulkPriority->set_param('action', 'priority');
+    $bulkPriority->set_param('value', 'high');
+    $bulkResponse = rest_do_request($bulkPriority);
+    Assert::true(
+      $bulkResponse->get_status() === 200
+      && $bulkResponse->get_data()['meta']['updated'] === 1
+      && $tickets->find($ticketId)?->priority()->value === 'high',
+      'Administrator bulk action updates selected tickets through the ticket service.'
+    );
+
     $verifications->delete($verificationId);
     $providers->delete($providerId);
     $messages->delete($message->id());

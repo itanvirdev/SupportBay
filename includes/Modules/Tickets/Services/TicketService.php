@@ -11,6 +11,7 @@ use SupportBay\Modules\Tickets\Entities\Ticket;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
+use SupportBay\Modules\Tickets\Enums\TicketBulkAction;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 use SupportBay\Modules\Tickets\Events\TicketClosed;
 use SupportBay\Modules\Tickets\Events\TicketCreated;
@@ -173,6 +174,44 @@ final class TicketService {
 
   public function changeState(int $id, TicketState $state, int $actorId): Ticket {
     return $this->change($id, ['state' => $state->value], 'state', $actorId);
+  }
+
+  /**
+   * Apply one supported mutation to a collection of tickets.
+   *
+   * Each successful ticket still emits its normal TicketChanged event. A missing
+   * or otherwise invalid ticket is reported without discarding valid updates.
+   *
+   * @param int[] $ticketIds
+   * @return array{updated: Ticket[], failed: array<int, string>}
+   */
+  public function bulkChange(
+    array $ticketIds,
+    TicketBulkAction $action,
+    mixed $value,
+    int $actorId,
+  ): array {
+    $updated = [];
+    $failed = [];
+
+    foreach (array_values(array_unique(array_map('absint', $ticketIds))) as $ticketId) {
+      if ($ticketId === 0) {
+        continue;
+      }
+
+      try {
+        $updated[] = match ($action) {
+          TicketBulkAction::ASSIGNMENT => $this->changeAssignment($ticketId, absint($value) ?: null, $actorId),
+          TicketBulkAction::DEPARTMENT => $this->changeDepartment($ticketId, absint($value), $actorId),
+          TicketBulkAction::PRIORITY => $this->changePriority($ticketId, TicketPriority::from(sanitize_key((string) $value)), $actorId),
+          TicketBulkAction::STATE => $this->changeState($ticketId, TicketState::from(sanitize_key((string) $value)), $actorId),
+        };
+      } catch (\ValueError|RuntimeException $exception) {
+        $failed[$ticketId] = $exception->getMessage();
+      }
+    }
+
+    return ['updated' => $updated, 'failed' => $failed];
   }
 
   /** @param array<string, mixed> $updates */

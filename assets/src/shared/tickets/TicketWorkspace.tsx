@@ -46,6 +46,7 @@ interface TicketWorkspaceProps {
   openTicket: (ticket: WorkspaceTicket) => void;
   createTicket?: () => void;
   options?: {agents:Array<{id:number;name:string}>;departments:Array<{id:number;name:string}>};
+  bulk?: (ticketIds: number[], action: string, value: string) => Promise<void>;
 }
 
 export function ticketQueryString(query: TicketQueryParams): string {
@@ -70,13 +71,15 @@ const defaults: TicketQueryParams = {
   assignment: '', agentId:'', departmentId:'', needReply:false, orderby: 'updated_at', order: 'desc',
 };
 
-export function TicketWorkspace({ mode, load, openTicket, createTicket, options }: TicketWorkspaceProps) {
+export function TicketWorkspace({ mode, load, openTicket, createTicket, options, bulk }: TicketWorkspaceProps) {
   const [query, setQuery] = useState(defaults);
   const [draftSearch, setDraftSearch] = useState('');
   const [result, setResult] = useState<TicketPage | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
+  const [bulkAction, setBulkAction] = useState('');
+  const [bulkPending, setBulkPending] = useState(false);
 
   const update = (changes: Partial<TicketQueryParams>) => setQuery((current) => ({ ...current, ...changes, page: changes.page ?? 1 }));
   const reload = useCallback(() => {
@@ -92,6 +95,22 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
     update({ search: draftSearch.trim() });
+  };
+  const applyBulkAction = async () => {
+    if (!bulk || !selected.length || !bulkAction) return;
+    const [action, value = ''] = bulkAction.split(':');
+    setBulkPending(true);
+    setError(null);
+    try {
+      await bulk(selected, action, value);
+      setSelected([]);
+      setBulkAction('');
+      setRefresh((current) => current + 1);
+    } catch (reason: unknown) {
+      setError(reason instanceof Error ? reason.message : 'Bulk ticket action failed.');
+    } finally {
+      setBulkPending(false);
+    }
   };
   const allSelected = Boolean(result?.items.length) && result?.items.every((ticket) => selected.includes(ticket.id));
   const first = result && result.total ? ((result.page - 1) * query.perPage) + 1 : 0;
@@ -143,7 +162,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options 
           </div>
         ))}
         <footer>
-          {mode === 'staff' ? <div><select aria-label="Bulk actions" disabled={!selected.length}><option>Bulk Actions</option></select><button disabled>Apply</button></div> : <span />}
+          {mode === 'staff' ? <div><select aria-label="Bulk actions" disabled={!selected.length || bulkPending} value={bulkAction} onChange={(event) => setBulkAction(event.target.value)}><option value="">Bulk Actions</option><optgroup label="Assignment"><option value="assignment:me">Assign to Me</option><option value="assignment:0">Unassign</option>{options?.agents.map((agent) => <option value={`assignment:${agent.id}`} key={`agent-${agent.id}`}>Assign to {agent.name}</option>)}</optgroup><optgroup label="Department">{options?.departments.map((department) => <option value={`department:${department.id}`} key={`department-${department.id}`}>Move to {department.name}</option>)}</optgroup><optgroup label="Priority"><option value="priority:normal">Priority: Normal</option><option value="priority:medium">Priority: Medium</option><option value="priority:high">Priority: High</option><option value="priority:urgent">Priority: Urgent</option></optgroup><optgroup label="State"><option value="state:trash">Move to Trash</option><option value="state:active">Restore</option></optgroup></select><button disabled={!bulkAction || bulkPending} onClick={applyBulkAction}>{bulkPending ? 'Applying…' : 'Apply'}</button></div> : <span />}
           <span>Showing {first}–{last} of {result?.total ?? 0}</span>
         </footer>
       </div>
