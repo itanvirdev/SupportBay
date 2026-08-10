@@ -15,6 +15,8 @@ final class TicketQuery {
     public readonly ?int $assignedAgentId = null,
     public readonly bool $unassigned = false,
     public readonly ?int $customerId = null,
+    public readonly ?int $departmentId = null,
+    public readonly bool $needsReply = false,
     public readonly string $orderBy = 'updated_at',
     public readonly string $direction = 'DESC',
   ) {

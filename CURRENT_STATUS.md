@@ -534,11 +534,25 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 1. ✅ Add the shared administrator/customer ticket list with server-backed search, filters, sorting, selection, and pagination.
 
-2. Add ticket conversation detail and internal-note visibility.
+2. ✅ Add administrator ticket conversation detail and internal-note visibility.
 
-3. Add agent reply and internal-note forms.
+3. ✅ Add agent reply and internal-note forms.
 
-4. Add close/reopen actions and React Flow Test coverage.
+4. ✅ Add close/reopen actions and React Flow Test coverage.
+
+5. ✅ Add WordPress TinyMCE rich replies and internal notes with strict server-side sanitization.
+
+6. ✅ Add the agent ticket sidebar with customer, ticket, verified-purchase, and activity context.
+
+7. ✅ Add secure agent reply attachments, message attachment display, and composer cancellation.
+
+8. ✅ Add authenticated agent downloads and submit-reply-and-close behavior.
+
+9. ✅ Add event-driven assignment, department, priority, trash, and restore operations with activity logging.
+
+10. ✅ Auto-assign an unassigned ticket to its first public staff responder.
+
+11. ✅ Add server-side Ticket Queue Intelligence with accurate public-reply counts, Need Reply detection, customer/agent/department context, agent and department filters, and smart sorting.
 
 ---
 

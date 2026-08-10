@@ -1,19 +1,15 @@
 import { useCallback } from 'react';
 import { portalApi } from '../../api/portal';
-import { TicketWorkspace, type TicketPage, type TicketQueryParams, type WorkspaceTicket } from '../../../shared/tickets/TicketWorkspace';
+import { TicketWorkspace, ticketQueryString, type TicketPage, type TicketQueryParams, type WorkspaceTicket } from '../../../shared/tickets/TicketWorkspace';
 import '../../../shared/tickets/workspace.scss';
 
 interface TicketsPageProps {
   navigate: (path: string) => void;
 }
 
-function queryString(query: TicketQueryParams): string {
-  return new URLSearchParams(Object.entries(query).map(([key, value]) => [key, String(value)])).toString();
-}
-
 export function TicketsPage({ navigate }: TicketsPageProps) {
   const load = useCallback(async (query: TicketQueryParams): Promise<TicketPage> => {
-    const response = await portalApi.tickets(queryString(query));
+    const response = await portalApi.tickets(ticketQueryString(query));
     return {
       items: response.data,
       page: Number(response.meta.page) || 1,

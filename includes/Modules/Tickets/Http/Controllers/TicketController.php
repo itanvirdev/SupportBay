@@ -6,6 +6,7 @@ namespace SupportBay\Modules\Tickets\Http\Controllers;
 
 use RuntimeException;
 use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Common\Utilities\RichTextSanitizer;
 use SupportBay\Core\Authorization\CapabilityManager;
 use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Messages\Enums\MessageType;
@@ -121,22 +122,25 @@ final class TicketController {
     $state = sanitize_key((string) $request->get_param('state'));
     $priority = sanitize_key((string) $request->get_param('priority'));
     $assignment = sanitize_key((string) $request->get_param('assignment'));
-    $result = $this->tickets->search(new TicketQuery(
+    $agentId = absint($request->get_param('agent_id')) ?: null;
+    $result = $this->tickets->searchQueue(new TicketQuery(
       page: $page,
       perPage: $perPage,
       search: sanitize_text_field(wp_unslash((string) $request->get_param('search'))) ?: null,
       status: TicketStatus::tryFrom($status)?->value,
       state: TicketState::tryFrom($state)?->value,
       priority: TicketPriority::tryFrom($priority)?->value,
-      assignedAgentId: $assignment === 'mine' ? get_current_user_id() : null,
+      assignedAgentId: $agentId ?? ($assignment === 'mine' ? get_current_user_id() : null),
       unassigned: $assignment === 'unassigned',
+      departmentId: absint($request->get_param('department_id')) ?: null,
+      needsReply: rest_sanitize_boolean($request->get_param('need_reply')),
       orderBy: sanitize_key((string) $request->get_param('orderby')),
       direction: sanitize_key((string) $request->get_param('order')),
     ));
     $total = $result['total'];
 
     return RestResponse::success(
-      array_map(static fn($ticket): array => $ticket->toArray(), $result['items']),
+      array_map(static fn($item): array => $item->toArray(), $result['items']),
       'Tickets retrieved.',
       [
         'page'        => $page,
@@ -165,7 +169,11 @@ final class TicketController {
     }
 
     $messages = array_map(
-      static fn($message): array => $message->toArray(),
+      static function ($message): array {
+        $data = $message->toArray();
+        $data['content'] = RichTextSanitizer::sanitize((string) $data['content']);
+        return $data;
+      },
       $this->messages->findByTicket($ticketId),
     );
 
@@ -202,7 +210,7 @@ final class TicketController {
         'author_id'   => get_current_user_id(),
         'author_type' => AuthorType::AGENT->value,
         'type'        => $type->value,
-        'content'     => sanitize_textarea_field(
+        'content'     => RichTextSanitizer::sanitize(
           wp_unslash((string) $request->get_param('content'))
         ),
       ]);
@@ -261,6 +269,9 @@ final class TicketController {
       'state' => ['sanitize_callback' => 'sanitize_key'],
       'priority' => ['sanitize_callback' => 'sanitize_key'],
       'assignment' => ['sanitize_callback' => 'sanitize_key'],
+      'agent_id' => ['sanitize_callback' => 'absint'],
+      'department_id' => ['sanitize_callback' => 'absint'],
+      'need_reply' => ['default' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
       'orderby' => ['default' => 'updated_at', 'sanitize_callback' => 'sanitize_key'],
       'order' => ['default' => 'desc', 'sanitize_callback' => 'sanitize_key'],
     ];

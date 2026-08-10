@@ -9,6 +9,7 @@ use SupportBay\Core\Events\EventDispatcher;
 use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Messages\Events\MessageCreated;
 use SupportBay\Modules\Messages\Listeners\SyncTicketReplyListener;
+use SupportBay\Modules\Messages\Listeners\AutoAssignFirstResponderListener;
 use SupportBay\Modules\Messages\Repositories\MessageRepository;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
@@ -23,6 +24,7 @@ final class MessageServiceProvider extends ServiceProvider {
   protected array $listeners = [
     MessageCreated::class => [
       SyncTicketReplyListener::class,
+      AutoAssignFirstResponderListener::class,
       LogMessageCreatedActivity::class,
     ],
   ];
@@ -39,6 +41,7 @@ final class MessageServiceProvider extends ServiceProvider {
     $container->singleton(MessageService::class);
 
     $container->singleton(SyncTicketReplyListener::class);
+    $container->singleton(AutoAssignFirstResponderListener::class);
 
     $container->singleton(LogMessageCreatedActivity::class);
   }

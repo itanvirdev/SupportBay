@@ -7,6 +7,7 @@ namespace SupportBay\Modules\Portal\Http\Controllers;
 use InvalidArgumentException;
 use RuntimeException;
 use SupportBay\Core\Http\RestResponse;
+use SupportBay\Common\Utilities\RichTextSanitizer;
 use SupportBay\Modules\Attachments\Entities\Attachment;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Data\CustomerProfileData;
@@ -309,7 +310,7 @@ final class PortalController {
         'subject' => sanitize_text_field(
           wp_unslash((string) $request->get_param('subject'))
         ),
-        'content' => sanitize_textarea_field(
+        'content' => RichTextSanitizer::sanitize(
           wp_unslash((string) $request->get_param('content'))
         ),
         'department_id' => absint($request->get_param('department_id')),
@@ -379,7 +380,7 @@ final class PortalController {
     try {
       $message = $this->portal->reply(
         (int) $request->get_param('id'),
-        sanitize_textarea_field(
+        RichTextSanitizer::sanitize(
           wp_unslash((string) $request->get_param('content'))
         ),
       );
@@ -656,7 +657,7 @@ final class PortalController {
       'id'          => $message->id(),
       'author_type' => $message->authorType()->value,
       'type'        => $message->type()->value,
-      'content'     => wp_strip_all_tags($message->content()),
+      'content'     => RichTextSanitizer::sanitize($message->content()),
       'edited_at'   => $message->editedAt(),
       'created_at'  => $message->createdAt(),
       'attachments' => array_map(

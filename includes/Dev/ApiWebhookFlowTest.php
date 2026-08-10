@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Dev;
 
 use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Common\Utilities\RichTextSanitizer;
 use SupportBay\Core\Testing\Assert;
 use SupportBay\Core\Testing\FlowTest;
 use SupportBay\Core\Integrations\IntegrationManager;
@@ -39,6 +40,22 @@ final class ApiWebhookFlowTest extends FlowTest {
 
     echo "🚀 Starting SupportBay API and Webhook Flow Test...\n\n";
 
+    $richText = RichTextSanitizer::sanitize(
+      '<p style="text-align:center;background:red"><strong>Safe</strong>'
+      . '<a href="javascript:alert(1)">link</a></p><table><tr><td>Cell</td></tr></table>'
+      . '<iframe src="https://example.com"></iframe><script>alert(1)</script>'
+    );
+    Assert::true(
+      str_contains($richText, '<strong>Safe</strong>')
+      && str_contains($richText, 'text-align: center')
+      && ! str_contains($richText, 'background')
+      && ! str_contains($richText, 'javascript:')
+      && ! str_contains($richText, '<table')
+      && ! str_contains($richText, '<iframe')
+      && ! str_contains($richText, '<script'),
+      'Rich text sanitizer preserves supported formatting and removes unsafe markup.'
+    );
+
     $webhooks = [];
     $captureWebhook = static function (WebhookData $webhook) use (&$webhooks): void {
       $webhooks[] = $webhook;
@@ -56,6 +73,26 @@ final class ApiWebhookFlowTest extends FlowTest {
     Assert::true(
       isset($routes['/sbay/v1/tickets']),
       'Versioned administrator ticket route is registered.'
+    );
+    Assert::true(
+      isset($routes['/sbay/v1/admin/tickets/(?P<id>\d+)/context']),
+      'Agent ticket context route is registered.'
+    );
+    Assert::true(
+      isset($routes['/sbay/v1/admin/tickets/(?P<ticket_id>\d+)/messages/(?P<message_id>\d+)/attachments']),
+      'Protected agent message attachment route is registered.'
+    );
+    Assert::true(
+      isset($routes['/sbay/v1/admin/attachments/(?P<id>\d+)/download']),
+      'Protected agent attachment download route is registered.'
+    );
+    Assert::true(
+      isset($routes['/sbay/v1/admin/tickets/(?P<id>\d+)/actions']),
+      'Capability-protected ticket operations route is registered.'
+    );
+    Assert::true(
+      isset($routes['/sbay/v1/admin/tickets/options']),
+      'Agent queue filter options route is registered.'
     );
 
     foreach (['customers', 'departments', 'providers', 'verifications'] as $resource) {
@@ -131,6 +168,18 @@ final class ApiWebhookFlowTest extends FlowTest {
     Assert::true($body['success'] === true, 'Ticket API uses the standard response envelope.');
     Assert::true(isset($body['meta']['total_pages']), 'Ticket API includes pagination metadata.');
 
+    $contextResponse = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/admin/tickets/' . $ticketId . '/context')
+    );
+    $context = $contextResponse->get_data()['data'];
+    Assert::true(
+      $contextResponse->get_status() === 200
+      && $context['customer']['email'] !== ''
+      && $context['information']['department'] !== null
+      && is_array($context['activities']),
+      'Agent ticket context composes safe customer, department, and activity data.'
+    );
+
     $filteredRequest = new WP_REST_Request('GET', '/sbay/v1/tickets');
     $filteredRequest->set_param('search', 'API and webhook test');
     $filteredRequest->set_param('state', 'active');
@@ -139,8 +188,22 @@ final class ApiWebhookFlowTest extends FlowTest {
 
     Assert::true(
       $filteredResponse['meta']['total'] >= 1
-      && $filteredResponse['data'][0]['id'] === $ticketId,
-      'Ticket workspace API applies search, state, and priority filters.'
+      && $filteredResponse['data'][0]['id'] === $ticketId
+      && $filteredResponse['data'][0]['reply_count'] >= 1
+      && $filteredResponse['data'][0]['needs_reply'] === true
+      && $filteredResponse['data'][0]['customer_name'] !== null
+      && $filteredResponse['data'][0]['department_name'] !== null,
+      'Ticket workspace API returns search-filtered queue intelligence.'
+    );
+
+    $needReplyRequest = new WP_REST_Request('GET', '/sbay/v1/tickets');
+    $needReplyRequest->set_param('search', 'API and webhook test');
+    $needReplyRequest->set_param('need_reply', true);
+    $needReplyResponse = rest_do_request($needReplyRequest)->get_data();
+    Assert::true(
+      $needReplyResponse['meta']['total'] >= 1
+      && $needReplyResponse['data'][0]['id'] === $ticketId,
+      'Need Reply filter includes tickets whose latest public reply is from the customer.'
     );
 
     $customerResponse = rest_do_request(

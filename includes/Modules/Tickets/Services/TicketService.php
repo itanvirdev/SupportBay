@@ -15,6 +15,7 @@ use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 use SupportBay\Modules\Tickets\Events\TicketClosed;
 use SupportBay\Modules\Tickets\Events\TicketCreated;
 use SupportBay\Modules\Tickets\Events\TicketReopened;
+use SupportBay\Modules\Tickets\Events\TicketChanged;
 use SupportBay\Modules\Tickets\Data\TicketQuery;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Core\Events\EventDispatcher;
@@ -77,6 +78,11 @@ final class TicketService {
   /** @return array{items: Ticket[], total: int} */
   public function search(TicketQuery $query): array {
     return $this->repository->search($query);
+  }
+
+  /** @return array{items: \SupportBay\Modules\Tickets\Data\TicketQueueItem[], total: int} */
+  public function searchQueue(TicketQuery $query): array {
+    return $this->repository->searchQueue($query);
   }
 
   /**
@@ -151,6 +157,31 @@ final class TicketService {
     $this->events->dispatch(new TicketReopened($reopened));
 
     return $reopened;
+  }
+
+  public function changeAssignment(int $id, ?int $agentId, int $actorId): Ticket {
+    return $this->change($id, ['assigned_agent_id' => $agentId], 'assignment', $actorId);
+  }
+
+  public function changeDepartment(int $id, int $departmentId, int $actorId): Ticket {
+    return $this->change($id, ['department_id' => $departmentId], 'department', $actorId);
+  }
+
+  public function changePriority(int $id, TicketPriority $priority, int $actorId): Ticket {
+    return $this->change($id, ['priority' => $priority->value], 'priority', $actorId);
+  }
+
+  public function changeState(int $id, TicketState $state, int $actorId): Ticket {
+    return $this->change($id, ['state' => $state->value], 'state', $actorId);
+  }
+
+  /** @param array<string, mixed> $updates */
+  private function change(int $id, array $updates, string $change, int $actorId): Ticket {
+    $this->findOrFail($id);
+    $this->repository->update($id, $updates);
+    $ticket = $this->findOrFail($id);
+    $this->events->dispatch(new TicketChanged($ticket, $change, $actorId));
+    return $ticket;
   }
 
   /**

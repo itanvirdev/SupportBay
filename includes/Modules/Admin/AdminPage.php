@@ -67,6 +67,8 @@ final class AdminPage {
       return;
     }
 
+    wp_enqueue_editor();
+
     $scriptPath = SBAY_PLUGIN_PATH . 'assets/dist/supportbay-admin.js';
     $stylePath = SBAY_PLUGIN_PATH . 'assets/dist/supportbay-admin.css';
 

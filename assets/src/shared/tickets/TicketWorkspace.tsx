@@ -8,6 +8,12 @@ export interface WorkspaceTicket {
   state?: string;
   priority: string;
   assigned_agent_id?: number | null;
+  agent_name?: string | null;
+  customer_name?: string | null;
+  customer_avatar_url?: string | null;
+  department_name?: string | null;
+  reply_count?: number;
+  needs_reply?: boolean;
   updated_at: string | null;
   created_at: string;
 }
@@ -27,6 +33,9 @@ export interface TicketQueryParams {
   state: string;
   priority: string;
   assignment: string;
+  agentId: string;
+  departmentId: string;
+  needReply: boolean;
   orderby: string;
   order: string;
 }
@@ -36,14 +45,32 @@ interface TicketWorkspaceProps {
   load: (query: TicketQueryParams) => Promise<TicketPage>;
   openTicket: (ticket: WorkspaceTicket) => void;
   createTicket?: () => void;
+  options?: {agents:Array<{id:number;name:string}>;departments:Array<{id:number;name:string}>};
+}
+
+export function ticketQueryString(query: TicketQueryParams): string {
+  return new URLSearchParams({
+    page: String(query.page),
+    per_page: String(query.perPage),
+    search: query.search,
+    status: query.status,
+    state: query.state,
+    priority: query.priority,
+    assignment: query.assignment,
+    agent_id: query.agentId,
+    department_id: query.departmentId,
+    need_reply: String(query.needReply),
+    orderby: query.orderby,
+    order: query.order,
+  }).toString();
 }
 
 const defaults: TicketQueryParams = {
   page: 1, perPage: 20, search: '', status: '', state: 'active', priority: '',
-  assignment: '', orderby: 'updated_at', order: 'desc',
+  assignment: '', agentId:'', departmentId:'', needReply:false, orderby: 'updated_at', order: 'desc',
 };
 
-export function TicketWorkspace({ mode, load, openTicket, createTicket }: TicketWorkspaceProps) {
+export function TicketWorkspace({ mode, load, openTicket, createTicket, options }: TicketWorkspaceProps) {
   const [query, setQuery] = useState(defaults);
   const [draftSearch, setDraftSearch] = useState('');
   const [result, setResult] = useState<TicketPage | null>(null);
@@ -73,9 +100,9 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket }: Ticket
   return (
     <section className={`sbay-ticket-workspace sbay-ticket-workspace--${mode}`}>
       <div className="sbay-ticket-tabs" role="tablist" aria-label="Ticket queues">
-        <button className={!query.assignment && query.state !== 'trash' ? 'is-active' : ''} onClick={() => update({ assignment: '', state: 'active', status: '' })}>▤ All Tickets</button>
-        {mode === 'staff' ? <button className={query.assignment === 'mine' ? 'is-active' : ''} onClick={() => update({ assignment: 'mine', state: 'active', status: '' })}>♙ My Tickets</button> : null}
-        {mode === 'staff' ? <button className={query.assignment === 'unassigned' ? 'is-active' : ''} onClick={() => update({ assignment: 'unassigned', state: 'active', status: '' })}>◉ Unassigned</button> : null}
+        <button className={!query.assignment && query.state !== 'trash' ? 'is-active' : ''} onClick={() => update({ assignment: '', agentId: '', state: 'active', status: '' })}>▤ All Tickets</button>
+        {mode === 'staff' ? <button className={query.assignment === 'mine' ? 'is-active' : ''} onClick={() => update({ assignment: 'mine', agentId: '', state: 'active', status: '' })}>♙ My Tickets</button> : null}
+        {mode === 'staff' ? <button className={query.assignment === 'unassigned' ? 'is-active' : ''} onClick={() => update({ assignment: 'unassigned', agentId: '', state: 'active', status: '' })}>◉ Unassigned</button> : null}
         {mode === 'staff' ? <button className={query.state === 'trash' ? 'is-active' : ''} onClick={() => update({ assignment: '', state: 'trash', status: '' })}>♲ Trashed</button> : null}
         <div className="sbay-ticket-tabs__actions">
           <button aria-label="Refresh tickets" onClick={() => setRefresh((value) => value + 1)}>↻</button>
@@ -88,12 +115,15 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket }: Ticket
           {['active', 'inactive'].map((state) => <button className={query.state === state && !query.status ? 'is-active' : ''} key={state} onClick={() => update({ state, status: '' })}>{state[0].toUpperCase() + state.slice(1)}</button>)}
           <button className={query.status === 'closed' ? 'is-active' : ''} onClick={() => update({ state: '', status: 'closed' })}>Closed</button>
           <button className={!query.state && !query.status ? 'is-active' : ''} onClick={() => update({ state: '', status: '' })}>All</button>
+          {mode==='staff'?<button className={query.needReply?'is-active':''} onClick={()=>update({needReply:!query.needReply})}>Need Reply</button>:null}
         </div>
         <form onSubmit={submitSearch}><input aria-label="Search tickets" onChange={(event) => setDraftSearch(event.target.value)} placeholder="Search keyword or ticket ID" value={draftSearch} /><button aria-label="Submit search">⌕</button></form>
         <div className="sbay-ticket-filter-row">
+          {mode==='staff'?<select aria-label="Department" value={query.departmentId} onChange={event=>update({departmentId:event.target.value})}><option value="">All Departments</option>{options?.departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
+          {mode==='staff'?<select aria-label="Agent" value={query.agentId} onChange={event=>update({agentId:event.target.value,assignment:''})}><option value="">All Agents</option>{options?.agents.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
           <select aria-label="Priority" value={query.priority} onChange={(event) => update({ priority: event.target.value })}><option value="">All Priorities</option><option value="normal">Normal</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>
-          <select aria-label="Sort tickets" value={`${query.orderby}:${query.order}`} onChange={(event) => { const [orderby, order] = event.target.value.split(':'); update({ orderby, order }); }}><option value="updated_at:desc">Updated (Newest First)</option><option value="updated_at:asc">Updated (Oldest First)</option><option value="created_at:desc">Created (Newest First)</option><option value="priority:desc">Priority (Highest First)</option></select>
-          <button disabled={query.search === '' && query.priority === '' && query.status === '' && query.state === 'active' && query.assignment === ''} onClick={() => { setDraftSearch(''); setQuery(defaults); }}>Reset Filters</button>
+          <select aria-label="Sort tickets" value={`${query.orderby}:${query.order}`} onChange={(event) => { const [orderby, order] = event.target.value.split(':'); update({ orderby, order }); }}><option value="updated_at:desc">Updated (Newest First)</option><option value="need_reply:desc">Need Reply First</option><option value="updated_at:asc">Updated (Oldest First)</option><option value="created_at:desc">Created (Newest First)</option><option value="priority:desc">Priority (Highest First)</option></select>
+          <button disabled={query.search === '' && query.priority === '' && query.status === '' && query.state === 'active' && query.assignment === '' && query.agentId === '' && query.departmentId === '' && !query.needReply} onClick={() => { setDraftSearch(''); setQuery(defaults); }}>Reset Filters</button>
         </div>
       </div>
 
@@ -101,14 +131,14 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket }: Ticket
       <div className="sbay-ticket-table">
         <div className="sbay-ticket-row sbay-ticket-row--header">
           {mode === 'staff' ? <input aria-label="Select all tickets" checked={allSelected} onChange={() => setSelected(allSelected ? [] : result?.items.map((ticket) => ticket.id) ?? [])} type="checkbox" /> : <span />}
-          <span>Title</span><span>Priority</span>{mode === 'staff' ? <span>Agent</span> : null}<span>Date</span>
+          <span>Title</span><span>{mode==='staff'?'Reply':'Priority'}</span>{mode === 'staff' ? <span>Agent</span> : null}<span>Date</span>
         </div>
         {!result ? <p className="sbay-ticket-empty">Loading tickets…</p> : result.items.length === 0 ? <p className="sbay-ticket-empty">No tickets match these filters.</p> : result.items.map((ticket) => (
           <div className="sbay-ticket-row" key={ticket.id}>
             {mode === 'staff' ? <input aria-label={`Select ${ticket.subject}`} checked={selected.includes(ticket.id)} onChange={() => setSelected((current) => current.includes(ticket.id) ? current.filter((id) => id !== ticket.id) : [...current, ticket.id])} type="checkbox" /> : <span className="sbay-ticket-avatar">{ticket.subject.charAt(0)}</span>}
-            <button className="sbay-ticket-title" onClick={() => openTicket(ticket)}><strong>{ticket.subject}</strong><span><i>{ticket.status}</i> #{ticket.track_id}</span></button>
-            <span className={`sbay-ticket-priority sbay-ticket-priority--${ticket.priority}`}>{ticket.priority}</span>
-            {mode === 'staff' ? <span>{ticket.assigned_agent_id ? `#${ticket.assigned_agent_id}` : 'Unassigned'}</span> : null}
+            <button className="sbay-ticket-title" onClick={() => openTicket(ticket)}><strong>{ticket.subject} {ticket.customer_name?<small>by {ticket.customer_name}</small>:null}</strong><span><i>{ticket.status}</i> #{ticket.track_id} · {ticket.department_name||'No department'} · {ticket.priority}</span></button>
+            {mode==='staff'?<span>{ticket.reply_count??0}{ticket.needs_reply?<i className="sbay-need-reply">Need Reply</i>:null}</span>:<span className={`sbay-ticket-priority sbay-ticket-priority--${ticket.priority}`}>{ticket.priority}</span>}
+            {mode === 'staff' ? <span>{ticket.agent_name||'Unassigned'}</span> : null}
             <span>{new Date(ticket.updated_at || ticket.created_at).toLocaleDateString()}</span>
           </div>
         ))}

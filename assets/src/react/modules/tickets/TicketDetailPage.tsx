@@ -155,7 +155,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
                 <strong>{message.author_type === 'customer' ? 'You' : 'Support team'}</strong>
                 <time>{formatDateTime(message.created_at)}</time>
               </div>
-              <p>{message.content}</p>
+              <div className="sbay-rich-content" dangerouslySetInnerHTML={{ __html: message.content }} />
               {message.attachments.length > 0 ? (
                 <ul className="sbay-attachments" aria-label="Attachments">
                   {message.attachments.map((attachment) => (

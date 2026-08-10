@@ -55,6 +55,8 @@ final class PortalPage {
       return;
     }
 
+    wp_enqueue_editor();
+
     $scriptPath = SBAY_PLUGIN_PATH . 'assets/dist/supportbay-customer.js';
     $stylePath = SBAY_PLUGIN_PATH . 'assets/dist/supportbay-customer.css';
 

@@ -13,6 +13,10 @@ use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use SupportBay\Modules\Tickets\Database\TicketSchema;
 use SupportBay\Modules\Tickets\Entities\Ticket;
 use SupportBay\Modules\Tickets\Data\TicketQuery;
+use SupportBay\Modules\Tickets\Data\TicketQueueItem;
+use SupportBay\Modules\Messages\Database\MessageSchema;
+use SupportBay\Modules\Customers\Database\CustomerSchema;
+use SupportBay\Modules\Departments\Database\DepartmentSchema;
 
 final class TicketRepository extends Repository {
 
@@ -163,6 +167,43 @@ final class TicketRepository extends Repository {
       'items' => array_map(fn(array $row): Ticket => $this->hydrate($row), $rows),
       'total' => $total,
     ];
+  }
+
+  /** @return array{items: TicketQueueItem[], total: int} */
+  public function searchQueue(TicketQuery $query): array {
+    $ticketTable = $this->table();
+    $messageTable = MessageSchema::tableName();
+    $customerTable = CustomerSchema::tableName();
+    $departmentTable = DepartmentSchema::tableName();
+    $userTable = $this->db->users;
+    $clauses = [];
+    $values = [];
+    foreach (['status', 'state', 'priority'] as $field) {
+      if ($query->{$field} !== null) { $clauses[] = "t.{$field} = %s"; $values[] = $query->{$field}; }
+    }
+    if ($query->departmentId !== null) { $clauses[] = 't.department_id = %d'; $values[] = $query->departmentId; }
+    if ($query->unassigned) { $clauses[] = 't.assigned_agent_id IS NULL'; }
+    elseif ($query->assignedAgentId !== null) { $clauses[] = 't.assigned_agent_id = %d'; $values[] = $query->assignedAgentId; }
+    if ($query->search) {
+      $like = '%' . $this->db->esc_like($query->search) . '%';
+      $clauses[] = '(t.subject LIKE %s OR t.track_id LIKE %s OR cu.display_name LIKE %s)';
+      array_push($values, $like, $like, $like);
+    }
+    $needExpression = "(lm.author_type IN ('customer','guest') AND t.status NOT IN ('resolved','closed') AND t.state = 'active')";
+    if ($query->needsReply) { $clauses[] = $needExpression; }
+    $where = $clauses ? 'WHERE ' . implode(' AND ', $clauses) : '';
+    $aggregate = "(SELECT ticket_id, COUNT(*) reply_count, MAX(id) latest_reply_id FROM {$messageTable} WHERE type = 'reply' GROUP BY ticket_id) replies";
+    $joins = "LEFT JOIN {$aggregate} ON replies.ticket_id=t.id LEFT JOIN {$messageTable} lm ON lm.id=replies.latest_reply_id LEFT JOIN {$customerTable} c ON c.id=t.customer_id LEFT JOIN {$userTable} cu ON cu.ID=c.user_id LEFT JOIN {$userTable} au ON au.ID=t.assigned_agent_id LEFT JOIN {$departmentTable} d ON d.id=t.department_id";
+    $countSql = "SELECT COUNT(*) FROM {$ticketTable} t {$joins} {$where}";
+    $total = (int) ($values ? $this->db->get_var($this->db->prepare($countSql, ...$values)) : $this->db->get_var($countSql));
+    $order = strtoupper($query->direction) === 'ASC' ? 'ASC' : 'DESC';
+    $orderBy = match ($query->orderBy) {
+      'created_at' => 't.created_at', 'priority' => "CASE t.priority WHEN 'urgent' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END",
+      'need_reply' => $needExpression, default => 'COALESCE(t.last_reply_at,t.updated_at,t.created_at)',
+    };
+    $sql = "SELECT t.*, COALESCE(replies.reply_count,0) reply_count, {$needExpression} needs_reply, au.display_name agent_name, cu.display_name customer_name, c.avatar_url customer_avatar_url, d.name department_name FROM {$ticketTable} t {$joins} {$where} ORDER BY {$orderBy} {$order}, t.id DESC LIMIT %d OFFSET %d";
+    $rows = $this->db->get_results($this->db->prepare($sql, ...[...$values, $query->perPage, ($query->page - 1) * $query->perPage]), ARRAY_A);
+    return ['items' => array_map(static fn(array $row): TicketQueueItem => new TicketQueueItem($row), $rows), 'total' => $total];
   }
 
   /**

@@ -9,8 +9,14 @@ use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 use SupportBay\Modules\Tickets\Http\Controllers\TicketController;
+use SupportBay\Modules\Tickets\Events\TicketChanged;
+use SupportBay\Modules\Activities\Listeners\LogTicketChangedActivity;
 
 final class TicketServiceProvider extends ServiceProvider {
+
+  protected array $listeners = [
+    TicketChanged::class => [LogTicketChangedActivity::class],
+  ];
 
   // protected array $listeners = [
 
@@ -33,6 +39,7 @@ final class TicketServiceProvider extends ServiceProvider {
     $container->singleton(TicketService::class);
 
     $container->singleton(TicketController::class);
+    $container->singleton(LogTicketChangedActivity::class);
   }
 
   /**

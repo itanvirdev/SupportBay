@@ -1,18 +1,18 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { adminGet } from './api';
+import { adminDownload, adminGet, adminPost, adminUpload } from './api';
 import { getAdminConfig } from './config';
 import './styles.scss';
-import { TicketWorkspace, type TicketPage, type TicketQueryParams, type WorkspaceTicket } from '../shared/tickets/TicketWorkspace';
+import { TicketWorkspace, ticketQueryString, type TicketPage, type TicketQueryParams, type WorkspaceTicket } from '../shared/tickets/TicketWorkspace';
 import '../shared/tickets/workspace.scss';
+import { TicketConversation, type ConversationMessage, type ConversationTicket, type TicketAttachment, type TicketContext } from '../shared/tickets/TicketConversation';
 
 interface TicketSummary {
   tickets: number;
 }
 
 async function loadTickets(query: TicketQueryParams): Promise<TicketPage> {
-  const search = new URLSearchParams(Object.entries(query).map(([key, value]) => [key, String(value)]));
-  const response = await adminGet<WorkspaceTicket[]>(`tickets?${search.toString()}`);
+  const response = await adminGet<WorkspaceTicket[]>(`tickets?${ticketQueryString(query)}`);
   return {
     items: response.data,
     page: Number(response.meta.page) || 1,
@@ -44,6 +44,9 @@ function AdminApp() {
   const content = sectionContent[config.section];
   const [summary, setSummary] = useState<TicketSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const ticketId = Number(new URLSearchParams(window.location.search).get('ticket')) || null;
+  const [detail, setDetail] = useState<{ ticket: ConversationTicket; messages: ConversationMessage[]; context: TicketContext } | null>(null);
+  const [queueOptions, setQueueOptions] = useState<TicketContext['options']>();
 
   useEffect(() => {
     if (config.section === 'settings') {
@@ -59,6 +62,63 @@ function AdminApp() {
     });
   }, [config.section]);
 
+  useEffect(() => {
+    if (config.section !== 'tickets' || ticketId) return;
+    adminGet<TicketContext['options']>('admin/tickets/options')
+      .then((response) => setQueueOptions(response.data))
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Ticket filters could not be loaded.'));
+  }, [config.section, ticketId]);
+
+  useEffect(() => {
+    if (!ticketId) return;
+    Promise.all([
+      adminGet<ConversationTicket>(`tickets/${ticketId}`),
+      adminGet<ConversationMessage[]>(`tickets/${ticketId}/messages`),
+      adminGet<TicketContext>(`admin/tickets/${ticketId}/context`),
+    ]).then(([ticket, messages, context]) => setDetail({ ticket: ticket.data, messages: messages.data, context: context.data }))
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Ticket could not be loaded.'));
+  }, [ticketId]);
+
+  const addMessage = async (content: string, type: 'reply' | 'internal_note', files: File[], close: boolean) => {
+    if (!ticketId || !detail) return;
+    const response = await adminPost<ConversationMessage>(`tickets/${ticketId}/messages`, { content, type });
+    const uploaded = await Promise.all(files.map((file) => adminUpload<TicketAttachment>(
+      `admin/tickets/${ticketId}/messages/${response.data.id}/attachments`, file,
+    )));
+    const nextDetail = {
+      ...detail,
+      messages: [...detail.messages, response.data],
+      context: {...detail.context, attachments: [...detail.context.attachments, ...uploaded.map(item=>item.data)]},
+    };
+    if (close) {
+      const closed = await adminPost<ConversationTicket>(`tickets/${ticketId}/close`, {});
+      setDetail({...nextDetail, ticket: closed.data});
+    } else {
+      setDetail(nextDetail);
+    }
+  };
+
+  const downloadAttachment = async (file: TicketAttachment) => {
+    const blob = await adminDownload(`admin/attachments/${file.id}/download`);
+    const url = URL.createObjectURL(blob); const link = document.createElement('a');
+    link.href = url; link.download = file.original_name; link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
+
+  const mutateTicket = async (action: string, value: string | number) => {
+    if (!ticketId || !detail) return;
+    const ticket = await adminPost<ConversationTicket>(`admin/tickets/${ticketId}/actions`, { action, value });
+    const context = await adminGet<TicketContext>(`admin/tickets/${ticketId}/context`);
+    setDetail({...detail, ticket: ticket.data, context: context.data});
+  };
+
+  const transition = async () => {
+    if (!ticketId || !detail) return;
+    const action = detail.ticket.status === 'closed' ? 'reopen' : 'close';
+    const response = await adminPost<ConversationTicket>(`tickets/${ticketId}/${action}`, {});
+    setDetail({ ...detail, ticket: response.data });
+  };
+
   return (
     <main className={`sbay-admin-main sbay-admin-main--${config.section}`}>
       <header className="sbay-admin-workspace-header">
@@ -69,9 +129,10 @@ function AdminApp() {
       {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
 
       {config.section === 'tickets' ? (
-        <TicketWorkspace
+        ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} /> : <p>Loading ticket conversation…</p>) : <TicketWorkspace
           mode="staff"
           load={loadTickets}
+          options={queueOptions}
           openTicket={(ticket) => { window.location.href = `${config.adminUrl}&ticket=${ticket.id}`; }}
         />
       ) : null}
