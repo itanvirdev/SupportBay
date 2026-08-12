@@ -69,6 +69,11 @@ final class ActivityService {
     return $this->repository->getByEvent($eventType);
   }
 
+  /** @param int[] $ticketIds @return Activity[] */
+  public function getByTickets(array $ticketIds, int $limit = 20): array {
+    return $this->repository->getByTickets($ticketIds, $limit);
+  }
+
   /**
    * Normalize defaults.
    */

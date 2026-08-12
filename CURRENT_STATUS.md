@@ -560,6 +560,8 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 14. ✅ Add manager-controlled ticket splitting with selective conversation and attachment transfer, transactional queue repair, related-ticket metadata, and audit activities.
 
+15. ✅ Add Customer 360 profiles with safe identity data, masked provider connections, purchase and ticket history, recent ticket activity, and capability-gated lifecycle controls.
+
 ---
 
 # Current Workflow

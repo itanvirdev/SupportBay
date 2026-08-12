@@ -220,6 +220,17 @@ final class CustomerService {
     );
   }
 
+  /** @return array<int, array{provider: string, reference: string}> */
+  public function providerConnections(int $id): array {
+    $customer = $this->find($id);
+
+    if (! $customer) {
+      throw new RuntimeException('Customer not found.');
+    }
+
+    return $this->users->providerConnections($customer->userId());
+  }
+
   /**
    * Update customer-editable profile fields.
    *

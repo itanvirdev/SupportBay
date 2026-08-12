@@ -106,6 +106,10 @@ final class ApiWebhookFlowTest extends FlowTest {
       isset($routes['/sbay/v1/admin/tickets/(?P<id>\d+)/split']),
       'Manager ticket split route is registered.'
     );
+    Assert::true(
+      isset($routes['/sbay/v1/admin/customers/(?P<id>\d+)/profile']),
+      'Capability-protected Customer 360 profile route is registered.'
+    );
 
     foreach (['customers', 'departments', 'providers', 'verifications'] as $resource) {
       Assert::true(
@@ -169,6 +173,7 @@ final class ApiWebhookFlowTest extends FlowTest {
       'purchase-' . $suffix,
       customerId: $customerId,
     )->id();
+    update_user_meta($userId, 'sbay_oauth_fake-purchase_identity', 'provider-customer-' . $suffix);
 
     $request = new WP_REST_Request('GET', '/sbay/v1/tickets');
     $request->set_param('page', 1);
@@ -223,6 +228,22 @@ final class ApiWebhookFlowTest extends FlowTest {
     );
     Assert::equals(200, $customerResponse->get_status(), 'Customer detail API is available.');
 
+    $profileResponse = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/admin/customers/' . $customerId . '/profile')
+    );
+    $profileData = $profileResponse->get_data()['data'];
+    Assert::true(
+      $profileResponse->get_status() === 200
+      && $profileData['customer']['email'] !== ''
+      && $profileData['summary']['tickets'] >= 1
+      && $profileData['summary']['purchases'] >= 1
+      && $profileData['tickets'][0]['id'] === $ticketId
+      && $profileData['providers'][0]['provider'] === 'fake-purchase'
+      && ! str_contains($profileData['providers'][0]['reference'], $suffix)
+      && ! isset($profileData['purchases'][0]['provider_snapshot']),
+      'Customer 360 composes safe identity, provider, purchase, and ticket history data.'
+    );
+
     $providerResponse = rest_do_request(
       new WP_REST_Request('GET', '/sbay/v1/providers/' . $providerId)
     );
@@ -252,6 +273,11 @@ final class ApiWebhookFlowTest extends FlowTest {
       403,
       rest_do_request(new WP_REST_Request('GET', '/sbay/v1/customers'))->get_status(),
       'Support agents cannot manage customers.'
+    );
+    Assert::equals(
+      403,
+      rest_do_request(new WP_REST_Request('GET', '/sbay/v1/admin/customers/' . $customerId . '/profile'))->get_status(),
+      'Support agents cannot open Customer 360 profiles without customer-management capability.'
     );
     $deniedBulk = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/bulk-actions');
     $deniedBulk->set_param('ticket_ids', [$ticketId]);

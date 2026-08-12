@@ -147,6 +147,28 @@ final class ActivityRepository extends Repository {
   }
 
   /**
+   * Get recent activities across a known set of tickets.
+   *
+   * @param int[] $ticketIds
+   * @return Activity[]
+   */
+  public function getByTickets(array $ticketIds, int $limit = 20): array {
+    $ids = array_values(array_unique(array_filter(array_map('absint', $ticketIds))));
+
+    if ($ids === []) {
+      return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+    $rows = $this->db->get_results($this->db->prepare(
+      "SELECT * FROM {$this->table()} WHERE ticket_id IN ({$placeholders}) ORDER BY created_at DESC, id DESC LIMIT %d",
+      ...[...$ids, max(1, min(100, $limit))],
+    ), ARRAY_A);
+
+    return array_map(fn(array $row): Activity => $this->hydrate($row), $rows);
+  }
+
+  /**
    * Hydrate row → Activity Entity
    */
   protected function hydrate(array $row): object {

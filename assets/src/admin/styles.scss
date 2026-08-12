@@ -24,10 +24,47 @@
 .sbay-settings-foundation nav span.is-active { background: #e7f2ed; color: #216e52; font-weight: 700; }
 .sbay-settings-foundation h2 { margin: 8px 0; }
 .sbay-admin-error { margin-bottom: 18px; padding: 13px; border-radius: 9px; color: #8d2d28; background: #fcebea; }
+.sbay-customer-profile { display:grid; gap:22px; }
+.sbay-customer-hero { padding:24px; display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center; border:1px solid #dfe7e2; border-radius:15px; background:#fff; }
+.sbay-customer-avatar { width:72px; height:72px; display:grid; place-items:center; overflow:hidden; border-radius:50%; background:#dfeae4; color:#216e52; font-size:28px; font-weight:800; }
+.sbay-customer-avatar img { width:100%; height:100%; object-fit:cover; }
+.sbay-customer-hero h1 { margin:3px 0 5px; font-size:30px; }
+.sbay-customer-hero p { margin:6px 0 0; color:#697770; }
+.sbay-customer-hero>div:last-child { display:grid; justify-items:end; gap:10px; }
+.sbay-customer-hero button,.sbay-back { padding:8px 12px; border:1px solid #ccd8d1; border-radius:8px; background:#fff; cursor:pointer; }
+.sbay-customer-state { padding:5px 9px; border-radius:99px; background:#e9f3ee; color:#216e52; font-weight:750; text-transform:capitalize; }
+.sbay-customer-state.is-suspended { background:#fcebea; color:#9c342e; }
+.sbay-customer-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.sbay-customer-summary div,.sbay-customer-grid section { padding:20px; border:1px solid #dfe7e2; border-radius:13px; background:#fff; }
+.sbay-customer-summary strong { display:block; font-size:30px; }
+.sbay-customer-summary span,.sbay-customer-profile p { color:#697770; }
+.sbay-customer-grid { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:18px; align-items:start; }
+.sbay-customer-grid main,.sbay-customer-grid aside { display:grid; gap:18px; }
+.sbay-customer-grid h2 { margin:0 0 15px; font-size:17px; }
+.sbay-customer-list { display:grid; }
+.sbay-customer-list>button { padding:14px 0; display:flex; justify-content:space-between; gap:16px; border:0; border-bottom:1px solid #edf1ee; background:none; text-align:left; cursor:pointer; }
+.sbay-customer-list>button>span { display:grid; gap:5px; }
+.sbay-customer-list>button>span:last-child { justify-items:end; }
+.sbay-customer-list small,.sbay-customer-list time { color:#718078; }
+.sbay-customer-list i,.sbay-purchase-grid i { color:#216e52; font-style:normal; text-transform:capitalize; }
+.sbay-purchase-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.sbay-purchase-grid article { padding:15px; border:1px solid #e4eae6; border-radius:10px; }
+.sbay-purchase-grid article header { display:flex; justify-content:space-between; gap:10px; }
+.sbay-customer-profile dl { margin:10px 0 0; }
+.sbay-customer-profile dl div { padding:8px 0; display:grid; grid-template-columns:100px 1fr; gap:10px; border-bottom:1px solid #edf1ee; }
+.sbay-customer-profile dt { font-weight:700; }
+.sbay-customer-profile dd { margin:0; overflow-wrap:anywhere; }
+.sbay-customer-grid ul,.sbay-customer-grid ol { margin:0; padding:0; display:grid; gap:10px; list-style:none; }
+.sbay-customer-grid li { padding-bottom:10px; display:grid; gap:3px; border-bottom:1px solid #edf1ee; }
+.sbay-customer-grid li span,.sbay-customer-grid li time { color:#718078; font-size:12px; }
 @media (max-width: 782px) {
   .sbay-admin-page { min-height: calc(100vh - 46px); }
   .sbay-admin-php-header { align-items: flex-start; flex-direction: column; gap: 12px; padding: 18px 20px 0; }
   .sbay-admin-php-header nav { min-height: 46px; gap: 20px; }
   .sbay-admin-main { padding: 28px 20px; }
   .sbay-admin-panel, .sbay-settings-foundation { grid-template-columns: 1fr; }
+  .sbay-customer-hero,.sbay-customer-grid { grid-template-columns:1fr; }
+  .sbay-customer-hero>div:last-child { justify-items:start; }
+  .sbay-customer-summary { grid-template-columns:repeat(2,1fr); }
+  .sbay-purchase-grid { grid-template-columns:1fr; }
 }

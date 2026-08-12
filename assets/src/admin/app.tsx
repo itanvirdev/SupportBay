@@ -6,6 +6,7 @@ import './styles.scss';
 import { TicketWorkspace, ticketQueryString, type TicketPage, type TicketQueryParams, type WorkspaceTicket } from '../shared/tickets/TicketWorkspace';
 import '../shared/tickets/workspace.scss';
 import { TicketConversation, type ConversationMessage, type ConversationTicket, type TicketAttachment, type TicketContext } from '../shared/tickets/TicketConversation';
+import { CustomerProfile, type CustomerProfileData } from './CustomerProfile';
 
 interface TicketSummary {
   tickets: number;
@@ -45,7 +46,10 @@ function AdminApp() {
   const [summary, setSummary] = useState<TicketSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const ticketId = Number(new URLSearchParams(window.location.search).get('ticket')) || null;
+  const customerId = Number(new URLSearchParams(window.location.search).get('customer')) || null;
+  const returnTicketId = Number(new URLSearchParams(window.location.search).get('return_ticket')) || null;
   const [detail, setDetail] = useState<{ ticket: ConversationTicket; messages: ConversationMessage[]; context: TicketContext } | null>(null);
+  const [customerProfile, setCustomerProfile] = useState<CustomerProfileData | null>(null);
   const [queueOptions, setQueueOptions] = useState<TicketContext['options']>();
 
   useEffect(() => {
@@ -78,6 +82,17 @@ function AdminApp() {
     ]).then(([ticket, messages, context]) => setDetail({ ticket: ticket.data, messages: messages.data, context: context.data }))
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Ticket could not be loaded.'));
   }, [ticketId]);
+
+  const loadCustomerProfile = async (id: number) => {
+    const response = await adminGet<CustomerProfileData>(`admin/customers/${id}/profile`);
+    setCustomerProfile(response.data);
+  };
+
+  useEffect(() => {
+    if (!customerId) return;
+    loadCustomerProfile(customerId)
+      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Customer profile could not be loaded.'));
+  }, [customerId]);
 
   const addMessage = async (content: string, type: 'reply' | 'internal_note', files: File[], close: boolean) => {
     if (!ticketId || !detail) return;
@@ -142,6 +157,12 @@ function AdminApp() {
     window.location.href = `${config.adminUrl}&ticket=${response.data.id}`;
   };
 
+  const changeCustomerState = async (state: 'registered'|'suspended') => {
+    if (!customerId) return;
+    await adminPost(`customers/${customerId}/state`, { state });
+    await loadCustomerProfile(customerId);
+  };
+
   return (
     <main className={`sbay-admin-main sbay-admin-main--${config.section}`}>
       <header className="sbay-admin-workspace-header">
@@ -152,7 +173,7 @@ function AdminApp() {
       {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
 
       {config.section === 'tickets' ? (
-        ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} merge={mergeTicket} split={splitTicket} /> : <p>Loading ticket conversation…</p>) : <TicketWorkspace
+        customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : <p>Loading customer profile…</p>) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} merge={mergeTicket} split={splitTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : <p>Loading ticket conversation…</p>) : <TicketWorkspace
           mode="staff"
           load={loadTickets}
           options={queueOptions}

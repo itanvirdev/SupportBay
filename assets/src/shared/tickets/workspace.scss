@@ -71,6 +71,7 @@
 .sbay-ticket-user { display:grid; grid-template-columns:46px 1fr; gap:4px 12px; align-items:center; }
 .sbay-ticket-user>span { grid-row:1/4; width:46px; height:46px; display:grid; place-items:center; border-radius:50%; background:#e4ebe7; font-size:20px; font-weight:800; }
 .sbay-ticket-user a,.sbay-ticket-user small { color:#68766f; overflow-wrap:anywhere; }
+.sbay-ticket-user button { grid-column:2; justify-self:start; padding:4px 0; border:0; background:none; color:#216e52; font-weight:700; cursor:pointer; }
 .sbay-ticket-logs { margin:0; padding:0; display:grid; gap:12px; list-style:none; }
 .sbay-ticket-logs li { padding-bottom:12px; display:grid; gap:4px; border-bottom:1px solid #edf1ee; }
 .sbay-ticket-logs span,.sbay-ticket-logs time { color:#68766f; font-size:12px; }

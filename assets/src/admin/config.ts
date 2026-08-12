@@ -4,6 +4,7 @@ export interface AdminConfig {
   siteName: string;
   adminUrl: string;
   userName: string;
+  canManageCustomers: boolean;
   section: 'tickets' | 'reports' | 'settings';
 }
 

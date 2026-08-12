@@ -92,6 +92,34 @@ final class WordPressUserRepository {
   }
 
   /**
+   * Return linked provider identities without decrypting or exposing tokens.
+   *
+   * @return array<int, array{provider: string, reference: string}>
+   */
+  public function providerConnections(int $userId): array {
+    $connections = [];
+
+    foreach (get_user_meta($userId) as $key => $values) {
+      if (! preg_match('/^sbay_oauth_([a-z0-9_-]+)_identity$/', (string) $key, $matches)) {
+        continue;
+      }
+
+      $reference = isset($values[0]) ? sanitize_text_field((string) maybe_unserialize($values[0])) : '';
+
+      if ($reference === '') {
+        continue;
+      }
+
+      $connections[] = [
+        'provider' => sanitize_key($matches[1]),
+        'reference' => $reference,
+      ];
+    }
+
+    return $connections;
+  }
+
+  /**
    * Delete a test-created WordPress user.
    */
   public function delete(int $userId): bool {

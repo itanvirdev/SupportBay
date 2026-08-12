@@ -1007,12 +1007,20 @@ Features
 
 ## Customer Management
 
+Status
+
+```
+🚧 In Progress
+```
+
 Features
 
 - Customer Search
-- Linked Providers
-- Purchase History
-- Ticket History
+- Linked Providers ✅
+- Purchase History ✅
+- Ticket History ✅
+- Customer 360 Profile ✅
+- Suspend / Reactivate ✅
 
 ---
 
