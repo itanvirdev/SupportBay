@@ -47,6 +47,7 @@ interface TicketWorkspaceProps {
   createTicket?: () => void;
   options?: {agents:Array<{id:number;name:string}>;departments:Array<{id:number;name:string}>};
   bulk?: (ticketIds: number[], action: string, value: string) => Promise<void>;
+  openCustomers?: () => void;
 }
 
 export function ticketQueryString(query: TicketQueryParams): string {
@@ -71,7 +72,7 @@ const defaults: TicketQueryParams = {
   assignment: '', agentId:'', departmentId:'', needReply:false, orderby: 'updated_at', order: 'desc',
 };
 
-export function TicketWorkspace({ mode, load, openTicket, createTicket, options, bulk }: TicketWorkspaceProps) {
+export function TicketWorkspace({ mode, load, openTicket, createTicket, options, bulk, openCustomers }: TicketWorkspaceProps) {
   const [query, setQuery] = useState(defaults);
   const [draftSearch, setDraftSearch] = useState('');
   const [result, setResult] = useState<TicketPage | null>(null);
@@ -125,6 +126,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
         {mode === 'staff' ? <button className={query.state === 'trash' ? 'is-active' : ''} onClick={() => update({ assignment: '', state: 'trash', status: '' })}>♲ Trashed</button> : null}
         <div className="sbay-ticket-tabs__actions">
           <button aria-label="Refresh tickets" onClick={() => setRefresh((value) => value + 1)}>↻</button>
+          {openCustomers ? <button onClick={openCustomers}>Customers</button> : null}
           {createTicket ? <button className="is-primary" onClick={createTicket}>＋ Add Ticket</button> : null}
         </div>
       </div>

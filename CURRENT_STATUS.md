@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Customer Management Workspace
+Provider Management Workspace
 
 Current Objective
 
-Build customer search, profiles, linked providers, purchase history, and ticket history.
+Build provider configuration, credential management, connection health, and safe connection testing inside Settings.
 
 ---
 
@@ -562,6 +562,8 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 15. ✅ Add Customer 360 profiles with safe identity data, masked provider connections, purchase and ticket history, recent ticket activity, and capability-gated lifecycle controls.
 
+16. ✅ Add the server-paginated Customer Directory with identity search, state/source filters, support-context counts, sorting, profile navigation, and capability enforcement.
+
 ---
 
 # Current Workflow
@@ -683,7 +685,7 @@ Never
 After Administrator Ticket Workspace
 
 ```
-Customer Management Workspace
+Provider Management Workspace
 ```
 
 ---
@@ -739,11 +741,11 @@ Status
 ```
 Current Sprint
 
-Customer Management Workspace
+Provider Management Workspace
 
 Next Target
 
-Customer Management Workspace
+Provider Management Workspace
 ```
 
 ---

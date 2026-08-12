@@ -110,6 +110,10 @@ final class ApiWebhookFlowTest extends FlowTest {
       isset($routes['/sbay/v1/admin/customers/(?P<id>\d+)/profile']),
       'Capability-protected Customer 360 profile route is registered.'
     );
+    Assert::true(
+      isset($routes['/sbay/v1/admin/customers/directory']),
+      'Paginated Customer Directory route is registered.'
+    );
 
     foreach (['customers', 'departments', 'providers', 'verifications'] as $resource) {
       Assert::true(
@@ -244,6 +248,22 @@ final class ApiWebhookFlowTest extends FlowTest {
       'Customer 360 composes safe identity, provider, purchase, and ticket history data.'
     );
 
+    $directoryRequest = new WP_REST_Request('GET', '/sbay/v1/admin/customers/directory');
+    $directoryRequest->set_param('search', 'sbay-api-' . $suffix);
+    $directoryRequest->set_param('state', CustomerState::REGISTERED->value);
+    $directoryRequest->set_param('source', CustomerSource::REGISTRATION->value);
+    $directoryResponse = rest_do_request($directoryRequest);
+    $directoryData = $directoryResponse->get_data();
+    Assert::true(
+      $directoryResponse->get_status() === 200
+      && $directoryData['meta']['total'] === 1
+      && $directoryData['data'][0]['id'] === $customerId
+      && $directoryData['data'][0]['ticket_count'] >= 1
+      && $directoryData['data'][0]['purchase_count'] >= 1
+      && ! isset($directoryData['data'][0]['user_id']),
+      'Customer Directory applies server-side identity and lifecycle filters with support context counts.'
+    );
+
     $providerResponse = rest_do_request(
       new WP_REST_Request('GET', '/sbay/v1/providers/' . $providerId)
     );
@@ -278,6 +298,11 @@ final class ApiWebhookFlowTest extends FlowTest {
       403,
       rest_do_request(new WP_REST_Request('GET', '/sbay/v1/admin/customers/' . $customerId . '/profile'))->get_status(),
       'Support agents cannot open Customer 360 profiles without customer-management capability.'
+    );
+    Assert::equals(
+      403,
+      rest_do_request(new WP_REST_Request('GET', '/sbay/v1/admin/customers/directory'))->get_status(),
+      'Support agents cannot search the Customer Directory without customer-management capability.'
     );
     $deniedBulk = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/bulk-actions');
     $deniedBulk->set_param('ticket_ids', [$ticketId]);

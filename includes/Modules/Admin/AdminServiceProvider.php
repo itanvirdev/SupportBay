@@ -9,12 +9,16 @@ use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Admin\Http\AdminTicketController;
 use SupportBay\Modules\Admin\Http\AdminCustomerController;
 use SupportBay\Modules\Admin\Services\CustomerProfileService;
+use SupportBay\Modules\Admin\Services\CustomerDirectoryService;
+use SupportBay\Modules\Admin\Repositories\CustomerDirectoryRepository;
 
 final class AdminServiceProvider extends ServiceProvider {
   public function register(Container $container): void {
     $container->singleton(AdminPage::class);
     $container->singleton(AdminTicketController::class);
     $container->singleton(CustomerProfileService::class);
+    $container->singleton(CustomerDirectoryRepository::class);
+    $container->singleton(CustomerDirectoryService::class);
     $container->singleton(AdminCustomerController::class);
   }
 

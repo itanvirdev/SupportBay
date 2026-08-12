@@ -588,10 +588,10 @@ Completely decouple provider-specific APIs from SupportBay business logic.
 
 # Next Milestone
 
-After Administrator Ticket Workspace
+After Customer Management Workspace
 
 ```
-Customer Management Workspace
+Provider Management Workspace
 ```
 
 ---
@@ -1010,12 +1010,12 @@ Features
 Status
 
 ```
-🚧 In Progress
+✅ Complete
 ```
 
 Features
 
-- Customer Search
+- Customer Search ✅
 - Linked Providers ✅
 - Purchase History ✅
 - Ticket History ✅
@@ -1458,7 +1458,7 @@ Current
 Current Sprint
 
 ```
-Customer Management Workspace
+Provider Management Workspace
 ```
 
 ↓
@@ -1466,7 +1466,7 @@ Customer Management Workspace
 Next Sprint
 
 ```
-Customer Management Workspace
+Verification Management Workspace
 ```
 
 ↓
