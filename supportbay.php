@@ -136,6 +136,10 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
       case 'provider':
         \SupportBay\Dev\ProviderFlowTest::run(
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
+          $container->get(\SupportBay\Modules\Providers\Services\ProviderConfiguration::class),
+          $container->get(\SupportBay\Core\Security\SecretCipher::class),
+          $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
+          $container->get(\SupportBay\Modules\Providers\Services\ProviderConnectionService::class),
         );
         break;
 
@@ -233,6 +237,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
           $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
+          $container->get(\SupportBay\Modules\Providers\Services\ProviderConnectionService::class),
         );
         break;
 
@@ -280,6 +285,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 
         \SupportBay\Dev\ProviderFlowTest::run(
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
+          $container->get(\SupportBay\Modules\Providers\Services\ProviderConfiguration::class),
+          $container->get(\SupportBay\Core\Security\SecretCipher::class),
+          $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
         );
 
         \SupportBay\Dev\VerificationFlowTest::run(

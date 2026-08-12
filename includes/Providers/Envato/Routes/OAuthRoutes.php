@@ -6,6 +6,7 @@ namespace SupportBay\Providers\Envato\Routes;
 
 use SupportBay\Modules\Providers\Services\ProviderConfiguration;
 use SupportBay\Modules\Auth\Services\OAuthLoginService;
+use SupportBay\Modules\Providers\Services\ProviderService;
 
 final class OAuthRoutes {
   /**
@@ -19,6 +20,7 @@ final class OAuthRoutes {
   public function __construct(
     private readonly OAuthLoginService $oauth,
     private readonly ProviderConfiguration $config,
+    private readonly ProviderService $providers,
   ) {
   }
 
@@ -110,6 +112,12 @@ final class OAuthRoutes {
         'redirect_uri'  => $this->config->redirectUri(self::PROVIDER) ?? '',
       ]
     );
+
+    $provider = $this->providers->findBySlug(self::PROVIDER);
+
+    if ($provider) {
+      $this->providers->connected($provider->id());
+    }
 
     wp_set_auth_cookie($customer->userId(), true);
 

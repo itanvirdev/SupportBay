@@ -8,6 +8,8 @@ use SupportBay\Core\Container\Container;
 use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Providers\Repositories\ProviderRepository;
 use SupportBay\Modules\Providers\Services\ProviderService;
+use SupportBay\Modules\Providers\Services\ProviderConfiguration;
+use SupportBay\Modules\Providers\Services\ProviderConnectionService;
 use SupportBay\Modules\Providers\Http\Controllers\ProviderController;
 
 final class ProviderServiceProvider extends ServiceProvider {
@@ -43,6 +45,10 @@ final class ProviderServiceProvider extends ServiceProvider {
     $container->singleton(ProviderRepository::class);
 
     $container->singleton(ProviderService::class);
+
+    $container->singleton(ProviderConfiguration::class);
+
+    $container->singleton(ProviderConnectionService::class);
 
     $container->singleton(ProviderController::class);
   }

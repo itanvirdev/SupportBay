@@ -121,6 +121,14 @@ final class ApiWebhookFlowTest extends FlowTest {
         sprintf('Administrator %s route is registered.', $resource)
       );
     }
+    Assert::true(
+      isset($routes['/sbay/v1/providers/(?P<id>\d+)/configuration']),
+      'Secret-safe provider configuration route is registered.'
+    );
+    Assert::true(
+      isset($routes['/sbay/v1/providers/(?P<id>\d+)/test-connection']),
+      'Capability-aware provider connection test route is registered.'
+    );
 
     wp_set_current_user(0);
 

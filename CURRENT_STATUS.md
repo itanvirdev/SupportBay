@@ -564,6 +564,12 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 16. ✅ Add the server-paginated Customer Directory with identity search, state/source filters, support-context counts, sorting, profile navigation, and capability enforcement.
 
+17. ✅ Add the secret-safe Provider Directory inside Settings with configuration/connection health, enable/disable lifecycle controls, and React/provider flow coverage.
+
+18. ✅ Add provider-declared configuration schemas, encrypted write-only secrets, validated configuration REST endpoints, dynamic React forms, and OAuth-backed connection health.
+
+19. ✅ Add optional provider connection-test capabilities, normalized results, persisted health outcomes, capability-aware REST/UI controls, and deterministic flow coverage.
+
 ---
 
 # Current Workflow
@@ -682,10 +688,8 @@ Never
 
 # Next Milestone
 
-After Administrator Ticket Workspace
-
 ```
-Provider Management Workspace
+Verification Management Workspace
 ```
 
 ---
@@ -745,7 +749,7 @@ Provider Management Workspace
 
 Next Target
 
-Provider Management Workspace
+Verification Management Workspace
 ```
 
 ---

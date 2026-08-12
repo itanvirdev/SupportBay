@@ -62,5 +62,21 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($markup, 'Settings'),
       'Administrator page renders the shared PHP navigation and React mount point.'
     );
+
+    $providerWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/ProviderWorkspace.tsx'
+    );
+
+    Assert::true(
+      is_string($providerWorkspace)
+      && str_contains($providerWorkspace, "adminGet<ProviderItem[]>('providers')")
+      && str_contains($providerWorkspace, 'providers/${provider.id}/${action}')
+      && str_contains($providerWorkspace, 'providers/${editing.id}/configuration')
+      && str_contains($providerWorkspace, 'providers/${provider.id}/test-connection')
+      && str_contains($providerWorkspace, 'provider.connection_test_available')
+      && str_contains($providerWorkspace, "field.type === 'secret' ? 'password'")
+      && ! str_contains($providerWorkspace, 'client_secret'),
+      'Settings includes schema-driven, secret-safe provider configuration and lifecycle controls.'
+    );
   }
 }

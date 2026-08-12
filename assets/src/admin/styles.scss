@@ -24,6 +24,7 @@
 .sbay-settings-foundation nav span.is-active { background: #e7f2ed; color: #216e52; font-weight: 700; }
 .sbay-settings-foundation h2 { margin: 8px 0; }
 .sbay-admin-error { margin-bottom: 18px; padding: 13px; border-radius: 9px; color: #8d2d28; background: #fcebea; }
+.sbay-admin-notice { margin-bottom:18px; padding:13px; border-radius:9px; color:#216e52; background:#e0f2e9; }
 .sbay-customer-profile { display:grid; gap:22px; }
 .sbay-customer-hero { padding:24px; display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center; border:1px solid #dfe7e2; border-radius:15px; background:#fff; }
 .sbay-customer-avatar { width:72px; height:72px; display:grid; place-items:center; overflow:hidden; border-radius:50%; background:#dfeae4; color:#216e52; font-size:28px; font-weight:800; }
@@ -82,6 +83,46 @@
 .sbay-directory-table footer { padding:13px 18px; display:flex; justify-content:space-between; align-items:center; background:#f8faf9; }
 .sbay-directory-table footer nav { display:flex; align-items:center; gap:8px; }
 .sbay-directory-table footer button,.sbay-directory-table footer nav span { width:34px; height:34px; display:grid; place-items:center; border:1px solid #ccd8d1; border-radius:7px; background:#fff; }
+.sbay-provider-workspace { padding:24px; display:grid; grid-template-columns:220px minmax(0,1fr); gap:34px; border:1px solid #dfe7e2; border-radius:15px; background:#fff; }
+.sbay-provider-workspace>nav { display:grid; align-content:start; gap:6px; }
+.sbay-provider-workspace>nav span { padding:10px 12px; border-radius:8px; color:#52615a; }
+.sbay-provider-workspace>nav span.is-active { background:#e7f2ed; color:#216e52; font-weight:700; }
+.sbay-provider-content>header { margin-bottom:22px; display:flex; align-items:start; justify-content:space-between; gap:20px; }
+.sbay-provider-content small { color:#216e52; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.sbay-provider-content h2 { margin:6px 0; font-size:26px; }
+.sbay-provider-content p { margin:0; color:#697770; }
+.sbay-provider-content>header button,.sbay-provider-grid button { padding:9px 14px; border:1px solid #ccd8d1; border-radius:8px; background:#fff; cursor:pointer; font-weight:700; }
+.sbay-provider-content button:disabled { cursor:not-allowed; opacity:.55; }
+.sbay-provider-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.sbay-provider-grid article { padding:18px; display:grid; gap:18px; border:1px solid #dfe7e2; border-radius:13px; background:#fbfcfb; }
+.sbay-provider-grid article.has-error { border-color:#e8b7b3; }
+.sbay-provider-grid article>header { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; }
+.sbay-provider-mark { width:42px; height:42px; display:grid; place-items:center; border-radius:10px; background:#dfeee7; color:#216e52; font-size:20px; font-weight:850; }
+.sbay-provider-grid h3 { margin:0 0 3px; font-size:17px; }
+.sbay-provider-grid header span { color:#718078; font-size:12px; text-transform:capitalize; }
+.sbay-provider-grid header strong { padding:5px 9px; border-radius:99px; background:#edf0ee; color:#65726c; font-size:12px; }
+.sbay-provider-grid header strong.is-enabled { background:#e0f2e9; color:#216e52; }
+.sbay-provider-grid dl { margin:0; display:grid; }
+.sbay-provider-grid dl div { padding:9px 0; display:flex; justify-content:space-between; gap:14px; border-bottom:1px solid #e8edea; }
+.sbay-provider-grid dt { color:#697770; }
+.sbay-provider-grid dd { margin:0; text-align:right; font-weight:650; overflow-wrap:anywhere; }
+.sbay-provider-grid footer { display:flex; align-items:end; justify-content:space-between; gap:18px; }
+.sbay-provider-grid footer span { max-width:70%; color:#718078; font-size:12px; line-height:1.5; }
+.sbay-provider-grid footer>div { display:flex; gap:8px; }
+.sbay-provider-grid button.is-primary { border-color:#216e52; background:#216e52; color:#fff; }
+.sbay-provider-grid button.is-danger { border-color:#dfaaa6; color:#9c342e; }
+.sbay-provider-empty { padding:34px; border:1px dashed #ccd8d1; border-radius:12px; text-align:center; }
+.sbay-provider-dialog { position:fixed; z-index:100000; inset:0; padding:30px; display:grid; place-items:center; background:rgba(20,31,27,.55); }
+.sbay-provider-dialog form { width:min(560px,100%); max-height:calc(100vh - 60px); padding:24px; display:grid; gap:18px; overflow:auto; border-radius:15px; background:#fff; box-shadow:0 24px 70px rgba(12,28,21,.24); }
+.sbay-provider-dialog form>header { display:flex; align-items:start; justify-content:space-between; gap:20px; }
+.sbay-provider-dialog form>header h2 { margin:5px 0 0; }
+.sbay-provider-dialog form>header button { width:34px; height:34px; padding:0; border:1px solid #ccd8d1; border-radius:8px; background:#fff; font-size:22px; cursor:pointer; }
+.sbay-provider-dialog label { display:grid; gap:7px; font-weight:700; }
+.sbay-provider-dialog label input { min-height:42px; padding:0 11px; border:1px solid #bfcfc6; border-radius:8px; font:inherit; }
+.sbay-provider-dialog label small { color:#718078; font-weight:400; line-height:1.45; }
+.sbay-provider-dialog footer { padding-top:16px; display:flex; justify-content:flex-end; gap:9px; border-top:1px solid #e8edea; }
+.sbay-provider-dialog footer button { padding:9px 14px; border:1px solid #ccd8d1; border-radius:8px; background:#fff; cursor:pointer; font-weight:700; }
+.sbay-provider-dialog footer button.is-primary { border-color:#216e52; background:#216e52; color:#fff; }
 @media (max-width: 782px) {
   .sbay-admin-page { min-height: calc(100vh - 46px); }
   .sbay-admin-php-header { align-items: flex-start; flex-direction: column; gap: 12px; padding: 18px 20px 0; }
@@ -96,4 +137,7 @@
   .sbay-directory-filters form { flex-basis:100%; }
   .sbay-directory-table>div,.sbay-directory-table>button { grid-template-columns:minmax(220px,1fr) 100px 70px; }
   .sbay-directory-table>div>:nth-child(n+4),.sbay-directory-table>button>:nth-child(n+4) { display:none; }
+  .sbay-provider-workspace { grid-template-columns:1fr; }
+  .sbay-provider-workspace>nav { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sbay-provider-grid { grid-template-columns:1fr; }
 }

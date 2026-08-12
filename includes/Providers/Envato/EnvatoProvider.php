@@ -8,6 +8,8 @@ use RuntimeException;
 use SupportBay\Core\Integrations\Contracts\IntegrationProvider;
 use SupportBay\Core\Integrations\Contracts\OAuthProvider;
 use SupportBay\Core\Integrations\Contracts\PurchaseVerificationProvider;
+use SupportBay\Core\Integrations\Contracts\ConfigurableIntegrationProvider;
+use SupportBay\Core\Integrations\Data\ProviderConfigurationField;
 use SupportBay\Core\Integrations\Data\OAuthIdentityData;
 use SupportBay\Core\Integrations\Data\OAuthLoginData;
 use SupportBay\Core\Integrations\Data\OAuthTokenData;
@@ -19,6 +21,7 @@ use SupportBay\Providers\Envato\Services\EnvatoPurchaseService;
 
 final class EnvatoProvider implements
   IntegrationProvider,
+  ConfigurableIntegrationProvider,
   OAuthProvider,
   PurchaseVerificationProvider {
   /**
@@ -159,6 +162,32 @@ final class EnvatoProvider implements
      * - Register admin settings
      * - Register CLI commands
      */
+  }
+
+  /** @return ProviderConfigurationField[] */
+  public function configurationFields(): array {
+    return [
+      new ProviderConfigurationField(
+        key: 'client_id',
+        label: 'Client ID',
+        required: true,
+        description: 'The client identifier from your Envato OAuth application.',
+      ),
+      new ProviderConfigurationField(
+        key: 'client_secret',
+        label: 'Client Secret',
+        type: 'secret',
+        required: true,
+        description: 'Stored encrypted. Leave blank when editing to keep the existing secret.',
+      ),
+      new ProviderConfigurationField(
+        key: 'redirect_uri',
+        label: 'Redirect URI',
+        type: 'url',
+        required: true,
+        description: 'Must exactly match the callback URL registered with Envato.',
+      ),
+    ];
   }
 
   /**

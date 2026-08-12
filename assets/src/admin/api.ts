@@ -15,6 +15,10 @@ export async function adminPost<T>(path: string, body: object): Promise<ApiRespo
   return adminRequest<T>(path, { method: 'POST', body: JSON.stringify(body) });
 }
 
+export async function adminPut<T>(path: string, body: object): Promise<ApiResponse<T>> {
+  return adminRequest<T>(path, { method: 'PUT', body: JSON.stringify(body) });
+}
+
 export async function adminUpload<T>(path: string, file: File): Promise<ApiResponse<T>> {
   const body = new FormData();
   body.append('file', file);

@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Customers\Repositories;
 
 use RuntimeException;
+use SupportBay\Core\Security\SecretCipher;
 use SupportBay\Core\Integrations\Data\OAuthIdentityData;
 use SupportBay\Core\Integrations\Data\OAuthTokenData;
 use WP_Error;
 use WP_User;
 
 final class WordPressUserRepository {
+  public function __construct(private readonly SecretCipher $cipher) {
+  }
+
   /**
    * Find a WordPress user by ID.
    */
@@ -170,24 +174,6 @@ final class WordPressUserRepository {
       );
     }
 
-    $key = hash('sha256', wp_salt('auth'), true);
-    $iv = random_bytes(12);
-    $tag = '';
-    $ciphertext = openssl_encrypt(
-      $json,
-      'aes-256-gcm',
-      $key,
-      OPENSSL_RAW_DATA,
-      $iv,
-      $tag,
-    );
-
-    if ($ciphertext === false) {
-      throw new RuntimeException(
-        'Unable to encrypt provider connection data.'
-      );
-    }
-
-    return base64_encode($iv . $tag . $ciphertext);
+    return $this->cipher->encrypt($json);
   }
 }

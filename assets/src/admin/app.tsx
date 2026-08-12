@@ -8,6 +8,7 @@ import '../shared/tickets/workspace.scss';
 import { TicketConversation, type ConversationMessage, type ConversationTicket, type TicketAttachment, type TicketContext } from '../shared/tickets/TicketConversation';
 import { CustomerProfile, type CustomerProfileData } from './CustomerProfile';
 import { CustomerDirectory } from './CustomerDirectory';
+import { ProviderWorkspace } from './ProviderWorkspace';
 
 interface TicketSummary {
   tickets: number;
@@ -194,12 +195,7 @@ function AdminApp() {
       ) : null}
 
       {config.section === 'settings' ? (
-        <section className="sbay-settings-foundation">
-          <nav aria-label="Settings sections">
-            <span className="is-active">General</span><span>Security</span><span>User Roles</span><span>Categories</span><span>Email Notifications</span><span>Integrations</span>
-          </nav>
-          <div><small>Settings foundation</small><h2>General</h2><p>Settings controls will be added as their configuration services and secure save endpoints are introduced.</p></div>
-        </section>
+        <ProviderWorkspace />
       ) : null}
     </main>
   );
