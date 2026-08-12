@@ -80,4 +80,6 @@
 .sbay-ticket-merge { margin-top:6px; padding-top:12px; display:grid; gap:8px; border-top:1px solid #edf1ee; }
 .sbay-ticket-merge input { min-height:38px; padding:0 9px; border:1px solid #d7dfda; border-radius:7px; }
 .sbay-ticket-merge button { border-color:#b84a41; color:#a23a32; }
+.sbay-split-select { margin-right:10px; display:inline-flex; align-items:center; gap:5px; color:#216e52; font-size:12px; font-weight:600; }
+.sbay-split-select input { margin:0; }
 @media (max-width:800px) { .sbay-conversation__grid { grid-template-columns:1fr; } }

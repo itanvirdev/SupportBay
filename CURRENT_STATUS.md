@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Administrator Ticket Workspace
+Customer Management Workspace
 
 Current Objective
 
-Build the administrator ticket list, conversation detail, replies, internal notes, and status actions.
+Build customer search, profiles, linked providers, purchase history, and ticket history.
 
 ---
 
@@ -558,6 +558,8 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 13. ✅ Add same-customer ticket merging with transactional message and attachment re-parenting, recoverable source retirement, target queue repair, and audit activities.
 
+14. ✅ Add manager-controlled ticket splitting with selective conversation and attachment transfer, transactional queue repair, related-ticket metadata, and audit activities.
+
 ---
 
 # Current Workflow
@@ -676,10 +678,10 @@ Never
 
 # Next Milestone
 
-After Admin Dashboard Foundation
+After Administrator Ticket Workspace
 
 ```
-Administrator Ticket Workspace
+Customer Management Workspace
 ```
 
 ---
@@ -735,11 +737,11 @@ Status
 ```
 Current Sprint
 
-Administrator Ticket Workspace
+Customer Management Workspace
 
 Next Target
 
-Administrator Ticket Workspace
+Customer Management Workspace
 ```
 
 ---

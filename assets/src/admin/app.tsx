@@ -133,6 +133,15 @@ function AdminApp() {
     window.location.href = `${config.adminUrl}&ticket=${targetId}`;
   };
 
+  const splitTicket = async (messageIds: number[], subject: string) => {
+    if (!ticketId) return;
+    const response = await adminPost<ConversationTicket>(`admin/tickets/${ticketId}/split`, {
+      message_ids: messageIds,
+      subject,
+    });
+    window.location.href = `${config.adminUrl}&ticket=${response.data.id}`;
+  };
+
   return (
     <main className={`sbay-admin-main sbay-admin-main--${config.section}`}>
       <header className="sbay-admin-workspace-header">
@@ -143,7 +152,7 @@ function AdminApp() {
       {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
 
       {config.section === 'tickets' ? (
-        ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} merge={mergeTicket} /> : <p>Loading ticket conversation…</p>) : <TicketWorkspace
+        ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} merge={mergeTicket} split={splitTicket} /> : <p>Loading ticket conversation…</p>) : <TicketWorkspace
           mode="staff"
           load={loadTickets}
           options={queueOptions}
