@@ -56,12 +56,18 @@ Expected Result:
 Open:
 
 ```text
-/supportbay/oauth/envato/login
+/?sbay_oauth=login&provider=envato
 ```
 
 Expected Result:
 
 - Browser redirects to Envato.
+
+Before testing, configure Envato's redirect URI to:
+
+```text
+/?sbay_oauth=callback&provider=envato
+```
 
 ---
 
@@ -84,6 +90,7 @@ Expected Result:
 - Authorization code received.
 - No PHP errors.
 - No uncaught exceptions.
+- Existing signed-in customers return to `/support/profile/` with the Envato account connected.
 
 ---
 

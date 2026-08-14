@@ -9,6 +9,8 @@ import type {
   PortalTicket,
   PortalTicketDetail,
   PortalVerification,
+  PortalPurchaseProvider,
+  PortalProviderConnection,
   UpdateProfileInput,
 } from './types';
 
@@ -17,6 +19,8 @@ export const portalApi = {
   profile: () => apiGet<PortalProfile>('portal/profile'),
   updateProfile: (input: UpdateProfileInput) =>
     apiPost<PortalProfile>('portal/profile', input),
+  providerConnections: () =>
+    apiGet<PortalProviderConnection[]>('portal/providers'),
   tickets: (query = '') => apiGetResponse<PortalTicket[]>(`portal/tickets${query ? `?${query}` : ''}`),
   createTicket: (input: CreateTicketInput) =>
     apiPost<PortalTicket>('portal/tickets', input),
@@ -38,4 +42,6 @@ export const portalApi = {
   departments: () => apiGet<PortalDepartment[]>('portal/departments'),
   verifications: () =>
     apiGet<PortalVerification[]>('portal/verifications'),
+  purchaseProviders: () =>
+    apiGet<PortalPurchaseProvider[]>('portal/purchase-providers'),
 };

@@ -8,6 +8,7 @@ use RuntimeException;
 use SupportBay\Core\Integrations\Contracts\IntegrationProvider;
 use SupportBay\Core\Integrations\Contracts\OAuthProvider;
 use SupportBay\Core\Integrations\Contracts\PurchaseVerificationProvider;
+use SupportBay\Core\Integrations\Contracts\RefreshableOAuthProvider;
 use SupportBay\Core\Integrations\Contracts\ConfigurableIntegrationProvider;
 use SupportBay\Core\Integrations\Data\ProviderConfigurationField;
 use SupportBay\Core\Integrations\Data\OAuthIdentityData;
@@ -23,6 +24,7 @@ final class EnvatoProvider implements
   IntegrationProvider,
   ConfigurableIntegrationProvider,
   OAuthProvider,
+  RefreshableOAuthProvider,
   PurchaseVerificationProvider {
   /**
    * Constructor.
@@ -116,6 +118,56 @@ final class EnvatoProvider implements
           ? (int) $token['expires_in']
           : null,
       ),
+    );
+  }
+
+  /**
+   * Refresh and normalize an Envato OAuth token.
+   *
+   * @param array<string, mixed> $context
+   */
+  public function refreshOAuthToken(
+    OAuthTokenData $token,
+    array $context,
+  ): OAuthTokenData {
+    $refreshToken = trim((string) $token->refreshToken());
+    $clientId = trim((string) ($context['client_id'] ?? ''));
+    $clientSecret = trim((string) ($context['client_secret'] ?? ''));
+
+    if ($refreshToken === '' || $clientId === '' || $clientSecret === '') {
+      throw new RuntimeException(
+        'Envato OAuth credentials are incomplete. Please reconnect the provider.'
+      );
+    }
+
+    $response = $this->oauth->refreshToken(
+      $clientId,
+      $clientSecret,
+      $refreshToken,
+    );
+    $accessToken = sanitize_text_field(
+      (string) ($response['access_token'] ?? '')
+    );
+
+    if ($accessToken === '') {
+      throw new RuntimeException(
+        'Envato did not return a refreshed access token.'
+      );
+    }
+
+    return new OAuthTokenData(
+      accessToken: $accessToken,
+      refreshToken: $this->sanitizeNullable(
+        isset($response['refresh_token'])
+          ? (string) $response['refresh_token']
+          : $refreshToken
+      ),
+      tokenType: sanitize_text_field(
+        (string) ($response['token_type'] ?? $token->tokenType())
+      ),
+      expiresIn: isset($response['expires_in'])
+        ? max(0, (int) $response['expires_in'])
+        : $token->expiresIn(),
     );
   }
 

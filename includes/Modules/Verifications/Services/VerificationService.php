@@ -15,6 +15,7 @@ use SupportBay\Modules\Verifications\Events\VerificationRefreshed;
 use SupportBay\Modules\Verifications\Events\VerificationRevoked;
 use SupportBay\Modules\Verifications\Events\VerificationVerified;
 use SupportBay\Modules\Verifications\Repositories\VerificationRepository;
+use SupportBay\Modules\Verifications\Data\VerificationDirectoryQuery;
 
 final class VerificationService {
   /**
@@ -212,6 +213,16 @@ final class VerificationService {
     return $this->repository->all();
   }
 
+  /** @return array{items: \SupportBay\Modules\Verifications\Data\VerificationDirectoryItem[], total: int} */
+  public function search(VerificationDirectoryQuery $query): array {
+    return $this->repository->search($query);
+  }
+
+  /** @return string[] */
+  public function providerSlugs(): array {
+    return $this->repository->providerSlugs();
+  }
+
   /**
    * Find verification or throw an exception.
    */
@@ -347,6 +358,57 @@ final class VerificationService {
     $verificationId = $this->create($data);
 
     return $this->findOrFail($verificationId);
+  }
+
+  /**
+   * Resolve a purchase entitlement for new-ticket creation.
+   *
+   * Existing provider/reference records are reused without an external call.
+   * New references are verified once through the registered provider.
+   *
+   * @param array<string, mixed> $context
+   */
+  public function resolveTicketEntitlement(
+    string $provider,
+    string $reference,
+    int $customerId,
+    array $context = [],
+  ): Verification {
+    $provider = sanitize_key($provider);
+    $reference = trim($reference);
+
+    if ($provider === '' || $reference === '') {
+      throw new RuntimeException('Provider and Purchase Code/Key are required.');
+    }
+
+    $verification = $this->repository->findByReference($provider, $reference);
+
+    if ($verification === null) {
+      try {
+        $verification = $this->verifyPurchase(
+          $provider,
+          $reference,
+          $context,
+          $customerId,
+        );
+      } catch (RuntimeException) {
+        throw new RuntimeException('Purchase Code/Key is invalid or could not be verified.');
+      }
+    }
+
+    if ($verification->customerId() !== $customerId) {
+      throw new RuntimeException('Purchase Code/Key is invalid or belongs to another customer.');
+    }
+
+    if (! $verification->isVerified()) {
+      throw new RuntimeException('Purchase Code/Key is invalid or no longer verified.');
+    }
+
+    if (! $verification->hasSupportExpiry() || $verification->supportExpired()) {
+      throw new RuntimeException('Support for this purchase has expired.');
+    }
+
+    return $verification;
   }
 
   /**

@@ -47,6 +47,14 @@ export interface UpdateProfileInput {
   language: string;
 }
 
+export interface PortalProviderConnection {
+  slug: string;
+  name: string;
+  connected: boolean;
+  reference: string | null;
+  connect_url: string;
+}
+
 export interface PortalTicket {
   id: number;
   track_id: string;
@@ -97,12 +105,19 @@ export interface CreateTicketInput {
   subject: string;
   content: string;
   department_id: number;
-  purchase_verification_id: number | null;
+  provider: string;
+  purchase_reference: string;
+}
+
+export interface PortalPurchaseProvider {
+  slug: string;
+  name: string;
 }
 
 export interface PortalVerification {
   id: number;
   provider: string;
+  reference?: string;
   product_id: string | null;
   product_name: string | null;
   license_type: string | null;

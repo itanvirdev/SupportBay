@@ -57,6 +57,31 @@ final class ReactPortalFlowTest extends FlowTest {
       'Secure attachment streaming hook is registered.'
     );
 
+    $newTicketPage = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/react/modules/tickets/NewTicketPage.tsx'
+    );
+
+    Assert::true(
+      is_string($newTicketPage)
+      && str_contains($newTicketPage, 'portalApi.purchaseProviders()')
+      && str_contains($newTicketPage, 'purchase_reference: purchaseReference.trim()')
+      && str_contains($newTicketPage, 'Purchase Code/Key')
+      && ! str_contains($newTicketPage, 'purchase_verification_id'),
+      'Ticket creation requires provider-backed Purchase Code/Key entitlement.'
+    );
+
+    $profilePage = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/react/modules/profile/ProfilePage.tsx'
+    );
+
+    Assert::true(
+      is_string($profilePage)
+      && str_contains($profilePage, 'portalApi.providerConnections()')
+      && str_contains($profilePage, 'Connected providers')
+      && str_contains($profilePage, "provider.connected ? 'Reconnect' : 'Connect'"),
+      'Customer profile exposes connected-provider management.'
+    );
+
     if ($previousValue === null) {
       unset($wp_query->query_vars['sbay_customer_portal']);
     } else {

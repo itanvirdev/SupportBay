@@ -281,11 +281,19 @@ final class ApiWebhookFlowTest extends FlowTest {
 
     $verificationRequest = new WP_REST_Request('GET', '/sbay/v1/verifications');
     $verificationRequest->set_param('provider', 'fake-purchase');
+    $verificationRequest->set_param('status', 'verified');
+    $verificationRequest->set_param('search', 'purchase-' . $suffix);
     $verificationResponse = rest_do_request($verificationRequest);
+    $verificationBody = $verificationResponse->get_data();
     Assert::equals(
       true,
-      $verificationResponse->get_data()['meta']['total'] >= 1,
-      'Verification API applies provider filters.'
+      $verificationBody['meta']['total'] >= 1
+      && $verificationBody['data'][0]['provider'] === 'fake-purchase'
+      && $verificationBody['data'][0]['verification_status'] === 'verified'
+      && ! str_contains($verificationBody['data'][0]['reference'], $suffix)
+      && ! isset($verificationBody['data'][0]['provider_reference'])
+      && ! isset($verificationBody['data'][0]['provider_snapshot']),
+      'Verification Directory combines server filters and returns masked purchase data.'
     );
 
     $wordpressUser = get_userdata($userId);

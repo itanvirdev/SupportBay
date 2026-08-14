@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
-import type { PortalDepartment, PortalVerification } from '../../api/types';
+import type { PortalDepartment, PortalPurchaseProvider } from '../../api/types';
 import { FilePicker } from '../../components/FilePicker';
 
 interface NewTicketPageProps {
@@ -9,22 +9,24 @@ interface NewTicketPageProps {
 
 export function NewTicketPage({ navigate }: NewTicketPageProps) {
   const [departments, setDepartments] = useState<PortalDepartment[]>([]);
-  const [purchases, setPurchases] = useState<PortalVerification[]>([]);
+  const [providers, setProviders] = useState<PortalPurchaseProvider[]>([]);
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
   const [departmentId, setDepartmentId] = useState(0);
-  const [purchaseId, setPurchaseId] = useState(0);
+  const [provider, setProvider] = useState('');
+  const [purchaseReference, setPurchaseReference] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
 
   useEffect(() => {
-    Promise.all([portalApi.departments(), portalApi.verifications()])
-      .then(([departmentData, purchaseData]) => {
+    Promise.all([portalApi.departments(), portalApi.purchaseProviders()])
+      .then(([departmentData, providerData]) => {
         setDepartments(departmentData);
-        setPurchases(purchaseData);
+        setProviders(providerData);
         setDepartmentId(departmentData[0]?.id ?? 0);
+        setProvider(providerData[0]?.slug ?? '');
       })
       .catch(() => setError('Ticket options could not be loaded.'))
       .finally(() => setLoading(false));
@@ -40,7 +42,8 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
         subject,
         content,
         department_id: departmentId,
-        purchase_verification_id: purchaseId || null,
+        provider,
+        purchase_reference: purchaseReference.trim(),
       });
       const detail = await portalApi.ticket(ticket.id);
       const openingMessage = detail.messages[0];
@@ -90,21 +93,25 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
             </select>
           </label>
           <label>
-            <span>Verified purchase <small>Optional</small></span>
-            <select value={purchaseId} onChange={(event) => setPurchaseId(Number(event.target.value))}>
-              <option value={0}>No linked purchase</option>
-              {purchases.map((purchase) => (
-                <option value={purchase.id} key={purchase.id}>{purchase.product_name ?? 'Verified product'}</option>
+            <span>Purchase provider</span>
+            <select value={provider} onChange={(event) => setProvider(event.target.value)} required>
+              {providers.map((item) => (
+                <option value={item.slug} key={item.slug}>{item.name}</option>
               ))}
             </select>
+          </label>
+          <label>
+            <span>Purchase Code/Key</span>
+            <input value={purchaseReference} onChange={(event) => setPurchaseReference(event.target.value)} required autoComplete="off" />
+            <small>Your ticket is created only after the purchase and active support are confirmed.</small>
           </label>
           <label>
             <span>How can we help?</span>
             <textarea value={content} onChange={(event) => setContent(event.target.value)} rows={8} required />
           </label>
-          {departments.length === 0 ? <p className="sbay-form-error">No support departments are currently available.</p> : null}
+          {departments.length === 0 ? <p className="sbay-form-error">No support departments are currently available.</p> : providers.length === 0 ? <p className="sbay-form-error">Purchase verification is currently unavailable.</p> : null}
           {error ? <p className="sbay-form-error" role="alert">{error}</p> : null}
-          <button className="sbay-primary-button" type="submit" disabled={submitting || departments.length === 0}>
+          <button className="sbay-primary-button" type="submit" disabled={submitting || departments.length === 0 || providers.length === 0}>
             {submitting ? 'Creating…' : 'Create ticket'}
           </button>
         </form>

@@ -5,6 +5,7 @@ export interface AdminConfig {
   adminUrl: string;
   userName: string;
   canManageCustomers: boolean;
+  canViewVerifications: boolean;
   section: 'tickets' | 'reports' | 'settings';
 }
 

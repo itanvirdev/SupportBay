@@ -98,6 +98,7 @@ final class AdminPage {
         'adminUrl'  => esc_url_raw(admin_url('admin.php?page=' . self::TICKETS_SLUG)),
         'userName'  => sanitize_text_field(wp_get_current_user()->display_name),
         'canManageCustomers' => current_user_can(CapabilityManager::MANAGE_CUSTOMERS),
+        'canViewVerifications' => current_user_can(CapabilityManager::VIEW_VERIFICATIONS),
         'section'   => $section,
       ]) . ';',
       'before',

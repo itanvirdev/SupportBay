@@ -38,6 +38,7 @@ final class TicketVerificationFlowTest extends FlowTest {
       'verification_status' => VerificationStatus::VERIFIED,
       'product_id'          => '12345678',
       'product_name'        => 'SupportBay Test Product',
+      'support_expires_at'  => '2030-01-01 00:00:00',
     ]);
 
     $firstTicketId = $tickets->create([
@@ -100,6 +101,31 @@ final class TicketVerificationFlowTest extends FlowTest {
       'Another customer cannot use the verification.'
     );
 
+    $expiredVerificationId = $verifications->create([
+      'provider'            => 'fake-purchase',
+      'provider_reference'  => $reference . '-EXPIRED',
+      'customer_id'         => 1,
+      'verification_status' => VerificationStatus::VERIFIED,
+      'support_expires_at'  => '2020-01-01 00:00:00',
+    ]);
+    $expiredRejected = false;
+
+    try {
+      $tickets->create([
+        'customer_id'              => 1,
+        'department_id'            => 1,
+        'subject'                  => 'Expired Support Ticket',
+        'purchase_verification_id' => $expiredVerificationId,
+      ]);
+    } catch (RuntimeException) {
+      $expiredRejected = true;
+    }
+
+    Assert::true(
+      $expiredRejected,
+      'Expired support cannot be used to create a new ticket.'
+    );
+
     $verifications->revoke($verificationId);
 
     $revokedRejected = false;
@@ -133,6 +159,11 @@ final class TicketVerificationFlowTest extends FlowTest {
     Assert::true(
       $verifications->delete($verificationId),
       'Test verification deleted.'
+    );
+
+    Assert::true(
+      $verifications->delete($expiredVerificationId),
+      'Expired test verification deleted.'
     );
   }
 }

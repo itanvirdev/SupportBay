@@ -89,9 +89,36 @@ final class WordPressUserRepository {
       $userId,
       $this->connectionKey($identity->provider()),
       $this->encrypt([
-        'token'        => $token->toArray(),
+        'token'        => $this->tokenPayload($token),
         'connected_at' => current_time('mysql'),
       ]),
+    );
+  }
+
+  /**
+   * Replace an encrypted provider token while preserving connection identity.
+   */
+  public function updateProviderToken(
+    int $userId,
+    string $provider,
+    OAuthTokenData $token,
+  ): void {
+    $provider = sanitize_key($provider);
+    $connection = $this->providerConnection($userId, $provider);
+
+    if ($connection === []) {
+      throw new RuntimeException(
+        'The provider connection must be reconnected.'
+      );
+    }
+
+    $connection['token'] = $this->tokenPayload($token);
+    $connection['refreshed_at'] = current_time('mysql');
+
+    update_user_meta(
+      $userId,
+      $this->connectionKey($provider),
+      $this->encrypt($connection),
     );
   }
 
@@ -121,6 +148,26 @@ final class WordPressUserRepository {
     }
 
     return $connections;
+  }
+
+  /** @return array<string, mixed> */
+  public function providerConnection(int $userId, string $provider): array {
+    $encrypted = get_user_meta($userId, $this->connectionKey($provider), true);
+
+    if (! is_string($encrypted) || $encrypted === '') {
+      return [];
+    }
+
+    $json = $this->cipher->isEncrypted($encrypted)
+      ? $this->cipher->decrypt($encrypted)
+      : $this->decryptLegacyConnection($encrypted);
+    $connection = json_decode($json, true);
+
+    if (! is_array($connection)) {
+      throw new RuntimeException('Stored provider connection data is invalid.');
+    }
+
+    return $connection;
   }
 
   /**
@@ -175,5 +222,41 @@ final class WordPressUserRepository {
     }
 
     return $this->cipher->encrypt($json);
+  }
+
+  /** @return array<string, mixed> */
+  private function tokenPayload(OAuthTokenData $token): array {
+    $payload = $token->toArray();
+    $issuedAt = (int) current_time('timestamp');
+
+    $payload['issued_at'] = $issuedAt;
+    $payload['expires_at'] = $token->expiresIn() !== null
+      ? $issuedAt + $token->expiresIn()
+      : null;
+
+    return $payload;
+  }
+
+  private function decryptLegacyConnection(string $encrypted): string {
+    $payload = base64_decode($encrypted, true);
+
+    if ($payload === false || strlen($payload) < 29) {
+      throw new RuntimeException('Stored provider connection data is invalid.');
+    }
+
+    $plaintext = openssl_decrypt(
+      substr($payload, 28),
+      'aes-256-gcm',
+      hash('sha256', wp_salt('auth'), true),
+      OPENSSL_RAW_DATA,
+      substr($payload, 0, 12),
+      substr($payload, 12, 16),
+    );
+
+    if ($plaintext === false) {
+      throw new RuntimeException('Unable to decrypt stored provider connection data.');
+    }
+
+    return $plaintext;
   }
 }

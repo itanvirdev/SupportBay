@@ -18,6 +18,11 @@ use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Verifications\Enums\VerificationStatus;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use WP_REST_Request;
+use SupportBay\Core\Integrations\IntegrationManager;
+use SupportBay\Modules\Providers\Enums\ProviderCategory;
+use SupportBay\Modules\Providers\Enums\ProviderStatus;
+use SupportBay\Modules\Providers\Services\ProviderService;
+use SupportBay\Dev\FakeOAuthProvider;
 
 final class CustomerPortalApiFlowTest extends FlowTest {
   protected static function title(): string {
@@ -31,6 +36,8 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     /** @var MessageService $messages */
     /** @var DepartmentService $departments */
     /** @var AttachmentService $attachments */
+    /** @var IntegrationManager $integrations */
+    /** @var ProviderService $providers */
     [
       $customers,
       $tickets,
@@ -38,7 +45,28 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       $messages,
       $departments,
       $attachments,
+      $integrations,
+      $providers,
     ] = $services;
+
+    $purchaseProvider = new FakePurchaseProvider();
+    $integrations->register($purchaseProvider);
+    $providerId = $providers->create([
+      'slug' => $purchaseProvider->slug(),
+      'name' => $purchaseProvider->name(),
+      'category' => ProviderCategory::MARKETPLACE,
+      'status' => ProviderStatus::ENABLED,
+      'settings' => ['available' => true],
+    ]);
+    $oauthProvider = new FakeOAuthProvider();
+    $integrations->register($oauthProvider);
+    $oauthProviderId = $providers->create([
+      'slug' => $oauthProvider->slug(),
+      'name' => $oauthProvider->name(),
+      'category' => ProviderCategory::MARKETPLACE,
+      'status' => ProviderStatus::ENABLED,
+      'settings' => ['available' => true],
+    ]);
 
     $userId = wp_insert_user([
       'user_login' => 'sbay-portal-' . strtolower(
@@ -72,9 +100,19 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'verification_status' => VerificationStatus::VERIFIED,
       'product_id'          => '12345678',
       'product_name'        => 'Portal Test Product',
+      'support_expires_at'  => '2030-01-01 00:00:00',
       'provider_snapshot'   => [
         'secret' => 'must-not-be-exposed',
       ],
+    ]);
+
+    $expiredReference = 'EXPIRED-' . strtoupper(wp_generate_password(16, false, false));
+    $expiredVerificationId = $verifications->create([
+      'provider'            => 'fake-purchase',
+      'provider_reference'  => $expiredReference,
+      'customer_id'         => $customerId,
+      'verification_status' => VerificationStatus::VERIFIED,
+      'support_expires_at'  => '2020-01-01 00:00:00',
     ]);
 
     $departmentId = $departments->create([
@@ -196,6 +234,35 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Profile updates cannot change account identity fields.'
     );
 
+    $customers->connectProvider(
+      $customerId,
+      $oauthProvider->authenticateOAuth(
+        'portal-connect',
+        ['reference' => 'PORTAL-OAUTH-CUSTOMER'],
+      ),
+    );
+    $providerConnectionsResponse = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/portal/providers')
+    );
+    $providerConnections = $providerConnectionsResponse->get_data()['data'] ?? [];
+    $oauthConnection = array_values(array_filter(
+      $providerConnections,
+      static fn(array $connection): bool =>
+        ($connection['slug'] ?? '') === 'fake-oauth',
+    ))[0] ?? [];
+
+    Assert::true(
+      ($oauthConnection['connected'] ?? false) === true
+      && str_contains((string) ($oauthConnection['connect_url'] ?? ''), 'sbay_oauth=login')
+      && ! str_contains((string) ($oauthConnection['reference'] ?? ''), 'PORTAL-OAUTH-CUSTOMER'),
+      'Portal exposes a masked connected-provider summary and generic reconnect URL.'
+    );
+
+    Assert::false(
+      array_key_exists('token', $oauthConnection),
+      'Portal provider summaries never expose OAuth tokens.'
+    );
+
     $ticketResponse = rest_do_request(
       new WP_REST_Request('GET', '/sbay/v1/portal/tickets')
     );
@@ -266,6 +333,43 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Portal exposes active ticket departments.'
     );
 
+    $providerResponse = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/portal/purchase-providers')
+    );
+
+    Assert::true(
+      in_array('fake-purchase', array_column($providerResponse->get_data()['data'] ?? [], 'slug'), true),
+      'Portal exposes provider-independent purchase verification options.'
+    );
+
+    $providers->disable($providerId);
+    $disabledProviderResponse = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/portal/purchase-providers')
+    );
+
+    Assert::false(
+      in_array('fake-purchase', array_column($disabledProviderResponse->get_data()['data'] ?? [], 'slug'), true),
+      'Portal hides disabled purchase providers.'
+    );
+
+    $providers->enable($providerId);
+
+    $expiredRequest = new WP_REST_Request('POST', '/sbay/v1/portal/tickets');
+    $expiredRequest->set_body_params([
+      'subject' => 'Expired support request',
+      'content' => 'This ticket must not be created.',
+      'department_id' => $departmentId,
+      'provider' => 'fake-purchase',
+      'purchase_reference' => $expiredReference,
+    ]);
+    $expiredResponse = rest_do_request($expiredRequest);
+
+    Assert::true(
+      $expiredResponse->get_status() === 422
+      && str_contains($expiredResponse->get_data()['message'] ?? '', 'expired'),
+      'Portal rejects Purchase Code/Key records whose support has expired.'
+    );
+
     $createRequest = new WP_REST_Request(
       'POST',
       '/sbay/v1/portal/tickets'
@@ -274,7 +378,8 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'subject'                  => 'Created from customer portal',
       'content'                  => 'This is the opening portal message.',
       'department_id'            => $departmentId,
-      'purchase_verification_id' => $verificationId,
+      'provider'                  => 'fake-purchase',
+      'purchase_reference'        => $verifications->find($verificationId)->providerReference(),
     ]);
     $createResponse = rest_do_request($createRequest);
     $createData = $createResponse->get_data();
@@ -289,6 +394,30 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::true(
       $createdTicketId > 0,
       'Portal returns the created ticket.'
+    );
+
+    Assert::equals(
+      0,
+      $purchaseProvider->verificationCalls(),
+      'Existing purchase verification is reused without a provider API call.'
+    );
+
+    $newReference = 'NEW-' . strtoupper(wp_generate_password(16, false, false));
+    $newEntitlement = $verifications->resolveTicketEntitlement(
+      'fake-purchase',
+      $newReference,
+      $customerId,
+    );
+    $verifications->resolveTicketEntitlement(
+      'fake-purchase',
+      $newReference,
+      $customerId,
+    );
+
+    Assert::equals(
+      1,
+      $purchaseProvider->verificationCalls(),
+      'A new Purchase Code/Key calls its provider once and is cached for reuse.'
     );
 
     $openingMessage = $messages->findByTicket($createdTicketId)[0] ?? null;
@@ -511,6 +640,16 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     );
 
     Assert::true(
+      $verifications->delete($newEntitlement->id()),
+      'New entitlement cache record deleted.'
+    );
+
+    Assert::true(
+      $verifications->delete($expiredVerificationId),
+      'Expired portal entitlement deleted.'
+    );
+
+    Assert::true(
       $customers->deleteWithUser($customerId),
       'Test customer and WordPress user deleted.'
     );
@@ -519,5 +658,18 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       $departments->delete($departmentId),
       'Test department deleted.'
     );
+
+    Assert::true(
+      $providers->delete($providerId),
+      'Test purchase provider deleted.'
+    );
+
+    Assert::true(
+      $providers->delete($oauthProviderId),
+      'Test OAuth provider deleted.'
+    );
+
+    $integrations->unregister($purchaseProvider->slug());
+    $integrations->unregister($oauthProvider->slug());
   }
 }

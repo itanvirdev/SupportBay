@@ -16,6 +16,7 @@ use SupportBay\Modules\Auth\Repositories\AuthTokenRepository;
 use SupportBay\Modules\Auth\Services\AuthService;
 use SupportBay\Modules\Auth\Services\MagicLoginService;
 use SupportBay\Modules\Auth\Services\OAuthLoginService;
+use SupportBay\Modules\Auth\Http\OAuthRoutes;
 
 final class AuthServiceProvider extends ServiceProvider {
   /**
@@ -48,5 +49,11 @@ final class AuthServiceProvider extends ServiceProvider {
     $container->singleton(MagicLoginService::class);
 
     $container->singleton(OAuthLoginService::class);
+
+    $container->singleton(OAuthRoutes::class);
+  }
+
+  public function boot(Container $container): void {
+    $container->get(OAuthRoutes::class)->register();
   }
 }

@@ -49,6 +49,12 @@ final class PortalController {
       'permission_callback' => [$this, 'permissions'],
     ]);
 
+    register_rest_route(self::NAMESPACE, '/portal/providers', [
+      'methods'             => 'GET',
+      'callback'            => [$this, 'providerConnections'],
+      'permission_callback' => [$this, 'permissions'],
+    ]);
+
     register_rest_route(self::NAMESPACE, '/portal/profile', [
       'methods'             => 'POST',
       'callback'            => [$this, 'updateProfile'],
@@ -151,6 +157,12 @@ final class PortalController {
     register_rest_route(self::NAMESPACE, '/portal/verifications', [
       'methods'             => 'GET',
       'callback'            => [$this, 'verifications'],
+      'permission_callback' => [$this, 'permissions'],
+    ]);
+
+    register_rest_route(self::NAMESPACE, '/portal/purchase-providers', [
+      'methods'             => 'GET',
+      'callback'            => [$this, 'purchaseProviders'],
       'permission_callback' => [$this, 'permissions'],
     ]);
 
@@ -261,6 +273,15 @@ final class PortalController {
     );
   }
 
+  public function providerConnections(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    return RestResponse::success(
+      $this->portal->providerConnections(),
+      'Customer provider connections retrieved.',
+    );
+  }
+
   /**
    * Return the current customer's tickets.
    */
@@ -314,9 +335,12 @@ final class PortalController {
           wp_unslash((string) $request->get_param('content'))
         ),
         'department_id' => absint($request->get_param('department_id')),
-        'purchase_verification_id' => absint(
-          $request->get_param('purchase_verification_id')
-        ) ?: null,
+        'provider' => sanitize_key(
+          (string) $request->get_param('provider')
+        ),
+        'purchase_reference' => sanitize_text_field(
+          wp_unslash((string) $request->get_param('purchase_reference'))
+        ),
       ]);
     } catch (InvalidArgumentException|RuntimeException $exception) {
       return RestResponse::error(
@@ -567,6 +591,18 @@ final class PortalController {
     );
   }
 
+  public function purchaseProviders(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    $providers = $this->portal->purchaseProviders();
+
+    return RestResponse::success(
+      $providers,
+      'Purchase verification providers retrieved.',
+      ['total' => count($providers)],
+    );
+  }
+
   /**
    * Return the current customer's purchase verifications.
    */
@@ -724,6 +760,9 @@ final class PortalController {
     return [
       'id'                 => $verification->id(),
       'provider'           => $verification->provider(),
+      'reference'          => \SupportBay\Modules\Verifications\Data\VerificationDirectoryItem::mask(
+        $verification->providerReference()
+      ),
       'product_id'         => $verification->productId(),
       'product_name'       => $verification->productName(),
       'license_type'       => $verification->licenseType(),

@@ -78,5 +78,18 @@ final class ReactAdminFlowTest extends FlowTest {
       && ! str_contains($providerWorkspace, 'client_secret'),
       'Settings includes schema-driven, secret-safe provider configuration and lifecycle controls.'
     );
+
+    $verificationDirectory = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/VerificationDirectory.tsx'
+    );
+
+    Assert::true(
+      is_string($verificationDirectory)
+      && str_contains($verificationDirectory, 'verifications?${query}')
+      && str_contains($verificationDirectory, 'All Providers')
+      && str_contains($verificationDirectory, 'All Statuses')
+      && str_contains($verificationDirectory, 'Verification pagination'),
+      'Support Tickets includes the server-backed Verification Directory workspace.'
+    );
   }
 }

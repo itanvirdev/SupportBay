@@ -270,4 +270,13 @@ final class Verification extends Entity {
   public function hasSnapshot(): bool {
     return ! empty($this->providerSnapshot);
   }
+
+  /**
+   * Whether this purchase currently grants new-ticket support.
+   */
+  public function hasActiveSupport(): bool {
+    return $this->isVerified()
+      && $this->hasSupportExpiry()
+      && ! $this->supportExpired();
+  }
 }

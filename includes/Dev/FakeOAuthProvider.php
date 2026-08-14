@@ -6,6 +6,7 @@ namespace SupportBay\Dev;
 
 use SupportBay\Core\Integrations\Contracts\IntegrationProvider;
 use SupportBay\Core\Integrations\Contracts\OAuthProvider;
+use SupportBay\Core\Integrations\Contracts\RefreshableOAuthProvider;
 use SupportBay\Core\Integrations\Data\OAuthIdentityData;
 use SupportBay\Core\Integrations\Data\OAuthLoginData;
 use SupportBay\Core\Integrations\Data\OAuthTokenData;
@@ -13,7 +14,9 @@ use SupportBay\Modules\Providers\Enums\ProviderCategory;
 
 final class FakeOAuthProvider implements
   IntegrationProvider,
-  OAuthProvider {
+  OAuthProvider,
+  RefreshableOAuthProvider {
+  private int $refreshCalls = 0;
   public function slug(): string {
     return 'fake-oauth';
   }
@@ -63,8 +66,26 @@ final class FakeOAuthProvider implements
       token: new OAuthTokenData(
         accessToken: 'fake-access-token',
         refreshToken: 'fake-refresh-token',
-        expiresIn: 3600,
+        expiresIn: 1,
       ),
     );
+  }
+
+  /** @param array<string, mixed> $context */
+  public function refreshOAuthToken(
+    OAuthTokenData $token,
+    array $context,
+  ): OAuthTokenData {
+    $this->refreshCalls++;
+
+    return new OAuthTokenData(
+      accessToken: 'fake-refreshed-access-token',
+      refreshToken: $token->refreshToken(),
+      expiresIn: 3600,
+    );
+  }
+
+  public function refreshCalls(): int {
+    return $this->refreshCalls;
   }
 }

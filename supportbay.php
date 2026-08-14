@@ -183,6 +183,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Customers\Services\CustomerService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Auth\Http\OAuthRoutes::class
           )
         );
         break;
@@ -206,6 +209,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Attachments\Services\AttachmentService::class
+          ),
+          $container->get(
+            \SupportBay\Core\Integrations\IntegrationManager::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Providers\Services\ProviderService::class
           )
         );
         break;
@@ -323,6 +332,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Customers\Services\CustomerService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Auth\Http\OAuthRoutes::class
           )
         );
 
@@ -344,6 +356,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Attachments\Services\AttachmentService::class
+          ),
+          $container->get(
+            \SupportBay\Core\Integrations\IntegrationManager::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Providers\Services\ProviderService::class
           )
         );
 

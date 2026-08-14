@@ -23,6 +23,13 @@ use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Data\TicketQuery;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Modules\Verifications\Entities\Verification;
+use SupportBay\Core\Integrations\Contracts\PurchaseVerificationProvider;
+use SupportBay\Core\Integrations\IntegrationManager;
+use SupportBay\Modules\Auth\Services\OAuthLoginService;
+use SupportBay\Modules\Auth\Http\OAuthRoutes;
+use SupportBay\Core\Integrations\Contracts\OAuthProvider;
+use SupportBay\Modules\Providers\Services\ProviderConfiguration;
+use SupportBay\Modules\Providers\Services\ProviderService;
 
 final class PortalService {
   public function __construct(
@@ -32,6 +39,11 @@ final class PortalService {
     private readonly MessageService $messages,
     private readonly DepartmentService $departments,
     private readonly AttachmentService $attachments,
+    private readonly IntegrationManager $integrations,
+    private readonly OAuthLoginService $oauth,
+    private readonly ProviderService $providers,
+    private readonly ProviderConfiguration $providerConfiguration,
+    private readonly OAuthRoutes $oauthRoutes,
   ) {
   }
 
@@ -174,6 +186,82 @@ final class PortalService {
     return $this->departments->active();
   }
 
+  /** @return array<int, array{slug: string, name: string}> */
+  public function purchaseProviders(): array {
+    $providers = [];
+
+    foreach ($this->integrations->all() as $integration) {
+      if (! $integration instanceof PurchaseVerificationProvider) {
+        continue;
+      }
+
+      $provider = $this->providers->findBySlug($integration->slug());
+
+      if (
+        ! $provider ||
+        ! $provider->isEnabled() ||
+        ! $this->providerConfiguration->configured($integration->slug())
+      ) {
+        continue;
+      }
+
+      $providers[] = [
+        'slug' => $integration->slug(),
+        'name' => $integration->name(),
+      ];
+    }
+
+    return $providers;
+  }
+
+  /**
+   * Return customer-safe OAuth provider connection summaries.
+   *
+   * @return array<int, array<string, mixed>>
+   */
+  public function providerConnections(): array {
+    $customer = $this->currentCustomer();
+    $connected = [];
+
+    foreach ($this->customers->providerConnections($customer->id()) as $connection) {
+      $connected[$connection['provider']] = $connection['reference'];
+    }
+
+    $providers = [];
+
+    foreach ($this->integrations->all() as $integration) {
+      if (! $integration instanceof OAuthProvider) {
+        continue;
+      }
+
+      $storedProvider = $this->providers->findBySlug($integration->slug());
+
+      if (
+        ! $storedProvider ||
+        ! $storedProvider->isEnabled() ||
+        ! $this->providerConfiguration->configured($integration->slug())
+      ) {
+        continue;
+      }
+
+      $reference = $connected[$integration->slug()] ?? null;
+
+      $providers[] = [
+        'slug' => $integration->slug(),
+        'name' => $integration->name(),
+        'connected' => $reference !== null,
+        'reference' => $reference !== null
+          ? $this->maskProviderReference($reference)
+          : null,
+        'connect_url' => $this->oauthRoutes->connectUrl(
+          $integration->slug()
+        ),
+      ];
+    }
+
+    return $providers;
+  }
+
   /**
    * Create a customer ticket with its opening message.
    *
@@ -201,21 +289,38 @@ final class PortalService {
       throw new InvalidArgumentException('Opening message is required.');
     }
 
-    $verificationId = ! empty($data['purchase_verification_id'])
-      ? (int) $data['purchase_verification_id']
-      : null;
+    $provider = sanitize_key((string) ($data['provider'] ?? ''));
+    $reference = trim((string) ($data['purchase_reference'] ?? ''));
 
-    if ($verificationId !== null && ! $this->verification($verificationId)) {
+    if ($provider === '' || $reference === '') {
       throw new InvalidArgumentException(
-        'The selected purchase is unavailable.'
+        'Provider and Purchase Code/Key are required.'
       );
+    }
+
+    $existingVerification = $this->verifications->findByReference(
+      $provider,
+      $reference,
+    );
+    $providerContext = $existingVerification === null
+      ? $this->oauth->providerContext($customer->id(), $provider)
+      : [];
+    $verification = $this->verifications->resolveTicketEntitlement(
+      $provider,
+      $reference,
+      $customer->id(),
+      $providerContext,
+    );
+
+    if (! $customer->isVerified()) {
+      $this->customers->verify($customer->id());
     }
 
     $ticketId = $this->tickets->create([
       'customer_id'              => $customer->id(),
       'created_by_id'            => $customer->userId(),
       'created_by_type'          => AuthorType::CUSTOMER->value,
-      'purchase_verification_id' => $verificationId,
+      'purchase_verification_id' => $verification->id(),
       'department_id'            => $departmentId,
       'subject'                  => $subject,
       'priority'                 => $department->defaultPriority()->value,
@@ -243,6 +348,18 @@ final class PortalService {
     }
 
     return $ticket;
+  }
+
+  private function maskProviderReference(string $reference): string {
+    $length = strlen($reference);
+
+    if ($length <= 4) {
+      return str_repeat('*', $length);
+    }
+
+    return substr($reference, 0, 2)
+      . str_repeat('*', max(4, $length - 4))
+      . substr($reference, -2);
   }
 
   /**

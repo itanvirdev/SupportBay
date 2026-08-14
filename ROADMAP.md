@@ -439,14 +439,18 @@ Completed
 - Customer Linking
 - Encrypted OAuth Token Storage
 - OAuth Flow Test
+- Refresh Token Consumption
+- Generic Customer Connect / Reconnect Flow
+- Customer Profile Connection Status
+- Cross-customer Identity Collision Protection
 
 Current
 
-Refresh token consumption and Customer Portal foundation.
+Customer connection experience complete; real Envato credential testing remains.
 
-Pending
+Next
 
-- Refresh Tokens
+- Additional provider adapters
 
 ---
 
@@ -634,7 +638,7 @@ Status
 
 Remaining
 
-- Refresh Token Consumption
+- Additional marketplace providers
 
 ---
 
@@ -811,16 +815,18 @@ Provide a modern customer experience completely independent from wp-admin.
 Status
 
 ```
-⏳ Planned
+🟢 Foundation Complete
 ```
 
 Features
 
-- Magic Login
-- OAuth Login
+- Magic Login ✅
+- OAuth Login ✅
+- Provider Connect / Reconnect ✅
+- Connected Provider Status ✅
 - Password Login
 - Remember Me
-- Logout
+- Logout ✅
 - Session Management
 
 Future
@@ -1042,6 +1048,10 @@ Features
 ---
 
 ## Verification Management
+
+Clarification
+
+Verification records are backend entitlement state used during ticket creation and in ticket/customer context. A standalone verification detail workflow is not required.
 
 Features
 
@@ -1464,7 +1474,7 @@ Current
 Current Sprint
 
 ```
-Provider Management Workspace
+Ticket Purchase Entitlement Enforcement
 ```
 
 ↓
@@ -1472,7 +1482,7 @@ Provider Management Workspace
 Next Sprint
 
 ```
-Verification Management Workspace
+To be selected after entitlement enforcement
 ```
 
 ↓

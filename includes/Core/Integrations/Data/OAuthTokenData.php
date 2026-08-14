@@ -29,6 +29,24 @@ final readonly class OAuthTokenData {
     return $this->expiresIn;
   }
 
+  /** @param array<string, mixed> $data */
+  public static function fromArray(array $data): self {
+    return new self(
+      accessToken: sanitize_text_field(
+        (string) ($data['access_token'] ?? '')
+      ),
+      refreshToken: self::nullableString(
+        $data['refresh_token'] ?? null
+      ),
+      tokenType: sanitize_text_field(
+        (string) ($data['token_type'] ?? 'Bearer')
+      ),
+      expiresIn: isset($data['expires_in'])
+        ? max(0, (int) $data['expires_in'])
+        : null,
+    );
+  }
+
   /**
    * @return array<string, mixed>
    */
@@ -39,5 +57,13 @@ final readonly class OAuthTokenData {
       'token_type'    => $this->tokenType,
       'expires_in'    => $this->expiresIn,
     ];
+  }
+
+  private static function nullableString(mixed $value): ?string {
+    $value = is_scalar($value)
+      ? sanitize_text_field((string) $value)
+      : '';
+
+    return $value !== '' ? $value : null;
   }
 }

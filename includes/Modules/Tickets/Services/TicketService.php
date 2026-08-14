@@ -243,6 +243,12 @@ final class TicketService {
       );
     }
 
+    if (! $verification->hasActiveSupport()) {
+      throw new RuntimeException(
+        'Tickets require a verified purchase with active support.'
+      );
+    }
+
     $customerId = isset($data['customer_id'])
       ? (int) $data['customer_id']
       : null;

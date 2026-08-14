@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Provider Management Workspace
+Customer Connected Providers
 
 Current Objective
 
-Build provider configuration, credential management, connection health, and safe connection testing inside Settings.
+Let authenticated customers view, connect, and reconnect enabled OAuth providers through a provider-neutral flow without exposing credentials or crossing customer identities.
 
 ---
 
@@ -276,10 +276,16 @@ README
 MANUAL_TESTING
 ```
 
-Still Missing
+Completed
 
 ```
 Refresh Token Consumption
+
+Encrypted Refreshed Token Persistence
+
+Reconnect-required Failure Handling
+
+Provider Availability Filtering
 ```
 
 ---
@@ -570,6 +576,14 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 19. ✅ Add optional provider connection-test capabilities, normalized results, persisted health outcomes, capability-aware REST/UI controls, and deterministic flow coverage.
 
+20. ✅ Add the server-paginated Verification Directory with combined search/provider/status filters, sorting, masked references, entitlement context, related-ticket counts, and capability-aware navigation.
+
+21. ✅ Replace optional saved-purchase selection with provider-backed Purchase Code/Key enforcement, cache-first reuse, ownership validation, active-support gating, ticket linking, and specific customer errors.
+
+22. ✅ Add provider-neutral OAuth token refresh, encrypted refreshed-token persistence, reconnect-required failures, and enabled/configured portal provider filtering.
+
+23. ✅ Add customer connected-provider summaries, generic OAuth connect/reconnect routes, collision-safe current-customer linking, and React profile controls.
+
 ---
 
 # Current Workflow
@@ -689,7 +703,7 @@ Never
 # Next Milestone
 
 ```
-Verification Management Workspace
+Next milestone selection
 ```
 
 ---
@@ -745,11 +759,11 @@ Status
 ```
 Current Sprint
 
-Provider Management Workspace
+Customer Connected Providers
 
 Next Target
 
-Verification Management Workspace
+Next milestone selection
 ```
 
 ---

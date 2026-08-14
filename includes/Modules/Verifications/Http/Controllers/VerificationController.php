@@ -9,6 +9,8 @@ use SupportBay\Core\Authorization\CapabilityManager;
 use SupportBay\Modules\Verifications\Entities\Verification;
 use SupportBay\Modules\Verifications\Enums\VerificationStatus;
 use SupportBay\Modules\Verifications\Services\VerificationService;
+use SupportBay\Modules\Verifications\Data\VerificationDirectoryItem;
+use SupportBay\Modules\Verifications\Data\VerificationDirectoryQuery;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -63,7 +65,7 @@ final class VerificationController {
       return RestResponse::error($exception->getMessage(), 'VERIFICATION_REFRESH_FAILED', [], 409);
     }
 
-    return RestResponse::success($verification->toArray(), 'Purchase verification refreshed.');
+    return RestResponse::success($this->data($verification), 'Purchase verification refreshed.');
   }
 
   public function revoke(WP_REST_Request $request): WP_REST_Response {
@@ -73,24 +75,35 @@ final class VerificationController {
       return RestResponse::error($exception->getMessage(), 'VERIFICATION_REVOKE_FAILED', [], 404);
     }
 
-    return RestResponse::success($verification->toArray(), 'Purchase verification revoked.');
+    return RestResponse::success($this->data($verification), 'Purchase verification revoked.');
   }
 
   public function index(WP_REST_Request $request): WP_REST_Response {
-    $status = VerificationStatus::tryFrom(sanitize_key((string) $request->get_param('status')));
-    $provider = sanitize_key((string) $request->get_param('provider'));
-    $items = $status
-      ? $this->verifications->findByStatus($status)
-      : ($provider !== '' ? $this->verifications->findByProvider($provider) : $this->verifications->all());
     $page = max(1, absint($request->get_param('page')) ?: 1);
     $perPage = min(100, max(1, absint($request->get_param('per_page')) ?: 20));
-    $total = count($items);
-    $items = array_slice($items, ($page - 1) * $perPage, $perPage);
+    $status = VerificationStatus::tryFrom(sanitize_key((string) $request->get_param('status')));
+    $provider = sanitize_key((string) $request->get_param('provider')) ?: null;
+    $result = $this->verifications->search(new VerificationDirectoryQuery(
+      page: $page,
+      perPage: $perPage,
+      search: sanitize_text_field(wp_unslash((string) $request->get_param('search'))) ?: null,
+      provider: $provider,
+      status: $status?->value,
+      orderBy: sanitize_key((string) $request->get_param('orderby')) ?: 'updated_at',
+      direction: sanitize_key((string) $request->get_param('order')) ?: 'desc',
+    ));
 
     return RestResponse::success(
-      array_map(static fn(Verification $verification): array => $verification->toArray(), $items),
+      array_map(static fn(VerificationDirectoryItem $item): array => $item->toArray(), $result['items']),
       'Purchase verifications retrieved.',
-      ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'total_pages' => (int) ceil($total / $perPage)],
+      [
+        'page' => $page,
+        'per_page' => $perPage,
+        'total' => $result['total'],
+        'total_pages' => (int) ceil($result['total'] / $perPage),
+        'providers' => $this->verifications->providerSlugs(),
+        'statuses' => VerificationStatus::values(),
+      ],
     );
   }
 
@@ -98,7 +111,30 @@ final class VerificationController {
     $verification = $this->verifications->find(absint($request->get_param('id')));
 
     return $verification
-      ? RestResponse::success($verification->toArray(), 'Purchase verification retrieved.')
+      ? RestResponse::success($this->data($verification), 'Purchase verification retrieved.')
       : RestResponse::error('Purchase verification was not found.', 'VERIFICATION_NOT_FOUND', [], 404);
+  }
+
+  /** @return array<string, mixed> */
+  private function data(Verification $verification): array {
+    return [
+      'id' => $verification->id(),
+      'provider' => $verification->provider(),
+      'reference' => VerificationDirectoryItem::mask($verification->providerReference()),
+      'customer_id' => $verification->customerId(),
+      'provider_customer_reference' => $verification->providerCustomerReference(),
+      'product_id' => $verification->productId(),
+      'product_name' => $verification->productName(),
+      'license_type' => $verification->licenseType(),
+      'support_expires_at' => $verification->supportExpiresAt(),
+      'purchased_at' => $verification->purchasedAt(),
+      'verified_at' => $verification->verifiedAt(),
+      'last_checked_at' => $verification->lastCheckedAt(),
+      'verification_status' => $verification->status()->value,
+      'has_snapshot' => $verification->hasSnapshot(),
+      'can_refresh' => $verification->canRefresh(),
+      'created_at' => $verification->createdAt(),
+      'updated_at' => $verification->updatedAt(),
+    ];
   }
 }

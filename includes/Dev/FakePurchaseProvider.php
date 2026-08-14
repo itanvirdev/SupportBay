@@ -12,6 +12,8 @@ use SupportBay\Modules\Providers\Enums\ProviderCategory;
 final class FakePurchaseProvider implements
   IntegrationProvider,
   PurchaseVerificationProvider {
+  private int $verificationCalls = 0;
+
   /**
    * Unique integration identifier.
    */
@@ -55,6 +57,8 @@ final class FakePurchaseProvider implements
     string $reference,
     array $context = [],
   ): PurchaseVerificationData {
+    $this->verificationCalls++;
+
     return new PurchaseVerificationData(
       provider: $this->slug(),
       providerReference: $reference,
@@ -70,5 +74,9 @@ final class FakePurchaseProvider implements
         'source'    => 'fake',
       ],
     );
+  }
+
+  public function verificationCalls(): int {
+    return $this->verificationCalls;
   }
 }

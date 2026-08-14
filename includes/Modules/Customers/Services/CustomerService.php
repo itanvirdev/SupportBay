@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use RuntimeException;
 use SupportBay\Core\Events\EventDispatcher;
 use SupportBay\Core\Integrations\Data\OAuthLoginData;
+use SupportBay\Core\Integrations\Data\OAuthTokenData;
 use SupportBay\Modules\Customers\Data\CustomerProfileData;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
@@ -126,6 +127,43 @@ final class CustomerService {
   }
 
   /**
+   * Link a provider identity to an existing authenticated customer.
+   */
+  public function connectProvider(
+    int $id,
+    OAuthLoginData $login,
+  ): Customer {
+    $customer = $this->find($id);
+
+    if (! $customer) {
+      throw new RuntimeException('Customer not found.');
+    }
+
+    $identity = $login->identity();
+    $linkedUserId = $this->users->findByProvider(
+      $identity->provider(),
+      $identity->providerReference(),
+    );
+
+    if (
+      $linkedUserId !== null &&
+      $linkedUserId !== $customer->userId()
+    ) {
+      throw new RuntimeException(
+        'This provider account is already connected to another customer.'
+      );
+    }
+
+    $this->users->linkProvider(
+      $customer->userId(),
+      $identity,
+      $login->token(),
+    );
+
+    return $customer;
+  }
+
+  /**
    * Delete a customer and its WordPress user.
    */
   public function deleteWithUser(int $id): bool {
@@ -229,6 +267,41 @@ final class CustomerService {
     }
 
     return $this->users->providerConnections($customer->userId());
+  }
+
+  /** @return array<string, mixed> */
+  public function providerContext(int $id, string $provider): array {
+    $customer = $this->find($id);
+
+    if (! $customer) {
+      throw new RuntimeException('Customer not found.');
+    }
+
+    $connection = $this->users->providerConnection(
+      $customer->userId(),
+      sanitize_key($provider),
+    );
+    $token = $connection['token'] ?? [];
+
+    return is_array($token) ? $token : [];
+  }
+
+  public function updateProviderToken(
+    int $id,
+    string $provider,
+    OAuthTokenData $token,
+  ): void {
+    $customer = $this->find($id);
+
+    if (! $customer) {
+      throw new RuntimeException('Customer not found.');
+    }
+
+    $this->users->updateProviderToken(
+      $customer->userId(),
+      sanitize_key($provider),
+      $token,
+    );
   }
 
   /**
