@@ -1177,7 +1177,7 @@ Pending
 - Persistent destinations
 - Signing secrets
 - HTTP delivery providers
-- Delivery logs and retries
+- Retries
 
 ---
 
@@ -1198,6 +1198,10 @@ Provider-independent Channel Contract ✅
 Ticket and Reply Event Listeners ✅
 
 Deterministic Notification Flow Test ✅
+
+Notification Delivery Logs ✅
+
+Successful / Failed Attempt Auditing ✅
 
 Email Templates ⏳
 

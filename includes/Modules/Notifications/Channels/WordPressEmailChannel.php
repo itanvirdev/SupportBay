@@ -8,6 +8,14 @@ use SupportBay\Modules\Notifications\Contracts\NotificationChannel;
 use SupportBay\Modules\Notifications\Data\NotificationData;
 
 final class WordPressEmailChannel implements NotificationChannel {
+  public function channel(): string {
+    return 'email';
+  }
+
+  public function provider(): ?string {
+    return 'wordpress';
+  }
+
   public function send(NotificationData $notification): bool {
     return wp_mail(
       $notification->recipient(),

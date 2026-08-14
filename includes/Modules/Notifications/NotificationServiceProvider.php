@@ -12,6 +12,7 @@ use SupportBay\Modules\Notifications\Contracts\NotificationChannel;
 use SupportBay\Modules\Notifications\Listeners\SendMessageCreatedEmail;
 use SupportBay\Modules\Notifications\Listeners\SendTicketCreatedEmails;
 use SupportBay\Modules\Notifications\Services\NotificationService;
+use SupportBay\Modules\Notifications\Repositories\NotificationLogRepository;
 use SupportBay\Modules\Tickets\Events\TicketCreated;
 
 final class NotificationServiceProvider extends ServiceProvider {
@@ -31,6 +32,7 @@ final class NotificationServiceProvider extends ServiceProvider {
       WordPressEmailChannel::class,
     );
     $container->singleton(NotificationService::class);
+    $container->singleton(NotificationLogRepository::class);
     $container->singleton(SendTicketCreatedEmails::class);
     $container->singleton(SendMessageCreatedEmail::class);
   }

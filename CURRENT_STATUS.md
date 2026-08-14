@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Customer Connected Providers
+Notification Delivery Logs
 
 Current Objective
 
-Let authenticated customers view, connect, and reconnect enabled OAuth providers through a provider-neutral flow without exposing credentials or crossing customer identities.
+Persist every outbound notification attempt with channel, provider, event, recipient, status, timestamps, payload, and safe failure details for future reporting and retries.
 
 ---
 
@@ -373,6 +373,10 @@ WordPress Email Channel
 
 ↓
 
+Notification Delivery Log
+
+↓
+
 NotificationFlowTest
 ```
 
@@ -382,10 +386,11 @@ Current behavior
 - Customer follow-up replies email the administrator.
 - Agent replies email the customer.
 - Initial ticket content and internal notes do not create duplicate or private emails.
+- Successful and failed attempts create immutable audit records.
+- Invalid recipients are recorded as retryable failures without channel delivery.
 
 Future notification work
 
-- Delivery logs
 - Queue and retries
 - Editable templates and preview
 - SMTP and external notification providers
@@ -584,6 +589,8 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 23. ✅ Add customer connected-provider summaries, generic OAuth connect/reconnect routes, collision-safe current-customer linking, and React profile controls.
 
+24. ✅ Add multi-channel-ready notification delivery logs with pending/sent/failed transitions, provider metadata, failure capture, and flow coverage.
+
 ---
 
 # Current Workflow
@@ -759,7 +766,7 @@ Status
 ```
 Current Sprint
 
-Customer Connected Providers
+Notification Delivery Logs
 
 Next Target
 

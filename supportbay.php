@@ -233,6 +233,8 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
         );
         break;
 
@@ -243,9 +245,8 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
-          $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
-          $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
-          $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderConnectionService::class),
         );
         break;
@@ -376,9 +377,8 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
-          $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
-          $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
-          $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
         );
 
         \SupportBay\Dev\ApiWebhookFlowTest::run(

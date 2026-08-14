@@ -14,6 +14,10 @@ use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
+use SupportBay\Modules\Notifications\Data\NotificationData;
+use SupportBay\Modules\Notifications\Enums\NotificationStatus;
+use SupportBay\Modules\Notifications\Repositories\NotificationLogRepository;
+use SupportBay\Modules\Notifications\Services\NotificationService;
 
 final class NotificationFlowTest extends FlowTest {
   protected static function title(): string {
@@ -25,7 +29,9 @@ final class NotificationFlowTest extends FlowTest {
     /** @var MessageService $messages */
     /** @var CustomerService $customers */
     /** @var DepartmentService $departments */
-    [$tickets, $messages, $customers, $departments] = $services;
+    /** @var NotificationService $notifications */
+    /** @var NotificationLogRepository $logs */
+    [$tickets, $messages, $customers, $departments, $notifications, $logs] = $services;
 
     echo "🚀 Starting SupportBay Notification Flow Test...\n\n";
 
@@ -71,6 +77,22 @@ final class NotificationFlowTest extends FlowTest {
       2,
       $deliveries,
       'Ticket creation notifies the administrator and customer.'
+    );
+
+    $ticketLogs = $notifications->logsForTicket($ticketId);
+
+    Assert::count(
+      2,
+      $ticketLogs,
+      'Ticket creation persists one delivery log per recipient.'
+    );
+
+    Assert::true(
+      $ticketLogs[0]->status() === NotificationStatus::SENT
+      && $ticketLogs[0]->sentAt() !== null
+      && $ticketLogs[0]->channel() === 'email'
+      && $ticketLogs[0]->provider() === 'wordpress',
+      'Successful email delivery records channel, provider, status, and send time.'
     );
 
     $initial = $messages->create([
@@ -126,7 +148,39 @@ final class NotificationFlowTest extends FlowTest {
       'Internal notes never send customer notifications.'
     );
 
+    Assert::count(
+      4,
+      $notifications->logsForTicket($ticketId),
+      'Only actual public notification attempts create delivery logs.'
+    );
+
+    Assert::false(
+      $notifications->send(new NotificationData(
+        event: 'system_alert',
+        recipient: 'not-an-email',
+        subject: 'Invalid recipient test',
+        content: 'This notification must fail before channel delivery.',
+        metadata: ['ticket_id' => $ticketId],
+      )),
+      'Invalid notification recipients fail safely.'
+    );
+
+    $failedLogs = $notifications->logsForTicket($ticketId);
+    $failedLog = $failedLogs[count($failedLogs) - 1];
+
+    Assert::true(
+      $failedLog->failed()
+      && $failedLog->canRetry()
+      && str_contains((string) $failedLog->errorMessage(), 'invalid'),
+      'Failed notification attempts retain a retryable audit record and error.'
+    );
+
     remove_filter('pre_wp_mail', $capture, 10);
+    Assert::equals(
+      5,
+      $logs->deleteByTicket($ticketId),
+      'Test notification delivery logs deleted.'
+    );
     $messages->delete($internal->id());
     $messages->delete($agentReply->id());
     $messages->delete($customerReply->id());
