@@ -17,7 +17,7 @@ final class NotificationLogSchema {
     global $wpdb;
 
     return "CREATE TABLE " . self::tableName() . " (
-      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
       ticket_id BIGINT UNSIGNED NULL,
       user_id BIGINT UNSIGNED NULL,
       channel VARCHAR(30) NOT NULL DEFAULT 'email',
@@ -36,6 +36,7 @@ final class NotificationLogSchema {
       metadata LONGTEXT NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY  (id),
       KEY ticket_id (ticket_id),
       KEY user_id (user_id),
       KEY channel (channel),

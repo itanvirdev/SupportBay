@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Notification Delivery Logs
+Database Migration Reliability
 
 Current Objective
 
-Persist every outbound notification attempt with channel, provider, event, recipient, status, timestamps, payload, and safe failure details for future reporting and retries.
+Make every registered module schema compatible with WordPress dbDelta, validate installation before storing the database version, and prove repeatable upgrades without SQL errors.
 
 ---
 
@@ -591,6 +591,8 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 24. ✅ Add multi-channel-ready notification delivery logs with pending/sent/failed transitions, provider metadata, failure capture, and flow coverage.
 
+25. ✅ Normalize all registered schemas for dbDelta, validate table creation before version updates, and add repeatable migration flow coverage.
+
 ---
 
 # Current Workflow
@@ -766,7 +768,7 @@ Status
 ```
 Current Sprint
 
-Notification Delivery Logs
+Database Migration Reliability
 
 Next Target
 

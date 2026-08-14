@@ -146,6 +146,9 @@ Modules
 - Service Provider System
 - Database Installer
 - Migration Registry
+- Idempotent dbDelta-compatible Schemas
+- Validated Database Version Updates
+- Database Migration Flow Test
 - Repository Base
 - Entity Base
 - Event Dispatcher

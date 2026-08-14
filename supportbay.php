@@ -238,6 +238,10 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'migration':
+        \SupportBay\Dev\DatabaseMigrationFlowTest::run();
+        break;
+
       case 'api-webhook':
         \SupportBay\Dev\ApiWebhookFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Http\Controllers\TicketController::class),
@@ -381,6 +385,8 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
         );
 
+        \SupportBay\Dev\DatabaseMigrationFlowTest::run();
+
         \SupportBay\Dev\ApiWebhookFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Http\Controllers\TicketController::class),
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
@@ -416,6 +422,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- portal-api\n";
         echo "- portal-react\n";
         echo "- notification\n";
+        echo "- migration\n";
         echo "- api-webhook\n";
         echo "- admin-react\n";
         echo "- all\n";
