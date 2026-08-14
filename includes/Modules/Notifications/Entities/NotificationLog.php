@@ -80,5 +80,8 @@ final class NotificationLog extends Entity {
 
   public function wasSent(): bool { return $this->status->isSuccessful(); }
   public function failed(): bool { return $this->status === NotificationStatus::FAILED; }
-  public function canRetry(): bool { return $this->status->canRetry(); }
+  public function canRetry(int $maximumAttempts = 3): bool {
+    return $this->status->canRetry()
+      && $this->retryCount < max(1, $maximumAttempts);
+  }
 }

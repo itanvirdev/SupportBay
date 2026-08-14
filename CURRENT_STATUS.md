@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Database Migration Reliability
+Notification Retry Foundation
 
 Current Objective
 
-Make every registered module schema compatible with WordPress dbDelta, validate installation before storing the database version, and prove repeatable upgrades without SQL errors.
+Replay failed notification audit records through their original channel, atomically track attempts, prevent duplicate logs, and enforce the three-attempt limit.
 
 ---
 
@@ -388,10 +388,12 @@ Current behavior
 - Initial ticket content and internal notes do not create duplicate or private emails.
 - Successful and failed attempts create immutable audit records.
 - Invalid recipients are recorded as retryable failures without channel delivery.
+- Failed records can be replayed from their stored payload through the matching channel.
+- Retries update the original audit record and stop after three attempts.
 
 Future notification work
 
-- Queue and retries
+- Queue and scheduled retry workers
 - Editable templates and preview
 - SMTP and external notification providers
 
@@ -593,6 +595,8 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 25. ✅ Normalize all registered schemas for dbDelta, validate table creation before version updates, and add repeatable migration flow coverage.
 
+26. ✅ Add atomic notification retry claiming, stored-payload replay, channel compatibility checks, three-attempt enforcement, and duplicate-free audit updates.
+
 ---
 
 # Current Workflow
@@ -768,7 +772,7 @@ Status
 ```
 Current Sprint
 
-Database Migration Reliability
+Notification Retry Foundation
 
 Next Target
 

@@ -73,6 +73,33 @@ final class NotificationLogRepository extends Repository {
     ], ['%s', '%s', '%s']);
   }
 
+  /**
+   * Atomically claim a retry attempt.
+   */
+  public function beginRetry(
+    int $id,
+    int $maximumAttempts,
+  ): bool {
+    $result = $this->db->query($this->db->prepare(
+      "UPDATE {$this->table()}
+       SET status = %s,
+           retry_count = retry_count + 1,
+           error_message = NULL,
+           updated_at = %s
+       WHERE id = %d
+         AND status IN (%s, %s)
+         AND retry_count < %d",
+      NotificationStatus::PROCESSING->value,
+      $this->now(),
+      $id,
+      NotificationStatus::PENDING->value,
+      NotificationStatus::FAILED->value,
+      max(1, $maximumAttempts),
+    ));
+
+    return $result === 1;
+  }
+
   /** Test cleanup only; production logs remain audit records. */
   public function deleteByTicket(int $ticketId): int {
     return (int) $this->db->delete(

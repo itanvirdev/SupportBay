@@ -36,13 +36,14 @@ final class NotificationFlowTest extends FlowTest {
     echo "🚀 Starting SupportBay Notification Flow Test...\n\n";
 
     $deliveries = [];
+    $deliverySucceeds = true;
     $capture = static function (
       null|bool $return,
       array $attributes,
-    ) use (&$deliveries): bool {
+    ) use (&$deliveries, &$deliverySucceeds): bool {
       $deliveries[] = $attributes;
 
-      return true;
+      return $deliverySucceeds;
     };
 
     add_filter('pre_wp_mail', $capture, 10, 2);
@@ -175,9 +176,80 @@ final class NotificationFlowTest extends FlowTest {
       'Failed notification attempts retain a retryable audit record and error.'
     );
 
+    Assert::false(
+      $notifications->retry($failedLog->id()),
+      'First invalid-recipient retry fails safely.'
+    );
+    Assert::false(
+      $notifications->retry($failedLog->id()),
+      'Second invalid-recipient retry fails safely.'
+    );
+    Assert::false(
+      $notifications->retry($failedLog->id()),
+      'Third invalid-recipient retry fails safely.'
+    );
+
+    $retryLimitEnforced = false;
+
+    try {
+      $notifications->retry($failedLog->id());
+    } catch (\RuntimeException $exception) {
+      $retryLimitEnforced = str_contains(
+        $exception->getMessage(),
+        'cannot be retried'
+      );
+    }
+
+    $exhaustedLog = $logs->find($failedLog->id());
+
+    Assert::true(
+      $retryLimitEnforced
+      && $exhaustedLog !== null
+      && $exhaustedLog->retryCount() === 3
+      && ! $exhaustedLog->canRetry(),
+      'Notification retries stop after three attempts.'
+    );
+
+    $deliverySucceeds = false;
+    Assert::false(
+      $notifications->send(new NotificationData(
+        event: 'system_alert',
+        recipient: 'retry-' . $suffix . '@example.com',
+        subject: 'Channel retry test',
+        content: 'This notification succeeds on retry.',
+        metadata: ['ticket_id' => $ticketId],
+      )),
+      'Channel delivery failure is recorded for retry.'
+    );
+
+    $retryableLogs = $notifications->logsForTicket($ticketId);
+    $retryableLog = $retryableLogs[count($retryableLogs) - 1];
+    $deliverySucceeds = true;
+
+    Assert::true(
+      $notifications->retry($retryableLog->id()),
+      'Stored notification payload is delivered successfully on retry.'
+    );
+
+    $retriedLog = $logs->find($retryableLog->id());
+
+    Assert::true(
+      $retriedLog !== null
+      && $retriedLog->status() === NotificationStatus::SENT
+      && $retriedLog->retryCount() === 1
+      && $retriedLog->errorMessage() === null,
+      'Successful retry updates the original audit record and clears its error.'
+    );
+
+    Assert::count(
+      6,
+      $notifications->logsForTicket($ticketId),
+      'Retries reuse their original audit records without creating duplicates.'
+    );
+
     remove_filter('pre_wp_mail', $capture, 10);
     Assert::equals(
-      5,
+      6,
       $logs->deleteByTicket($ticketId),
       'Test notification delivery logs deleted.'
     );

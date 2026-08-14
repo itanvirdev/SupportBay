@@ -1210,9 +1210,11 @@ Email Templates ⏳
 
 Queue ⏳
 
-Retry ⏳
+Manual Retry Foundation ✅
 
-Delivery Logs ⏳
+Three-attempt Enforcement ✅
+
+Scheduled Retry Worker ⏳
 
 SMTP ⏳
 
