@@ -3,7 +3,7 @@ import { useEffect, useId, useRef } from 'react';
 declare global {
   interface Window {
     wp?: { editor?: { initialize: (id: string, settings: object) => void; remove: (id: string) => void } };
-    tinymce?: { get: (id: string) => { getContent: () => string } | null };
+    tinymce?: { get: (id: string) => { getContent: () => string; setContent: (value: string) => void } | null };
   }
 }
 
@@ -33,6 +33,11 @@ export function RichTextEditor({ value, onChange, disabled = false }: Props) {
     });
     return () => window.wp?.editor?.remove(id);
   }, [id]);
+
+  useEffect(() => {
+    const editor = window.tinymce?.get(id);
+    if (editor && editor.getContent() !== value) editor.setContent(value);
+  }, [id, value]);
 
   return <textarea id={id} defaultValue={value} disabled={disabled} />;
 }

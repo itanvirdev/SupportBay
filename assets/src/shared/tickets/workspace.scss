@@ -30,6 +30,10 @@
 .sbay-ticket-priority { justify-self: start; background: #f2f4f3; color: #58645d; }
 .sbay-ticket-priority--high, .sbay-ticket-priority--urgent { background: #fff0ed; color: #b23b2f; }
 .sbay-need-reply { width: max-content; margin-top: 5px; padding: 3px 7px; border: 1px solid #f1aaa2; border-radius: 5px; background: #fff2f0; color: #b93428; font-size: 11px; font-style: normal; font-weight: 700; }
+.sbay-sla-badge { margin-left:7px; padding:3px 7px; border-radius:99px; background:#edf2ef; color:#5f6b65; font-size:11px; font-style:normal; font-weight:750; white-space:nowrap; }
+.sbay-sla-badge.is-met,.sbay-sla-badge.is-on_track { background:#e3f3ea; color:#237251; }
+.sbay-sla-badge.is-due_soon { background:#fff3d8; color:#916817; }
+.sbay-sla-badge.is-breached { background:#fde9e7; color:#ac382f; }
 .sbay-ticket-avatar { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #e5ebe7; font-weight: 700; }
 .sbay-ticket-table footer { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; background: #f8faf9; }
 .sbay-ticket-table footer select, .sbay-ticket-table footer button { min-height: 38px; margin-right: 8px; border: 1px solid #d7dfda; border-radius: 7px; background: #fff; }
@@ -60,6 +64,16 @@
 .sbay-conversation__composer.is-internal_note { padding:16px; border-radius:10px; background:#fff8e8; }
 .sbay-composer-actions { display:flex; gap:10px; }
 .sbay-composer-actions button:last-child { border-color:#d7dfda; background:#fff; color:#b13b35; }
+.sbay-composer-tabs { position:relative; align-items:center; }
+.sbay-saved-replies { margin-left:auto; position:relative; }
+.sbay-saved-replies__panel { position:absolute; z-index:20; top:calc(100% + 8px); right:0; width:min(420px,80vw); padding:14px; display:grid!important; gap:10px!important; border:1px solid #ccd7d1; border-radius:10px; background:#fff; box-shadow:0 14px 35px rgba(28,50,39,.16); }
+.sbay-saved-replies__panel label { display:grid; gap:6px; font-weight:700; }
+.sbay-saved-replies__panel input { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid #ccd7d1; border-radius:7px; }
+.sbay-saved-replies__panel p { margin:4px 0; color:#68766f; }
+.sbay-saved-replies__panel ul { max-height:300px; margin:0; padding:0; display:grid; overflow:auto; list-style:none; }
+.sbay-saved-replies__panel li button { width:100%; padding:10px; display:grid; gap:4px; border:0; border-radius:7px; background:#fff; color:#25352d; text-align:left; }
+.sbay-saved-replies__panel li button:hover,.sbay-saved-replies__panel li button:focus { background:#edf7f2; }
+.sbay-saved-replies__panel li span { color:#68766f; font-size:12px; font-weight:400; }
 .sbay-message-file { margin-top:12px; padding:9px 11px; border:1px solid #dfe7e2; border-radius:7px; background:#fff; }
 .sbay-message-file small { margin-left:8px; color:#68766f; }
 .sbay-conversation__sidebar { display:grid; align-content:start; gap:16px; }

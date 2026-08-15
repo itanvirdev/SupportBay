@@ -10,11 +10,52 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use SupportBay\Modules\Notifications\Data\NotificationMetricQuery;
 use SupportBay\Modules\Notifications\Repositories\NotificationLogRepository;
+use SupportBay\Common\Utilities\CsvExporter;
 
 final class NotificationMetricService {
   public function __construct(
     private readonly NotificationLogRepository $logs,
+    private readonly CsvExporter $csv,
   ) {
+  }
+
+  public function export(NotificationMetricQuery $query): string {
+    $report = $this->report($query);
+    $summary = $report['summary'];
+
+    return $this->csv->generate([
+      [
+        'name' => 'Notification delivery summary',
+        'headers' => ['Date from', 'Date to', 'Total', 'Successful', 'Failed', 'Queued', 'Cancelled', 'Retries', 'Success rate (%)', 'Failure rate (%)'],
+        'rows' => [[
+          $report['range']['from'], $report['range']['to'], $summary['total'],
+          $summary['successful'], $summary['failed'], $summary['queued'],
+          $summary['cancelled'], $summary['retries'], $summary['success_rate'],
+          $summary['failure_rate'],
+        ]],
+      ],
+      [
+        'name' => 'Daily delivery',
+        'headers' => ['Date', 'Total', 'Successful', 'Failed'],
+        'rows' => array_map(static fn(array $row): array => [
+          $row['date'], $row['total'], $row['successful'], $row['failed'],
+        ], $report['daily']),
+      ],
+      [
+        'name' => 'Delivery by event',
+        'headers' => ['Event', 'Total', 'Successful', 'Failed'],
+        'rows' => array_map(static fn(array $row): array => [
+          $row['event'], $row['total'], $row['successful'], $row['failed'],
+        ], $report['events']),
+      ],
+      [
+        'name' => 'Delivery by channel',
+        'headers' => ['Channel', 'Total', 'Successful', 'Failed'],
+        'rows' => array_map(static fn(array $row): array => [
+          $row['channel'], $row['total'], $row['successful'], $row['failed'],
+        ], $report['channels']),
+      ],
+    ]);
   }
 
   /** @return array<string, mixed> */

@@ -28,6 +28,7 @@ final class TicketService {
     private readonly TicketRepository $repository,
     private readonly VerificationService $verifications,
     private readonly EventDispatcher $events,
+    private readonly TicketSlaPolicyService $sla,
   ) {
   }
 
@@ -85,7 +86,13 @@ final class TicketService {
 
   /** @return array{items: \SupportBay\Modules\Tickets\Data\TicketQueueItem[], total: int} */
   public function searchQueue(TicketQuery $query): array {
-    return $this->repository->searchQueue($query);
+    $policy = $this->sla->get();
+    return $this->repository->searchQueue(
+      $query,
+      $policy->enabled(),
+      $policy->firstResponseMinutes(),
+      current_time('mysql'),
+    );
   }
 
   /**

@@ -27,6 +27,20 @@ It ensures:
 
 Versioning is mandatory to ensure backward compatibility.
 
+## Saved Replies
+
+Staff with `sbay_use_saved_replies` can list, search, and inspect saved replies through `GET /saved-replies` and `GET /saved-replies/{id}`. Active status is the safe list default. Managers with `sbay_manage_saved_replies` can create, update, deactivate, and delete records through the matching `POST`, `PUT`, and `DELETE` routes. All stored rich text passes through the shared reply sanitizer; the API never accepts executable HTML, embeds, tables, iframes, or custom CSS.
+
+`POST /saved-replies/{id}/use` requires `sbay_use_saved_replies` and atomically records an insertion only while the reply is active. The response exposes aggregate `usage_count`, `last_used_at`, and `last_used_by` values. This metric represents insertion into a staff composer, not guaranteed message delivery or unchanged content.
+
+`GET /saved-replies` accepts `orderby=title|usage|recent`. The service rejects all other values before the repository selects from its fixed SQL order clauses. Staff composer retrieval uses usage ordering; management interfaces may choose any supported order.
+
+Saved replies may include an optional sanitized category. `GET /saved-replies` accepts an exact `category` filter, searches category text with titles and content, and returns the categories present in the permitted status collection as response metadata. Categories are labels owned by saved replies rather than a separate shared taxonomy.
+
+Saved-reply list metadata advertises a fixed catalog of canonical `{{placeholder}}` tokens. The Settings editor uses this server-owned catalog for insertion controls. Staff ticket composers resolve only approved ticket, customer, assignment, department, and purchase context values and HTML-escape every replacement before passing the result to TinyMCE. Unknown or unavailable tokens remain visible.
+
+Saved replies may set an optional `department_id` applicability scope. Composer list requests pass the current ticket department and receive global replies plus exact matches. Ordinary staff requests without a department receive global replies only. Managers may omit the scope to inspect every record in Settings. Department scope improves relevance and is not treated as a secret-data boundary.
+
 ---
 
 # Core Principles
@@ -542,3 +556,52 @@ ranges use `Y-m-d`, must be ordered, and are limited to 367 days. The response
 contains summary counters and rates plus daily, event, and channel breakdowns.
 It intentionally excludes recipient, subject, content, payload, headers, and
 metadata.
+
+# Ticket Performance Reports
+
+Managers and administrators with `sbay_view_reports` can request ticket
+performance metrics through `GET /sbay/v1/reports/tickets`.
+
+Supported filters are `date_from`, `date_to`, `department_id`,
+`assigned_agent_id`, and `priority`. The endpoint returns aggregate ticket,
+staff-response, need-reply, resolved, closed, and average first-response values,
+plus daily, department, and agent breakdowns. Date ranges are limited to 367
+days, and trashed tickets are excluded.
+
+# Report Exports
+
+Administrators with `sbay_export_reports` can download the currently filtered
+reports through:
+
+- `GET /sbay/v1/reports/tickets/export`
+- `GET /sbay/v1/reports/notifications/export`
+
+Export routes accept the same query parameters and validation limits as their
+JSON report routes. They stream UTF-8 CSV attachments with deterministic,
+date-based filenames. CSV fields are escaped with native CSV rules, and values
+that could be interpreted as spreadsheet formulas are prefixed safely.
+
+# Ticket SLA Policy
+
+Administrators manage calendar-time first-response targets through
+`GET|PUT /sbay/v1/admin/ticket-sla-policy`. The policy stores one target in
+minutes for every ticket priority and validates values between 15 and 10080.
+
+Ticket report responses include the active policy, within-target, breached,
+and awaiting-within-target totals plus factual first-response bands. This
+version does not implement business-hour calendars, automatic escalation, or
+historical SLA policy snapshots.
+
+Ticket queue responses include server-calculated `sla_state`,
+`sla_target_minutes`, `sla_due_at`, and `sla_remaining_minutes`. The ticket
+list accepts `sla_state` and supports `orderby=sla_due`. An unanswered ticket
+is `due_soon` after 75 percent of its target has elapsed and `breached` after
+the target passes. Answered tickets are classified as `met` or `breached`
+against their actual first-response timestamp. A disabled policy returns the
+`disabled` state.
+
+First-response breaches are detected asynchronously every five minutes in
+batches of 20. A dedicated ticket-owned table atomically records each
+ticket-and-metric pair before the `TicketSlaBreached` domain event is
+dispatched. The initial listener creates a system-authored ticket timeline
+activity. Notification and escalation side effects remain separate listeners.

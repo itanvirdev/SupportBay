@@ -1,0 +1,100 @@
+import { FormEvent, useEffect, useState } from 'react';
+import { adminDownloadFile, adminGet } from './api';
+import { getAdminConfig } from './config';
+
+interface TicketMetricRow { tickets: number; responses: number; need_reply: number; closed: number; }
+interface TicketReport {
+  range: { from: string; to: string };
+  summary: TicketMetricRow & { resolved: number; average_first_response_minutes: number; sla:{enabled:boolean;targets:Record<string,number>;within_target:number;breached:number;awaiting_within_target:number}; response_bands:{under_1h:number;from_1h_to_4h:number;from_4h_to_24h:number;over_24h:number;no_response:number} };
+  daily: Array<TicketMetricRow & { date: string }>;
+  departments: Array<TicketMetricRow & { department: string }>;
+  agents: Array<TicketMetricRow & { agent: string }>;
+}
+interface ReportOptions { departments: Array<{id:number;name:string}>; agents: Array<{id:number;name:string}>; }
+
+const isoDate = (date: Date) => {
+  const offset = date.getTimezoneOffset();
+  return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 10);
+};
+const responseTime = (minutes: number) => minutes >= 60
+  ? `${Math.floor(minutes / 60)}h ${Math.round(minutes % 60)}m`
+  : `${Math.round(minutes)}m`;
+
+export function TicketReportWorkspace() {
+  const canExport = getAdminConfig().canExportReports;
+  const today = isoDate(new Date());
+  const start = new Date(); start.setDate(start.getDate() - 29);
+  const defaults = { dateFrom: isoDate(start), dateTo: today, departmentId: '', agentId: '', priority: '' };
+  const [filters, setFilters] = useState(defaults);
+  const [applied, setApplied] = useState(defaults);
+  const [options, setOptions] = useState<ReportOptions>({ departments: [], agents: [] });
+  const [report, setReport] = useState<TicketReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const query = () => {
+    const params = new URLSearchParams({ date_from: applied.dateFrom, date_to: applied.dateTo });
+    if (applied.departmentId) params.set('department_id', applied.departmentId);
+    if (applied.agentId) params.set('assigned_agent_id', applied.agentId);
+    if (applied.priority) params.set('priority', applied.priority);
+    return params;
+  };
+
+  useEffect(() => {
+    adminGet<ReportOptions>('admin/tickets/options').then((response) => setOptions(response.data))
+      .catch((reason) => setError(reason instanceof Error ? reason.message : 'Report filters could not be loaded.'));
+  }, []);
+
+  const load = async () => {
+    setLoading(true); setError(null);
+    try {
+      const response = await adminGet<TicketReport>(`reports/tickets?${query()}`);
+      setReport(response.data);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Ticket report could not be loaded.');
+    } finally { setLoading(false); }
+  };
+  useEffect(() => { void load(); }, [applied]);
+  const apply = (event: FormEvent) => { event.preventDefault(); setApplied(filters); };
+  const exportReport = async () => {
+    setExporting(true); setError(null);
+    try {
+      const file = await adminDownloadFile(`reports/tickets/export?${query()}`);
+      const url = URL.createObjectURL(file.blob); const link = document.createElement('a');
+      link.href = url; link.download = file.filename || 'supportbay-ticket-report.csv'; link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Ticket report could not be exported.');
+    } finally { setExporting(false); }
+  };
+  const maximum = Math.max(1, ...(report?.daily.map((row) => Math.max(row.tickets, row.responses)) ?? [1]));
+
+  return <section className="sbay-notification-report">
+    <header><div><small>Support performance</small><h2>Support Tickets Report</h2><p>Track ticket activity, response performance, outstanding replies, and team workload.</p></div><div>{canExport?<button type="button" onClick={() => void exportReport()} disabled={exporting}>{exporting?'Exporting…':'Export CSV'}</button>:null}<button type="button" onClick={() => void load()} disabled={loading}>Refresh</button></div></header>
+    <form className="sbay-report-filters sbay-ticket-report-filters" onSubmit={apply}>
+      <label><span>From</span><input type="date" value={filters.dateFrom} max={filters.dateTo} onChange={(event) => setFilters({...filters,dateFrom:event.target.value})}/></label>
+      <label><span>To</span><input type="date" value={filters.dateTo} min={filters.dateFrom} max={today} onChange={(event) => setFilters({...filters,dateTo:event.target.value})}/></label>
+      <label><span>Department</span><select value={filters.departmentId} onChange={(event) => setFilters({...filters,departmentId:event.target.value})}><option value="">All departments</option>{options.departments.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+      <label><span>Agent</span><select value={filters.agentId} onChange={(event) => setFilters({...filters,agentId:event.target.value})}><option value="">All agents</option>{options.agents.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+      <label><span>Priority</span><select value={filters.priority} onChange={(event) => setFilters({...filters,priority:event.target.value})}><option value="">All priorities</option><option value="normal">Normal</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
+      <button type="submit" disabled={loading}>Apply report</button>
+    </form>
+    {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
+    {loading && !report ? <p>Loading ticket performance…</p> : report ? <>
+      <div className="sbay-report-summary sbay-ticket-report-summary">
+        <article><span>Tickets</span><strong>{report.summary.tickets}</strong></article>
+        <article><span>Responses</span><strong>{report.summary.responses}</strong></article>
+        <article className="is-failed"><span>Need reply</span><strong>{report.summary.need_reply}</strong></article>
+        <article className="is-success"><span>Resolved / closed</span><strong>{report.summary.resolved + report.summary.closed}</strong></article>
+        <article><span>Avg. first response</span><strong>{responseTime(report.summary.average_first_response_minutes)}</strong></article>
+      </div>
+      <section className="sbay-sla-report"><header><div><h3>First-response SLA</h3><p>{report.summary.sla.enabled?'Calendar-time targets are active.':'SLA reporting is currently disabled in Settings.'}</p></div><span>Priority targets: {Object.entries(report.summary.sla.targets).map(([priority,minutes])=>`${priority} ${responseTime(minutes)}`).join(' · ')}</span></header><div><article className="is-success"><span>Within target</span><strong>{report.summary.sla.within_target}</strong></article><article className="is-failed"><span>Breached</span><strong>{report.summary.sla.breached}</strong></article><article><span>Awaiting within target</span><strong>{report.summary.sla.awaiting_within_target}</strong></article></div><footer>{Object.entries(report.summary.response_bands).map(([band,total])=><span key={band}><strong>{total}</strong>{band.replace(/_/g,' ').replace('from ','').replace('over ','24h+ ').replace('under ','<')}</span>)}</footer></section>
+      <section className="sbay-report-chart"><header><h3>Daily support activity</h3><span>{report.range.from} — {report.range.to}</span></header><div>{report.daily.map((row)=><article key={row.date} title={`${row.date}: ${row.tickets} tickets, ${row.responses} responses`}><div><i className="is-ticket" style={{height:`${(row.tickets/maximum)*100}%`}}/><i className="is-response" style={{height:`${(row.responses/maximum)*100}%`}}/></div><small>{row.date.slice(5)}</small></article>)}</div><footer><span><i className="is-ticket"/>Tickets</span><span><i className="is-response"/>Responses</span></footer></section>
+      <div className="sbay-report-breakdowns">
+        <section><h3>By department</h3><div className="is-header"><span>Department</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.departments.length?report.departments.map((row)=><div key={row.department}><strong>{row.department}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No department data in this range.</p>}</section>
+        <section><h3>By agent</h3><div className="is-header"><span>Agent</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.agents.length?report.agents.map((row)=><div key={row.agent}><strong>{row.agent}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No agent data in this range.</p>}</section>
+      </div>
+    </> : null}
+  </section>;
+}

@@ -19,6 +19,10 @@ export async function adminPut<T>(path: string, body: object): Promise<ApiRespon
   return adminRequest<T>(path, { method: 'PUT', body: JSON.stringify(body) });
 }
 
+export async function adminDelete<T>(path: string): Promise<ApiResponse<T>> {
+  return adminRequest<T>(path, { method: 'DELETE' });
+}
+
 export async function adminUpload<T>(path: string, file: File): Promise<ApiResponse<T>> {
   const body = new FormData();
   body.append('file', file);
@@ -26,13 +30,23 @@ export async function adminUpload<T>(path: string, file: File): Promise<ApiRespo
 }
 
 export async function adminDownload(path: string): Promise<Blob> {
+  return (await adminDownloadFile(path)).blob;
+}
+
+export async function adminDownloadFile(path: string): Promise<{blob: Blob; filename: string | null}> {
   const config = getAdminConfig();
   const response = await fetch(`${config.restUrl}${path}`, {
     credentials: 'same-origin',
     headers: { Accept: 'application/octet-stream', 'X-WP-Nonce': config.restNonce },
   });
-  if (!response.ok) throw new Error('Attachment could not be downloaded.');
-  return response.blob();
+  if (!response.ok) throw new Error('File could not be downloaded.');
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  const plain = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+  return {
+    blob: await response.blob(),
+    filename: encoded ? decodeURIComponent(encoded) : plain || null,
+  };
 }
 
 async function adminRequest<T>(path: string, options: RequestInit): Promise<ApiResponse<T>> {

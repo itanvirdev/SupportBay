@@ -83,6 +83,14 @@ final class DefaultNotificationTemplates {
         '<p>Hello {{agent_name}},</p><p>Support ticket <strong>#{{track_id}}</strong> has been reassigned to you.</p><p><strong>Subject:</strong> {{ticket_subject}}<br><strong>Priority:</strong> {{ticket_priority}}</p><p><a href="{{ticket_url}}">View ticket</a></p>',
         "Hello {{agent_name}},\n\nSupport ticket #{{track_id}} has been reassigned to you.\nSubject: {{ticket_subject}}\nPriority: {{ticket_priority}}\nView: {{ticket_url}}",
       ),
+      'ticket_sla_breached:agent' => $this->template(
+        'Agent — First-response SLA Breached',
+        'ticket_sla_breached',
+        NotificationRecipientType::AGENT,
+        'First-response SLA breached for ticket #{{track_id}}',
+        '<p>Hello {{agent_name}},</p><p>Ticket <strong>#{{track_id}}</strong> has breached its first-response SLA.</p><p><strong>Subject:</strong> {{ticket_subject}}<br><strong>Priority:</strong> {{ticket_priority}}<br><strong>Target:</strong> {{sla_target_minutes}} minutes<br><strong>Overdue:</strong> {{sla_overdue_minutes}} minutes</p><p><a href="{{ticket_url}}">Respond to ticket</a></p>',
+        "Hello {{agent_name}},\n\nTicket #{{track_id}} has breached its first-response SLA.\nSubject: {{ticket_subject}}\nPriority: {{ticket_priority}}\nTarget: {{sla_target_minutes}} minutes\nOverdue: {{sla_overdue_minutes}} minutes\nRespond: {{ticket_url}}",
+      ),
     ];
   }
 

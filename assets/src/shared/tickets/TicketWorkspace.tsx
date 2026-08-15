@@ -14,6 +14,10 @@ export interface WorkspaceTicket {
   department_name?: string | null;
   reply_count?: number;
   needs_reply?: boolean;
+  sla_state?: 'disabled'|'met'|'on_track'|'due_soon'|'breached';
+  sla_target_minutes?: number;
+  sla_due_at?: string | null;
+  sla_remaining_minutes?: number | null;
   updated_at: string | null;
   created_at: string;
 }
@@ -36,6 +40,7 @@ export interface TicketQueryParams {
   agentId: string;
   departmentId: string;
   needReply: boolean;
+  slaState: string;
   orderby: string;
   order: string;
 }
@@ -63,6 +68,7 @@ export function ticketQueryString(query: TicketQueryParams): string {
     agent_id: query.agentId,
     department_id: query.departmentId,
     need_reply: String(query.needReply),
+    sla_state: query.slaState,
     orderby: query.orderby,
     order: query.order,
   }).toString();
@@ -70,7 +76,15 @@ export function ticketQueryString(query: TicketQueryParams): string {
 
 const defaults: TicketQueryParams = {
   page: 1, perPage: 20, search: '', status: '', state: 'active', priority: '',
-  assignment: '', agentId:'', departmentId:'', needReply:false, orderby: 'updated_at', order: 'desc',
+  assignment: '', agentId:'', departmentId:'', needReply:false, slaState:'', orderby: 'updated_at', order: 'desc',
+};
+
+const slaLabel = (ticket: WorkspaceTicket) => {
+  if (ticket.sla_state === 'breached') return 'SLA breached';
+  if (ticket.sla_state === 'due_soon') return `SLA due soon`;
+  if (ticket.sla_state === 'on_track') return 'SLA on track';
+  if (ticket.sla_state === 'met') return 'SLA met';
+  return null;
 };
 
 export function TicketWorkspace({ mode, load, openTicket, createTicket, options, bulk, openCustomers, openVerifications }: TicketWorkspaceProps) {
@@ -144,9 +158,10 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
         <div className="sbay-ticket-filter-row">
           {mode==='staff'?<select aria-label="Department" value={query.departmentId} onChange={event=>update({departmentId:event.target.value})}><option value="">All Departments</option>{options?.departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
           {mode==='staff'?<select aria-label="Agent" value={query.agentId} onChange={event=>update({agentId:event.target.value,assignment:''})}><option value="">All Agents</option>{options?.agents.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
+          {mode==='staff'?<select aria-label="SLA state" value={query.slaState} onChange={event=>update({slaState:event.target.value})}><option value="">All SLA States</option><option value="breached">SLA Breached</option><option value="due_soon">SLA Due Soon</option><option value="on_track">SLA On Track</option><option value="met">SLA Met</option></select>:null}
           <select aria-label="Priority" value={query.priority} onChange={(event) => update({ priority: event.target.value })}><option value="">All Priorities</option><option value="normal">Normal</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>
-          <select aria-label="Sort tickets" value={`${query.orderby}:${query.order}`} onChange={(event) => { const [orderby, order] = event.target.value.split(':'); update({ orderby, order }); }}><option value="updated_at:desc">Updated (Newest First)</option><option value="need_reply:desc">Need Reply First</option><option value="updated_at:asc">Updated (Oldest First)</option><option value="created_at:desc">Created (Newest First)</option><option value="priority:desc">Priority (Highest First)</option></select>
-          <button disabled={query.search === '' && query.priority === '' && query.status === '' && query.state === 'active' && query.assignment === '' && query.agentId === '' && query.departmentId === '' && !query.needReply} onClick={() => { setDraftSearch(''); setQuery(defaults); }}>Reset Filters</button>
+          <select aria-label="Sort tickets" value={`${query.orderby}:${query.order}`} onChange={(event) => { const [orderby, order] = event.target.value.split(':'); update({ orderby, order }); }}><option value="updated_at:desc">Updated (Newest First)</option><option value="sla_due:asc">SLA Due First</option><option value="need_reply:desc">Need Reply First</option><option value="updated_at:asc">Updated (Oldest First)</option><option value="created_at:desc">Created (Newest First)</option><option value="priority:desc">Priority (Highest First)</option></select>
+          <button disabled={query.search === '' && query.priority === '' && query.status === '' && query.state === 'active' && query.assignment === '' && query.agentId === '' && query.departmentId === '' && query.slaState === '' && !query.needReply} onClick={() => { setDraftSearch(''); setQuery(defaults); }}>Reset Filters</button>
         </div>
       </div>
 
@@ -159,7 +174,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
         {!result ? <p className="sbay-ticket-empty">Loading tickets…</p> : result.items.length === 0 ? <p className="sbay-ticket-empty">No tickets match these filters.</p> : result.items.map((ticket) => (
           <div className="sbay-ticket-row" key={ticket.id}>
             {mode === 'staff' ? <input aria-label={`Select ${ticket.subject}`} checked={selected.includes(ticket.id)} onChange={() => setSelected((current) => current.includes(ticket.id) ? current.filter((id) => id !== ticket.id) : [...current, ticket.id])} type="checkbox" /> : <span className="sbay-ticket-avatar">{ticket.subject.charAt(0)}</span>}
-            <button className="sbay-ticket-title" onClick={() => openTicket(ticket)}><strong>{ticket.subject} {ticket.customer_name?<small>by {ticket.customer_name}</small>:null}</strong><span><i>{ticket.status}</i> #{ticket.track_id} · {ticket.department_name||'No department'} · {ticket.priority}</span></button>
+            <button className="sbay-ticket-title" onClick={() => openTicket(ticket)}><strong>{ticket.subject} {ticket.customer_name?<small>by {ticket.customer_name}</small>:null}</strong><span><i>{ticket.status}</i> #{ticket.track_id} · {ticket.department_name||'No department'} · {ticket.priority}{mode==='staff'&&slaLabel(ticket)?<em className={`sbay-sla-badge is-${ticket.sla_state}`} title={ticket.sla_due_at?`Due ${new Date(ticket.sla_due_at.replace(' ','T')).toLocaleString()}`:undefined}>{slaLabel(ticket)}</em>:null}</span></button>
             {mode==='staff'?<span>{ticket.reply_count??0}{ticket.needs_reply?<i className="sbay-need-reply">Need Reply</i>:null}</span>:<span className={`sbay-ticket-priority sbay-ticket-priority--${ticket.priority}`}>{ticket.priority}</span>}
             {mode === 'staff' ? <span>{ticket.agent_name||'Unassigned'}</span> : null}
             <span>{new Date(ticket.updated_at || ticket.created_at).toLocaleDateString()}</span>

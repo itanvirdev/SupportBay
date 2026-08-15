@@ -10,6 +10,7 @@ use SupportBay\Core\Integrations\IntegrationDiscovery;
 use SupportBay\Core\Integrations\IntegrationManager;
 use SupportBay\Core\Integrations\IntegrationRegistry;
 use SupportBay\Core\Authorization\CapabilityManager;
+use SupportBay\Core\Database\DatabaseInstaller;
 
 final class Application {
   /**
@@ -46,6 +47,12 @@ final class Application {
     }
 
     $this->registerCoreBindings();
+
+    add_action(
+      'init',
+      [DatabaseInstaller::class, 'maybeInstall'],
+      0,
+    );
 
     add_action(
       'init',

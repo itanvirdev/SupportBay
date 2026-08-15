@@ -99,6 +99,8 @@ final class AdminPage {
         'userName'  => sanitize_text_field(wp_get_current_user()->display_name),
         'canManageCustomers' => current_user_can(CapabilityManager::MANAGE_CUSTOMERS),
         'canViewVerifications' => current_user_can(CapabilityManager::VIEW_VERIFICATIONS),
+        'canExportReports' => current_user_can(CapabilityManager::EXPORT_REPORTS),
+        'canManageSavedReplies' => current_user_can(CapabilityManager::MANAGE_SAVED_REPLIES),
         'section'   => $section,
       ]) . ';',
       'before',

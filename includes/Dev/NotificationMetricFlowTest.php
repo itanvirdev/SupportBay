@@ -70,6 +70,18 @@ final class NotificationMetricFlowTest extends FlowTest {
         && $report['channels'][0]['channel'] === 'email',
         'Daily, event, and channel breakdowns use the same report filters.',
       );
+      $csv = $metrics->export(new NotificationMetricQuery(
+        dateFrom: $today,
+        dateTo: $today,
+        channel: 'email',
+        event: $event,
+      ));
+      Assert::true(
+        str_starts_with($csv, "\xEF\xBB\xBF")
+        && str_contains($csv, 'Notification delivery summary')
+        && str_contains($csv, 'Delivery by event'),
+        'Notification report exports filtered aggregate sections as UTF-8 CSV.',
+      );
 
       try {
         $metrics->report(new NotificationMetricQuery('2026-12-31', '2026-01-01'));
@@ -82,13 +94,16 @@ final class NotificationMetricFlowTest extends FlowTest {
         do_action('rest_api_init', rest_get_server());
       }
       Assert::true(
-        isset(rest_get_server()->get_routes()['/sbay/v1/reports/notifications']),
-        'Notification report route is registered.',
+        isset(rest_get_server()->get_routes()['/sbay/v1/reports/notifications'])
+        && isset(rest_get_server()->get_routes()['/sbay/v1/reports/notifications/export']),
+        'Notification report and export routes are registered.',
       );
       wp_set_current_user(0);
       Assert::true($controller->permissions() instanceof WP_Error, 'Anonymous report access is rejected.');
+      Assert::true($controller->exportPermissions() instanceof WP_Error, 'Anonymous notification export is rejected.');
       wp_set_current_user(1);
       Assert::true($controller->permissions() === true, 'Authorized administrators can view reports.');
+      Assert::true($controller->exportPermissions() === true, 'Administrators can export notification reports.');
 
       $request = new WP_REST_Request('GET', '/sbay/v1/reports/notifications');
       $request->set_query_params([
@@ -104,6 +119,14 @@ final class NotificationMetricFlowTest extends FlowTest {
         && ($data['data']['summary']['total'] ?? 0) === 4
         && ! str_contains(wp_json_encode($data), $recipient),
         'Protected report API returns aggregate data without recipients.',
+      );
+      $exportRequest = new WP_REST_Request('GET', '/sbay/v1/reports/notifications/export');
+      $exportRequest->set_query_params(['date_from' => $today, 'date_to' => $today, 'event' => $event]);
+      $exportData = rest_do_request($exportRequest)->get_data();
+      Assert::true(
+        str_ends_with((string) ($exportData['data']['filename'] ?? ''), '.csv')
+        && ! str_contains((string) ($exportData['data']['content'] ?? ''), $recipient),
+        'Notification CSV export remains aggregate-only.',
       );
     } finally {
       $logs->deleteByRecipient($recipient);

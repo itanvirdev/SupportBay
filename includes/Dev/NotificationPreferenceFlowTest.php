@@ -44,6 +44,10 @@ final class NotificationPreferenceFlowTest extends FlowTest {
       && $preferences->allows(
         'ticket_reassigned',
         NotificationRecipientType::AGENT,
+      )
+      && $preferences->allows(
+        'ticket_sla_breached',
+        NotificationRecipientType::AGENT,
       ),
       'Default preferences allow every built-in notification variant.'
     );

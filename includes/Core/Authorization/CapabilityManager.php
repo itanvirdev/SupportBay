@@ -15,9 +15,12 @@ final class CapabilityManager {
   public const EDIT_DEPARTMENT = 'sbay_edit_department';
   public const MANAGE_PROVIDERS = 'sbay_manage_providers';
   public const VIEW_REPORTS = 'sbay_view_reports';
+  public const EXPORT_REPORTS = 'sbay_export_reports';
   public const MANAGE_SETTINGS = 'sbay_manage_settings';
   public const VIEW_VERIFICATIONS = 'sbay_view_purchase_verification';
   public const REFRESH_VERIFICATION = 'sbay_refresh_verification';
+  public const USE_SAVED_REPLIES = 'sbay_use_saved_replies';
+  public const MANAGE_SAVED_REPLIES = 'sbay_manage_saved_replies';
 
   /** Register protected SupportBay roles and capabilities. */
   public static function register(): void {
@@ -32,6 +35,7 @@ final class CapabilityManager {
       'sbay_upload_attachment', self::CHANGE_TICKET_STATUS,
       'sbay_change_ticket_priority', 'sbay_move_ticket_department',
       'sbay_take_ticket_ownership', self::VIEW_VERIFICATIONS,
+      self::USE_SAVED_REPLIES,
     ];
     $manager = array_merge($agent, [
       'sbay_assign_ticket', 'sbay_reassign_ticket', 'sbay_escalate_ticket',
@@ -41,6 +45,7 @@ final class CapabilityManager {
       self::EDIT_DEPARTMENT, 'sbay_disable_department',
       self::VIEW_REPORTS, self::REFRESH_VERIFICATION,
       'sbay_manage_agents', self::MANAGE_CUSTOMERS,
+      self::MANAGE_SAVED_REPLIES,
     ]);
     $administrator = array_values(array_unique(array_merge(
       $customer,
@@ -48,7 +53,7 @@ final class CapabilityManager {
       [
         self::MANAGE_PROVIDERS, self::MANAGE_SETTINGS,
         'sbay_manage_roles', 'sbay_manage_capabilities',
-        'sbay_export_reports', 'sbay_download_attachment',
+        self::EXPORT_REPORTS, 'sbay_download_attachment',
         'sbay_delete_attachment', 'sbay_close_ticket', 'sbay_reopen_ticket',
       ],
     )));

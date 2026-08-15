@@ -6,6 +6,8 @@ export interface AdminConfig {
   userName: string;
   canManageCustomers: boolean;
   canViewVerifications: boolean;
+  canExportReports: boolean;
+  canManageSavedReplies: boolean;
   section: 'tickets' | 'reports' | 'settings';
 }
 

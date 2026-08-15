@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Database;
 
 use SupportBay\Modules\Tickets\Database\TicketSchema;
+use SupportBay\Modules\Tickets\Database\TicketSlaBreachSchema;
 use SupportBay\Modules\Messages\Database\MessageSchema;
 use SupportBay\Modules\Departments\Database\DepartmentSchema;
 use SupportBay\Modules\Activities\Database\ActivitySchema;
@@ -14,6 +15,7 @@ use SupportBay\Modules\Auth\Database\AuthTokenSchema;
 use SupportBay\Modules\Providers\Database\ProviderSchema;
 use SupportBay\Modules\Verifications\Database\PurchaseVerificationSchema;
 use SupportBay\Modules\Notifications\Database\NotificationLogSchema;
+use SupportBay\Modules\SavedReplies\Database\SavedReplySchema;
 
 final class MigrationRegistry {
   /**
@@ -24,6 +26,7 @@ final class MigrationRegistry {
   public static function tables(): array {
     return [
       TicketSchema::class,
+      TicketSlaBreachSchema::class,
       MessageSchema::class,
       DepartmentSchema::class,
       ActivitySchema::class,
@@ -33,6 +36,7 @@ final class MigrationRegistry {
       ProviderSchema::class,
       PurchaseVerificationSchema::class,
       NotificationLogSchema::class,
+      SavedReplySchema::class,
     ];
   }
 }

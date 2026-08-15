@@ -168,6 +168,11 @@ final class ActivityRepository extends Repository {
     return array_map(fn(array $row): Activity => $this->hydrate($row), $rows);
   }
 
+  /** Deterministic cleanup helper used by flow tests. */
+  public function deleteByTicket(int $ticketId): int {
+    return (int) $this->db->delete($this->table(), ['ticket_id'=>$ticketId], ['%d']);
+  }
+
   /**
    * Hydrate row → Activity Entity
    */

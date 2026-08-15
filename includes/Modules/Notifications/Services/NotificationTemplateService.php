@@ -92,6 +92,9 @@ final class NotificationTemplateService {
       'product_name' => 'SupportBay Demo Product',
       'license_type' => 'Regular License',
       'support_until' => 'December 31, 2026',
+      'sla_target_minutes' => 60,
+      'sla_breached_at' => '2026-08-15 10:30:00',
+      'sla_overdue_minutes' => 15,
     ];
   }
 

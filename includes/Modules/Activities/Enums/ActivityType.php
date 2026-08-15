@@ -24,6 +24,7 @@ enum ActivityType: string {
   case TICKET_CLOSED       = 'ticket_closed';
   case TICKET_MERGED       = 'ticket_merged';
   case TICKET_SPLIT        = 'ticket_split';
+  case TICKET_SLA_BREACHED = 'ticket_sla_breached';
 
   case MESSAGE_CREATED     = 'message_created';
   case MESSAGE_EDITED      = 'message_edited';
@@ -62,6 +63,7 @@ enum ActivityType: string {
       self::TICKET_CLOSED       => 'Ticket Closed',
       self::TICKET_MERGED       => 'Ticket Merged',
       self::TICKET_SPLIT        => 'Ticket Split',
+      self::TICKET_SLA_BREACHED => 'Ticket SLA Breached',
 
       self::MESSAGE_CREATED     => 'Message Created',
       self::MESSAGE_EDITED      => 'Message Edited',

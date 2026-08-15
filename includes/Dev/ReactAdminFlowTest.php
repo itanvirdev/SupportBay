@@ -47,7 +47,9 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains(implode('', $bootstrap), 'adminUrl')
       && str_contains(implode('', $bootstrap), 'tickets')
       && str_contains(implode('', $bootstrap), 'reports')
-      && str_contains(implode('', $bootstrap), 'settings'),
+      && str_contains(implode('', $bootstrap), 'settings')
+      && str_contains(implode('', $bootstrap), 'canExportReports')
+      && str_contains(implode('', $bootstrap), 'canManageSavedReplies'),
       'Each administrator page receives authenticated API configuration and its active section.'
     );
 
@@ -91,13 +93,51 @@ final class ReactAdminFlowTest extends FlowTest {
     $reportWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/NotificationReportWorkspace.tsx'
     );
+    $ticketReportWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/TicketReportWorkspace.tsx'
+    );
+    $reportsWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/ReportsWorkspace.tsx'
+    );
+    $slaWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/TicketSlaWorkspace.tsx'
+    );
     $ticketConversation = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketConversation.tsx'
+    );
+    $savedReplyWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/SavedReplyWorkspace.tsx'
+    );
+    $savedReplyPicker = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/shared/tickets/SavedReplyPicker.tsx'
+    );
+    $savedReplyRenderer = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/shared/tickets/savedReplyRenderer.ts'
+    );
+
+    Assert::true(
+      is_string($reportsWorkspace)
+      && str_contains($reportsWorkspace, 'Ticket Performance')
+      && str_contains($reportsWorkspace, 'Notification Delivery')
+      && is_string($ticketReportWorkspace)
+      && str_contains($ticketReportWorkspace, 'reports/tickets?${query}')
+      && str_contains($ticketReportWorkspace, 'reports/tickets/export?${query()}')
+      && str_contains($ticketReportWorkspace, 'admin/tickets/options')
+      && str_contains($ticketReportWorkspace, 'Daily support activity')
+      && str_contains($ticketReportWorkspace, 'By department')
+      && str_contains($ticketReportWorkspace, 'By agent')
+      && str_contains($ticketReportWorkspace, 'First-response SLA')
+      && str_contains($ticketReportWorkspace, 'response_bands')
+      && is_string($slaWorkspace)
+      && str_contains($slaWorkspace, 'admin/ticket-sla-policy')
+      && str_contains($slaWorkspace, 'Save SLA policy'),
+      'Reports combines ticket performance and notification delivery workspaces.'
     );
 
     Assert::true(
       is_string($reportWorkspace)
       && str_contains($reportWorkspace, 'reports/notifications?${query}')
+      && str_contains($reportWorkspace, 'reports/notifications/export?${query()}')
       && str_contains($reportWorkspace, 'Daily delivery trend')
       && str_contains($reportWorkspace, 'By event')
       && str_contains($reportWorkspace, 'By channel')
@@ -109,19 +149,69 @@ final class ReactAdminFlowTest extends FlowTest {
       is_string($ticketConversation)
       && str_contains($ticketConversation, "transition('resolve')")
       && str_contains($ticketConversation, 'Resolve ticket')
-      && str_contains($ticketConversation, "['resolved','closed'].includes(ticket.status)"),
-      'Agent ticket detail supports resolution and blocks final-state composers.'
+      && str_contains($ticketConversation, "['resolved','closed'].includes(ticket.status)")
+      && str_contains($ticketConversation, '<SavedReplyPicker')
+      && str_contains($ticketConversation, 'loadSavedReplies')
+      && is_string($savedReplyPicker)
+      && str_contains($savedReplyPicker, 'Search saved replies')
+      && str_contains($savedReplyPicker, 'All Categories')
+      && str_contains($savedReplyPicker, 'Replace the current draft')
+      && str_contains($savedReplyPicker, 'await track(reply.id)')
+      && str_contains($savedReplyPicker, 'select(reply)')
+      && is_string($savedReplyRenderer)
+      && str_contains($savedReplyRenderer, 'escapeHtml')
+      && str_contains($savedReplyRenderer, 'hasOwnProperty.call')
+      && str_contains($ticketConversation, 'renderSavedReply(saved.content,savedReplyContext)')
+      && str_contains($ticketConversation, 'loadSavedReplies(ticket.department_id)'),
+      'Agent ticket detail supports resolution, final-state enforcement, and guarded saved-reply insertion.'
+    );
+
+    $ticketWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketWorkspace.tsx'
+    );
+    Assert::true(
+      is_string($ticketWorkspace)
+      && str_contains($ticketWorkspace, 'sla_state: query.slaState')
+      && str_contains($ticketWorkspace, 'SLA Due First')
+      && str_contains($ticketWorkspace, 'SLA Breached')
+      && str_contains($ticketWorkspace, 'mode===\'staff\'&&slaLabel(ticket)'),
+      'Shared ticket workspace renders server-owned SLA controls only for staff.',
     );
 
     Assert::true(
       is_string($settingsWorkspace)
       && str_contains($settingsWorkspace, 'Email Notifications')
       && str_contains($settingsWorkspace, 'Delivery Logs')
+      && str_contains($settingsWorkspace, 'Saved Replies')
+      && str_contains($settingsWorkspace, 'Ticket SLA')
       && str_contains($settingsWorkspace, 'Integrations')
       && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace />')
       && str_contains($settingsWorkspace, '<NotificationLogWorkspace />')
+      && str_contains($settingsWorkspace, '<SavedReplyWorkspace />')
       && str_contains($settingsWorkspace, '<ProviderWorkspace />'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($savedReplyWorkspace)
+      && str_contains($savedReplyWorkspace, "saved-replies?status=active")
+      && str_contains($savedReplyWorkspace, "saved-replies?status=inactive")
+      && str_contains($savedReplyWorkspace, '<RichTextEditor')
+      && str_contains($savedReplyWorkspace, 'Create Saved Reply')
+      && str_contains($savedReplyWorkspace, 'Save Changes')
+      && str_contains($savedReplyWorkspace, 'adminDelete')
+      && str_contains($savedReplyWorkspace, 'This cannot be undone')
+      && str_contains($savedReplyWorkspace, 'composer insertions')
+      && str_contains($savedReplyWorkspace, 'last_used_at')
+      && str_contains($savedReplyWorkspace, 'Most Used')
+      && str_contains($savedReplyWorkspace, 'Recently Used')
+      && str_contains($savedReplyWorkspace, 'All Categories')
+      && str_contains($savedReplyWorkspace, 'For example: Billing')
+      && str_contains($savedReplyWorkspace, 'active.meta.placeholders')
+      && str_contains($savedReplyWorkspace, 'Saved reply placeholders')
+      && str_contains($savedReplyWorkspace, 'Global — all departments')
+      && str_contains($savedReplyWorkspace, "adminGet<Department[]>('departments?status=active')"),
+      'Settings provides capability-gated saved-reply lifecycle management with rich-text editing and confirmed deletion.'
     );
 
     Assert::true(
@@ -174,7 +264,12 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($adminBundle, 'Log retention')
       && str_contains($adminBundle, 'Run cleanup now')
       && str_contains($adminBundle, 'Delivery Report')
-      && str_contains($adminBundle, 'Daily delivery trend'),
+      && str_contains($adminBundle, 'Daily delivery trend')
+      && str_contains($adminBundle, 'Support Tickets Report')
+      && str_contains($adminBundle, 'Daily support activity')
+      && str_contains($adminBundle, 'Export CSV')
+      && str_contains($adminBundle, 'First-response SLA')
+      && str_contains($adminBundle, 'Save SLA policy'),
       'Compiled administrator bundle contains the notification template workspace.'
     );
 

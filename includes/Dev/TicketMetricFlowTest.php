@@ -1,0 +1,160 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SupportBay\Dev;
+
+use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Common\Enums\SourceType;
+use SupportBay\Core\Testing\Assert;
+use SupportBay\Core\Testing\FlowTest;
+use SupportBay\Modules\Messages\Enums\MessageType;
+use SupportBay\Modules\Messages\Repositories\MessageRepository;
+use SupportBay\Modules\Tickets\Data\TicketMetricQuery;
+use SupportBay\Modules\Tickets\Enums\TicketPriority;
+use SupportBay\Modules\Tickets\Enums\TicketState;
+use SupportBay\Modules\Tickets\Enums\TicketStatus;
+use SupportBay\Modules\Tickets\Http\Controllers\TicketMetricController;
+use SupportBay\Modules\Tickets\Repositories\TicketRepository;
+use SupportBay\Modules\Tickets\Services\TicketMetricService;
+use WP_Error;
+use WP_REST_Request;
+use SupportBay\Common\Utilities\CsvExporter;
+use SupportBay\Modules\Tickets\Services\TicketSlaPolicyService;
+
+final class TicketMetricFlowTest extends FlowTest {
+  protected static function title(): string { return 'Ticket Metric Flow Test'; }
+
+  protected static function execute(...$services): void {
+    /** @var TicketMetricService $metrics */
+    /** @var TicketMetricController $controller */
+    /** @var TicketRepository $tickets */
+    /** @var MessageRepository $messages */
+    /** @var CsvExporter $csvExporter */
+    /** @var TicketSlaPolicyService $sla */
+    [$metrics, $controller, $tickets, $messages, $csvExporter, $sla] = $services;
+    $today = current_time('Y-m-d');
+    $now = $today . ' 00:00:00';
+    $ticketIds = [];
+    $messageIds = [];
+    $agentId = 900000000 + wp_rand(1, 9999999);
+    $existingSla = get_option('sbay_ticket_sla_policy', null);
+
+    try {
+      $sla->update(['enabled' => true, 'first_response_minutes' => [
+        'normal' => 15, 'medium' => 30, 'high' => 45, 'urgent' => 60,
+      ]]);
+      $escaped = $csvExporter->generate([[
+        'name' => 'Formula safety',
+        'headers' => ['Value'],
+        'rows' => [['=HYPERLINK("https://example.test")']],
+      ]]);
+      Assert::true(
+        str_contains($escaped, "'=HYPERLINK"),
+        'CSV export neutralizes spreadsheet formula prefixes.',
+      );
+
+      foreach ([TicketStatus::ANSWERED, TicketStatus::OPEN, TicketStatus::CLOSED] as $index => $status) {
+        $ticketIds[] = $tickets->create([
+          'track_id' => strtoupper(substr(wp_generate_password(9, false, false), 0, 9)),
+          'customer_id' => 1,
+          'department_id' => 1,
+          'assigned_agent_id' => $agentId,
+          'subject' => 'Metric flow ' . $index,
+          'created_by_type' => AuthorType::CUSTOMER->value,
+          'status' => $status->value,
+          'state' => TicketState::ACTIVE->value,
+          'priority' => TicketPriority::NORMAL->value,
+          'source' => SourceType::WEB->value,
+          'first_response_at' => $index === 0 ? $today . ' 00:15:00' : null,
+          'closed_at' => $status === TicketStatus::CLOSED ? $now : null,
+          'created_at' => $now,
+          'updated_at' => $now,
+        ]);
+      }
+
+      foreach ([[0, AuthorType::AGENT], [1, AuthorType::CUSTOMER]] as [$ticketIndex, $author]) {
+        $message = $messages->create([
+          'ticket_id' => $ticketIds[$ticketIndex],
+          'author_id' => 1,
+          'author_type' => $author->value,
+          'type' => MessageType::REPLY->value,
+          'content' => 'Metric fixture',
+          'created_at' => $now,
+        ]);
+        $messageIds[] = $message;
+      }
+
+      $report = $metrics->report(new TicketMetricQuery(
+        dateFrom: $today,
+        dateTo: $today,
+        departmentId: 1,
+        assignedAgentId: $agentId,
+        priority: TicketPriority::NORMAL->value,
+      ));
+      Assert::true(
+        $report['summary']['tickets'] === 3
+        && $report['summary']['responses'] === 1
+        && $report['summary']['need_reply'] === 1
+        && $report['summary']['closed'] === 1
+        && $report['summary']['average_first_response_minutes'] === 15.0,
+        'Ticket report derives volume, response, queue, closure, and response-time metrics.',
+      );
+      Assert::true(
+        $report['summary']['sla']['within_target'] === 1
+        && $report['summary']['sla']['breached'] === 2
+        && $report['summary']['response_bands']['under_1h'] === 1
+        && $report['summary']['response_bands']['no_response'] === 2,
+        'SLA compliance and response-time bands use the configured priority target.',
+      );
+      Assert::true(
+        count($report['daily']) === 1
+        && $report['daily'][0]['tickets'] === 3
+        && $report['departments'][0]['tickets'] === 3,
+        'Ticket report applies filters consistently to daily and department breakdowns.',
+      );
+      $csv = $metrics->export(new TicketMetricQuery(
+        dateFrom: $today,
+        dateTo: $today,
+        assignedAgentId: $agentId,
+      ));
+      Assert::true(
+        str_starts_with($csv, "\xEF\xBB\xBF")
+        && str_contains($csv, 'Ticket performance summary')
+        && str_contains($csv, 'Daily activity')
+        && str_contains($csv, 'Agent workload'),
+        'Ticket report exports the filtered summary and breakdowns as UTF-8 CSV.',
+      );
+
+      if (did_action('rest_api_init') === 0) { do_action('rest_api_init', rest_get_server()); }
+      Assert::true(
+        isset(rest_get_server()->get_routes()['/sbay/v1/reports/tickets'])
+        && isset(rest_get_server()->get_routes()['/sbay/v1/reports/tickets/export']),
+        'Ticket report and export routes are registered.',
+      );
+      wp_set_current_user(0);
+      Assert::true($controller->permissions() instanceof WP_Error, 'Anonymous ticket report access is rejected.');
+      Assert::true($controller->exportPermissions() instanceof WP_Error, 'Anonymous report export is rejected.');
+      wp_set_current_user(1);
+      Assert::true($controller->permissions() === true, 'Authorized administrators can view ticket reports.');
+      Assert::true($controller->exportPermissions() === true, 'Administrators can export ticket reports.');
+      $request = new WP_REST_Request('GET', '/sbay/v1/reports/tickets');
+      $request->set_query_params(['date_from' => $today, 'date_to' => $today, 'department_id' => 1, 'assigned_agent_id' => $agentId]);
+      Assert::equals(200, rest_do_request($request)->get_status(), 'Protected ticket report endpoint responds successfully.');
+      $exportRequest = new WP_REST_Request('GET', '/sbay/v1/reports/tickets/export');
+      $exportRequest->set_query_params(['date_from' => $today, 'date_to' => $today, 'assigned_agent_id' => $agentId]);
+      $exportData = rest_do_request($exportRequest)->get_data();
+      Assert::true(
+        str_ends_with((string) ($exportData['data']['filename'] ?? ''), '.csv')
+        && str_contains((string) ($exportData['data']['content'] ?? ''), 'Ticket performance summary'),
+        'Ticket export endpoint returns an authorized CSV download payload.',
+      );
+    } finally {
+      foreach ($messageIds as $id) { $messages->delete($id); }
+      foreach ($ticketIds as $id) { $tickets->delete($id); }
+      if ($existingSla === null) { delete_option('sbay_ticket_sla_policy'); }
+      else { update_option('sbay_ticket_sla_policy', $existingSla, false); }
+      wp_set_current_user(0);
+    }
+  }
+}

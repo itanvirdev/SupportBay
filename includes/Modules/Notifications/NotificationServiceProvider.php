@@ -36,6 +36,8 @@ use SupportBay\Modules\Tickets\Events\TicketAssignmentChanged;
 use SupportBay\Modules\Tickets\Events\TicketClosed;
 use SupportBay\Modules\Tickets\Events\TicketReopened;
 use SupportBay\Modules\Tickets\Events\TicketResolved;
+use SupportBay\Modules\Tickets\Events\TicketSlaBreached;
+use SupportBay\Modules\Notifications\Listeners\SendTicketSlaBreachedEmail;
 
 final class NotificationServiceProvider extends ServiceProvider {
   /** @var array<class-string, array<class-string>> */
@@ -57,6 +59,9 @@ final class NotificationServiceProvider extends ServiceProvider {
     ],
     TicketAssignmentChanged::class => [
       SendTicketAssignedEmail::class,
+    ],
+    TicketSlaBreached::class => [
+      SendTicketSlaBreachedEmail::class,
     ],
   ];
 
@@ -87,6 +92,7 @@ final class NotificationServiceProvider extends ServiceProvider {
     $container->singleton(SendTicketLifecycleEmail::class);
     $container->singleton(SendTicketAssignedEmail::class);
     $container->singleton(SendMessageCreatedEmail::class);
+    $container->singleton(SendTicketSlaBreachedEmail::class);
   }
 
   public function boot(Container $container): void {

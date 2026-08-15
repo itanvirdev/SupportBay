@@ -7,6 +7,12 @@ namespace SupportBay\Core\Database;
 use RuntimeException;
 
 final class DatabaseInstaller {
+  public static function maybeInstall(): void {
+    if ((string) get_option('sbay_db_version', '') !== SBAY_DB_VERSION) {
+      self::install();
+    }
+  }
+
   public static function install(): void {
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 

@@ -23,9 +23,9 @@ final class NotificationTemplateFlowTest extends FlowTest {
     delete_option('sbay_notification_templates');
 
     Assert::count(
-      9,
+      10,
       $templates->all(),
-      'The nine active ticket, reply, lifecycle, and assignment templates have safe defaults.'
+      'The ten active ticket, reply, lifecycle, assignment, and SLA templates have safe defaults.'
     );
 
     $rendered = $templates->render(
@@ -98,6 +98,24 @@ final class NotificationTemplateFlowTest extends FlowTest {
       && str_contains($reassigned->subject, 'reassigned')
       && str_contains($reassigned->plainTextContent, 'Tanvir Agent'),
       'Ticket reassignment template renders for the newly assigned agent.'
+    );
+
+    $slaBreached = $templates->render(
+      'ticket_sla_breached',
+      NotificationRecipientType::AGENT,
+      [
+        'agent_name' => 'Tanvir Agent',
+        'track_id' => '54E5DF43',
+        'sla_target_minutes' => 60,
+        'sla_overdue_minutes' => 15,
+      ],
+    );
+    Assert::true(
+      $slaBreached !== null
+      && str_contains($slaBreached->subject, 'SLA breached')
+      && str_contains($slaBreached->plainTextContent, '60 minutes')
+      && str_contains($slaBreached->plainTextContent, '15 minutes'),
+      'First-response SLA breach template renders the target and overdue duration for agents.'
     );
 
     $updated = $templates->update(

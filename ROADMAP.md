@@ -1230,6 +1230,34 @@ Notification Log Retention and Cleanup ✅
 
 Notification Delivery Metrics and Reporting ✅
 
+Ticket Performance Reporting ✅
+
+Report Export Foundation ✅
+
+Ticket SLA Metrics and Response-Time Bands ✅
+
+SLA Due-State and Ticket Queue Indicators ✅
+
+Scheduled SLA Breach Detection and Domain Events ✅
+
+SLA Breach Notifications for Assigned Staff ✅
+
+Saved Replies Foundation ✅
+
+React Saved Reply Composer Integration ✅
+
+Saved Reply Management Settings UI ✅
+
+Saved Reply Usage Tracking ✅
+
+Saved Reply Sorting by Usage ✅
+
+Saved Reply Categories ✅
+
+Saved Reply Dynamic Placeholders ✅
+
+Saved Reply Department Scoping ✅
+
 Queue ✅
 
 Asynchronous Initial Delivery ✅

@@ -19,6 +19,17 @@ use SupportBay\Modules\Tickets\Events\TicketResolved;
 use SupportBay\Modules\Activities\Listeners\LogTicketResolvedActivity;
 use SupportBay\Modules\Activities\Listeners\LogTicketSplitActivity;
 use SupportBay\Modules\Tickets\Services\TicketSplitService;
+use SupportBay\Modules\Tickets\Services\TicketMetricService;
+use SupportBay\Modules\Tickets\Http\Controllers\TicketMetricController;
+use SupportBay\Common\Utilities\CsvExporter;
+use SupportBay\Modules\Tickets\Repositories\TicketSlaPolicyRepository;
+use SupportBay\Modules\Tickets\Services\TicketSlaPolicyService;
+use SupportBay\Modules\Tickets\Http\Controllers\TicketSlaPolicyController;
+use SupportBay\Modules\Tickets\Events\TicketSlaBreached;
+use SupportBay\Modules\Activities\Listeners\LogTicketSlaBreachedActivity;
+use SupportBay\Modules\Tickets\Repositories\TicketSlaBreachRepository;
+use SupportBay\Modules\Tickets\Services\TicketSlaBreachService;
+use SupportBay\Modules\Tickets\Services\TicketSlaBreachWorker;
 
 final class TicketServiceProvider extends ServiceProvider {
 
@@ -27,6 +38,7 @@ final class TicketServiceProvider extends ServiceProvider {
     TicketMerged::class => [LogTicketMergedActivity::class],
     TicketSplit::class => [LogTicketSplitActivity::class],
     TicketResolved::class => [LogTicketResolvedActivity::class],
+    TicketSlaBreached::class => [LogTicketSlaBreachedActivity::class],
   ];
 
   // protected array $listeners = [
@@ -46,16 +58,26 @@ final class TicketServiceProvider extends ServiceProvider {
    */
   public function register(Container $container): void {
     $container->singleton(TicketRepository::class);
+    $container->singleton(TicketSlaPolicyRepository::class);
+    $container->singleton(TicketSlaBreachRepository::class);
+    $container->singleton(CsvExporter::class);
 
     $container->singleton(TicketService::class);
     $container->singleton(TicketMergeService::class);
     $container->singleton(TicketSplitService::class);
+    $container->singleton(TicketMetricService::class);
+    $container->singleton(TicketSlaPolicyService::class);
+    $container->singleton(TicketSlaBreachService::class);
+    $container->singleton(TicketSlaBreachWorker::class);
 
     $container->singleton(TicketController::class);
+    $container->singleton(TicketMetricController::class);
+    $container->singleton(TicketSlaPolicyController::class);
     $container->singleton(LogTicketChangedActivity::class);
     $container->singleton(LogTicketMergedActivity::class);
     $container->singleton(LogTicketSplitActivity::class);
     $container->singleton(LogTicketResolvedActivity::class);
+    $container->singleton(LogTicketSlaBreachedActivity::class);
   }
 
   /**
@@ -67,6 +89,15 @@ final class TicketServiceProvider extends ServiceProvider {
     add_action(
       'rest_api_init',
       [$container->get(TicketController::class), 'registerRoutes'],
+    );
+    $container->get(TicketSlaBreachWorker::class)->register();
+    add_action(
+      'rest_api_init',
+      [$container->get(TicketMetricController::class), 'registerRoutes'],
+    );
+    add_action(
+      'rest_api_init',
+      [$container->get(TicketSlaPolicyController::class), 'registerRoutes'],
     );
   }
 }

@@ -120,6 +120,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'saved-reply':
+        \SupportBay\Dev\SavedReplyFlowTest::run(
+          $container->get(\SupportBay\Modules\SavedReplies\Services\SavedReplyService::class),
+        );
+        break;
+
       case 'customer':
         \SupportBay\Dev\CustomerFlowTest::run(
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)
@@ -295,6 +301,44 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         \SupportBay\Dev\NotificationMetricFlowTest::run(
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationMetricService::class),
           $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationMetricController::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+        );
+        break;
+
+      case 'ticket-metrics':
+        \SupportBay\Dev\TicketMetricFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketMetricService::class),
+          $container->get(\SupportBay\Modules\Tickets\Http\Controllers\TicketMetricController::class),
+          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketRepository::class),
+          $container->get(\SupportBay\Modules\Messages\Repositories\MessageRepository::class),
+          $container->get(\SupportBay\Common\Utilities\CsvExporter::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
+        );
+        break;
+
+      case 'ticket-sla':
+        \SupportBay\Dev\TicketSlaPolicyFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
+          $container->get(\SupportBay\Modules\Tickets\Http\Controllers\TicketSlaPolicyController::class),
+        );
+        break;
+
+      case 'ticket-sla-queue':
+        \SupportBay\Dev\TicketSlaQueueFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketRepository::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
+        );
+        break;
+
+      case 'ticket-sla-breach':
+        \SupportBay\Dev\TicketSlaBreachFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaBreachService::class),
+          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketSlaBreachRepository::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
+          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketRepository::class),
+          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
+          $container->get(\SupportBay\Modules\Activities\Repositories\ActivityRepository::class),
           $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
         );
         break;

@@ -427,6 +427,20 @@ The Settings Delivery Logs workspace uses protected administrator endpoints for 
 
 The Reports workspace loads aggregate notification delivery data from the protected reporting API. It presents date/channel/event filters, delivery-health summaries, a zero-filled daily trend, and event/channel tables. The client model contains no recipient or message fields.
 
+Reports uses a shared React workspace with Ticket Performance and Notification Delivery tabs. Ticket Performance loads protected aggregate metrics, reuses server-provided department and agent options, and provides date, department, agent, and priority filters. It renders ticket/response summary cards, a daily activity chart, and department/agent workload tables.
+
+Both report workspaces provide CSV download controls only when the PHP bootstrap reports `canExportReports`. Downloads reuse the currently applied filters, receive their filenames from protected REST responses, and use short-lived browser object URLs. Server-side capability checks remain authoritative.
+
+Settings includes a Ticket SLA workspace for priority-based calendar-minute first-response targets. Ticket Performance displays SLA compliance cards, configured targets, and response-time bands, and includes the same data in CSV exports. The interface explicitly avoids presenting these values as business-hours SLA calculations.
+
+The shared ticket queue consumes SLA state calculated by PHP. Staff views add an SLA-state filter, due-first sorting, and state badges with due-time tooltips. Customer views use the same component but hide SLA controls and indicators. React does not calculate or infer SLA state.
+
+The staff ticket composer exposes a lazy-loaded Saved Replies picker backed by the protected saved-reply API. It searches the active server-returned collection by title and readable content and can populate either the reply or internal-note draft. Replacing non-empty content requires explicit confirmation. Programmatic selection updates the WordPress TinyMCE instance, while final message content continues through the normal server-side rich-text sanitizer. Customer composers do not expose this staff tool.
+
+Settings includes a capability-gated Saved Replies workspace. Administrators can search active and inactive records, create or edit sanitized rich text with WordPress TinyMCE, change availability, and delete with explicit confirmation. The browser treats rendered drafts as untrusted input; persistence and sanitization remain owned by the PHP service.
+
+Saved reply placeholders use a server-advertised allowlist. Settings exposes click-to-insert canonical tokens, and the staff ticket conversation resolves them from its already-authorized context only when a reply is selected. Replacement values are HTML-escaped, unknown tokens remain visible, and the submitted message still passes through the normal server sanitizer.
+
 Agent ticket detail exposes distinct Resolve, Close, and Reopen transitions. Resolution and closure hide the reply composer until the ticket is reopened. Customer ticket detail treats both resolved and closed states as finalized and offers the existing reopen action for either state.
 
 All operations use the authenticated SupportBay REST client and WordPress REST nonce. Sanitized preview HTML comes from the server; raw draft HTML is never injected directly into the page.

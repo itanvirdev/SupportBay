@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { adminGet } from './api';
+import { adminDownloadFile, adminGet } from './api';
+import { getAdminConfig } from './config';
 
 interface MetricRow {
   total: number;
@@ -32,6 +33,7 @@ const isoDate = (date: Date) => {
 };
 
 export function NotificationReportWorkspace() {
+  const canExport = getAdminConfig().canExportReports;
   const today = isoDate(new Date());
   const initialFrom = new Date(); initialFrom.setDate(initialFrom.getDate() - 29);
   const [dateFrom, setDateFrom] = useState(isoDate(initialFrom));
@@ -42,14 +44,19 @@ export function NotificationReportWorkspace() {
   const [report, setReport] = useState<NotificationReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const query = () => {
+    const params = new URLSearchParams({ date_from: applied.dateFrom, date_to: applied.dateTo });
+    if (applied.channel) params.set('channel', applied.channel);
+    if (applied.eventKey) params.set('event', applied.eventKey);
+    return params;
+  };
 
   const load = async () => {
     setLoading(true); setError(null);
     try {
-      const query = new URLSearchParams({ date_from: applied.dateFrom, date_to: applied.dateTo });
-      if (applied.channel) query.set('channel', applied.channel);
-      if (applied.eventKey) query.set('event', applied.eventKey);
-      const response = await adminGet<NotificationReport>(`reports/notifications?${query}`);
+      const response = await adminGet<NotificationReport>(`reports/notifications?${query()}`);
       setReport(response.data);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Notification report could not be loaded.');
@@ -65,10 +72,22 @@ export function NotificationReportWorkspace() {
     setApplied({ dateFrom, dateTo, channel, eventKey: eventKey.trim() });
   };
 
+  const exportReport = async () => {
+    setExporting(true); setError(null);
+    try {
+      const file = await adminDownloadFile(`reports/notifications/export?${query()}`);
+      const url = URL.createObjectURL(file.blob); const link = document.createElement('a');
+      link.href = url; link.download = file.filename || 'supportbay-notification-report.csv'; link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Notification report could not be exported.');
+    } finally { setExporting(false); }
+  };
+
   const maximum = Math.max(1, ...(report?.daily.map((row) => row.total) ?? [1]));
 
   return <section className="sbay-notification-report">
-    <header><div><small>Notification performance</small><h2>Delivery Report</h2><p>Track delivery volume, success, failures, retries, events, and channels from notification audit records.</p></div><button type="button" onClick={() => void load()} disabled={loading}>Refresh</button></header>
+    <header><div><small>Notification performance</small><h2>Delivery Report</h2><p>Track delivery volume, success, failures, retries, events, and channels from notification audit records.</p></div><div>{canExport?<button type="button" onClick={() => void exportReport()} disabled={exporting}>{exporting?'Exporting…':'Export CSV'}</button>:null}<button type="button" onClick={() => void load()} disabled={loading}>Refresh</button></div></header>
     <form className="sbay-report-filters" onSubmit={apply}>
       <label><span>From</span><input type="date" value={dateFrom} max={dateTo} onChange={(event) => setDateFrom(event.target.value)}/></label>
       <label><span>To</span><input type="date" value={dateTo} min={dateFrom} max={today} onChange={(event) => setDateTo(event.target.value)}/></label>

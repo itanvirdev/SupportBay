@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Notification Delivery Metrics and Reporting
+Saved Reply Department Scoping
 
 Current Objective
 
-Give managers and administrators a date-based view of notification volume, delivery health, retries, events, and channels without exposing recipient or message data.
+Make saved replies globally applicable or relevant to one department while preserving manager visibility across all scopes.
 
 ---
 
@@ -456,10 +456,39 @@ Current behavior
 - Summary totals include successful, failed, queued, cancelled, retries, success rate, and failure rate.
 - Daily trend rows are zero-filled across the requested range, with event and channel breakdowns using identical filters.
 - Reporting responses contain aggregate operational data only and never expose recipients, subjects, bodies, payloads, headers, or metadata.
+- Reports now provides separate Ticket Performance and Notification Delivery workspaces.
+- `GET /sbay/v1/reports/tickets` requires `sbay_view_reports` and validates date, department, agent, and priority filters.
+- Ticket summaries include created tickets, staff responses, need-reply tickets, resolved/closed tickets, and average first-response minutes.
+- Daily ticket/response trends are zero-filled across the selected date range.
+- Department and agent breakdowns use the same server-side filters and exclude trashed tickets.
+- Ticket and notification reports expose capability-protected CSV export routes using the same validated queries as their on-screen reports.
+- Export files contain summaries and all visible breakdown sections, include UTF-8 BOM compatibility, and preserve date-based filenames.
+- CSV values beginning with spreadsheet formula characters are neutralized before output.
+- Managers can continue viewing reports, while export controls and endpoints require `sbay_export_reports`.
+- React downloads preserve server-provided filenames and release temporary browser object URLs.
+- Ticket SLA policy is option-backed with configurable first-response targets for normal, medium, high, and urgent priorities.
+- SLA targets are validated between 15 minutes and 7 days and managed through a protected Settings workspace.
+- Ticket reports classify responded-within-target, breached, and awaiting-within-target tickets using calendar minutes.
+- First-response bands report under 1 hour, 1–4 hours, 4–24 hours, 24 hours or more, and unanswered tickets.
+- SLA metrics and response bands are included in filtered CSV exports.
+- Business-hour calendars, escalation automation, and historical SLA snapshots remain explicitly deferred.
+- Ticket queue rows now expose server-calculated SLA state, target, due timestamp, and remaining calendar minutes.
+- SLA states are `disabled`, `met`, `on_track`, `due_soon`, and `breached`.
+- An unanswered ticket becomes due soon after consuming at least 75% of its priority target.
+- Staff can filter by SLA state and sort breached, due-soon, and on-track tickets in due-first order.
+- Shared React queue badges are staff-only; customer queue structure and presentation remain unchanged.
+- Disabling SLA reporting returns `disabled` for every queue row and removes active urgency classification.
+- `sbay_ticket_sla_breaches` stores durable first-response breach facts with a unique ticket-and-metric key.
+- A bounded five-minute WordPress Cron worker detects active, non-final, unanswered overdue tickets.
+- Breach records are atomically claimed before `TicketSlaBreached` is dispatched, preventing duplicate events across overlapping workers.
+- The domain event carries both Ticket and TicketSlaBreach entities.
+- A small activity listener records one system-authored first-response breach entry in the ticket timeline.
+- Database schema version 0.3.0 installs the new table automatically for already-active sites.
+- Disabling the SLA policy suppresses scheduled breach detection.
 
 Future notification work
 
-- Ticket performance reporting
+- SLA breach notifications for assigned staff
 - External notification providers
 
 ---
@@ -807,7 +836,7 @@ Never
 # Next Milestone
 
 ```
-Next milestone selection
+Ticket Categories Foundation
 ```
 
 ---
@@ -863,11 +892,20 @@ Status
 ```
 Current Sprint
 
-Notification Delivery Metrics and Reporting
+Saved Reply Department Scoping
+
+Completed
+
+- Saved replies optionally reference a department ID.
+- Global replies remain applicable to every department.
+- Staff composer queries return global plus matching department replies.
+- Ordinary staff requests without a department receive global replies only.
+- Managers can inspect and filter all department scopes in Settings.
+- Existing ticket and department domain services remain unchanged.
 
 Next Target
 
-Ticket performance reporting
+Ticket Categories Foundation
 ```
 
 ---
