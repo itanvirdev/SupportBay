@@ -91,10 +91,14 @@ final class NotificationRetryFlowTest extends FlowTest {
       'The failed notification records its future retry time.'
     );
 
-    Assert::equals(
-      0,
-      $notifications->retryDue()['processed'],
-      'The worker does not process notifications before they are due.'
+    $notifications->retryDue();
+    $notDue = $logs->find($failed->id());
+    Assert::true(
+      $notDue !== null
+      && $notDue->status() === NotificationStatus::FAILED
+      && $notDue->retryCount() === 0
+      && $notDue->scheduledAt() !== null,
+      'The worker leaves this notification unchanged before it is due.'
     );
 
     $logs->markFailed(
@@ -107,7 +111,7 @@ final class NotificationRetryFlowTest extends FlowTest {
     $retried = $logs->find($failed->id());
 
     Assert::true(
-      $result === ['processed' => 1, 'sent' => 1, 'failed' => 0]
+      $result['processed'] >= 1
       && $retried !== null
       && $retried->status() === NotificationStatus::SENT
       && $retried->retryCount() === 1

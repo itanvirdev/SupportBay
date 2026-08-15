@@ -91,6 +91,8 @@ The API may expose operational fields such as status, provider, retry count, tim
 
 Manual retries update the original audit record and retain the global three-attempt limit. They do not create duplicate notification logs.
 
+The React Settings workspace includes Delivery Logs alongside Email Notifications and Integrations. It provides server-backed search, status/event/channel filters, 20-record pagination, safe detail inspection, refresh, and manual retry only when the API reports `can_retry`. Detail views contain operational recipient, event, provider, status, attempt, scheduling, timestamp, and error fields only. Stored bodies, headers, payloads, and raw metadata are never requested or rendered.
+
 ---
 
 # Email Templates
@@ -624,6 +626,18 @@ Potential v2 Features
 ✓ Test email support.
 
 ✓ Delivery logs.
+
+✓ Configurable notification log retention.
+
+✓ Daily bounded cleanup of terminal notification records.
+
+✓ Active and retry-eligible notification records are protected from cleanup.
+
+✓ Date-based aggregate delivery reporting.
+
+✓ Daily, event, and channel delivery breakdowns.
+
+✓ Reporting excludes recipient and message data.
 
 ✓ Notification queue architecture.
 

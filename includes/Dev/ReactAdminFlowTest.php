@@ -85,8 +85,24 @@ final class ReactAdminFlowTest extends FlowTest {
     $templateWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/NotificationTemplateWorkspace.tsx'
     );
+    $logWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/NotificationLogWorkspace.tsx'
+    );
+    $reportWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/NotificationReportWorkspace.tsx'
+    );
     $ticketConversation = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketConversation.tsx'
+    );
+
+    Assert::true(
+      is_string($reportWorkspace)
+      && str_contains($reportWorkspace, 'reports/notifications?${query}')
+      && str_contains($reportWorkspace, 'Daily delivery trend')
+      && str_contains($reportWorkspace, 'By event')
+      && str_contains($reportWorkspace, 'By channel')
+      && ! str_contains($reportWorkspace, 'recipient'),
+      'Reports renders server-derived notification metrics without recipient data.'
     );
 
     Assert::true(
@@ -100,10 +116,29 @@ final class ReactAdminFlowTest extends FlowTest {
     Assert::true(
       is_string($settingsWorkspace)
       && str_contains($settingsWorkspace, 'Email Notifications')
+      && str_contains($settingsWorkspace, 'Delivery Logs')
       && str_contains($settingsWorkspace, 'Integrations')
       && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace />')
+      && str_contains($settingsWorkspace, '<NotificationLogWorkspace />')
       && str_contains($settingsWorkspace, '<ProviderWorkspace />'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($logWorkspace)
+      && str_contains($logWorkspace, 'admin/notifications?${query}')
+      && str_contains($logWorkspace, 'admin/notifications/${id}')
+      && str_contains($logWorkspace, 'admin/notifications/${log.id}/retry')
+      && str_contains($logWorkspace, "adminGet<NotificationRetention>('admin/notification-retention')")
+      && str_contains($logWorkspace, "adminPut<NotificationRetention>('admin/notification-retention', retention)")
+      && str_contains($logWorkspace, "admin/notification-retention/cleanup")
+      && str_contains($logWorkspace, 'Active and retry-eligible deliveries are always preserved')
+      && str_contains($logWorkspace, 'Notification log pagination')
+      && str_contains($logWorkspace, 'selected.can_retry')
+      && ! str_contains($logWorkspace, 'raw_metadata')
+      && ! str_contains($logWorkspace, 'headers')
+      && ! str_contains($logWorkspace, 'content:'),
+      'Delivery Logs uses protected safe diagnostics and retry eligibility without sensitive payload fields.'
     );
 
     Assert::true(
@@ -133,7 +168,13 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($adminBundle, '/test-email')
       && str_contains($adminBundle, 'notification-preferences')
       && str_contains($adminBundle, 'Email Preferences')
-      && str_contains($adminBundle, 'Send test email'),
+      && str_contains($adminBundle, 'Send test email')
+      && str_contains($adminBundle, 'Delivery Logs')
+      && str_contains($adminBundle, 'Retry delivery')
+      && str_contains($adminBundle, 'Log retention')
+      && str_contains($adminBundle, 'Run cleanup now')
+      && str_contains($adminBundle, 'Delivery Report')
+      && str_contains($adminBundle, 'Daily delivery trend'),
       'Compiled administrator bundle contains the notification template workspace.'
     );
 

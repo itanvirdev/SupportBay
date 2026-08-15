@@ -284,6 +284,21 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'notification-retention':
+        \SupportBay\Dev\NotificationRetentionFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationRetentionService::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+        );
+        break;
+
+      case 'notification-metrics':
+        \SupportBay\Dev\NotificationMetricFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationMetricService::class),
+          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationMetricController::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+        );
+        break;
+
       case 'api-webhook':
         \SupportBay\Dev\ApiWebhookFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Http\Controllers\TicketController::class),

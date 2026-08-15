@@ -10,10 +10,7 @@ import { CustomerProfile, type CustomerProfileData } from './CustomerProfile';
 import { CustomerDirectory } from './CustomerDirectory';
 import { SettingsWorkspace } from './SettingsWorkspace';
 import { VerificationDirectory } from './VerificationDirectory';
-
-interface TicketSummary {
-  tickets: number;
-}
+import { NotificationReportWorkspace } from './NotificationReportWorkspace';
 
 async function loadTickets(query: TicketQueryParams): Promise<TicketPage> {
   const response = await adminGet<WorkspaceTicket[]>(`tickets?${ticketQueryString(query)}`);
@@ -46,7 +43,6 @@ const sectionContent = {
 function AdminApp() {
   const config = getAdminConfig();
   const content = sectionContent[config.section];
-  const [summary, setSummary] = useState<TicketSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const ticketId = Number(new URLSearchParams(window.location.search).get('ticket')) || null;
   const customerId = Number(new URLSearchParams(window.location.search).get('customer')) || null;
@@ -57,20 +53,6 @@ function AdminApp() {
   const [detail, setDetail] = useState<{ ticket: ConversationTicket; messages: ConversationMessage[]; context: TicketContext } | null>(null);
   const [customerProfile, setCustomerProfile] = useState<CustomerProfileData | null>(null);
   const [queueOptions, setQueueOptions] = useState<TicketContext['options']>();
-
-  useEffect(() => {
-    if (config.section === 'settings') {
-      return;
-    }
-
-    adminGet<unknown[]>('tickets?per_page=1').then((response) => {
-      setSummary({
-        tickets: typeof response.meta.total === 'number' ? response.meta.total : response.data.length,
-      });
-    }).catch((reason: unknown) => {
-      setError(reason instanceof Error ? reason.message : 'Workspace data could not be loaded.');
-    });
-  }, [config.section]);
 
   useEffect(() => {
     if (config.section !== 'tickets' || ticketId || customerId || customerDirectory || verificationDirectory) return;
@@ -190,10 +172,7 @@ function AdminApp() {
       ) : null}
 
       {config.section === 'reports' ? (
-        <section className="sbay-admin-panel">
-          <div><small>Report foundation</small><strong>{summary ? summary.tickets : '—'}</strong><span>Current tickets</span></div>
-          <p>This page is reserved for date-based ticket, response, need-reply, and closed-ticket reporting. No placeholder analytics are being presented as real data.</p>
-        </section>
+        <NotificationReportWorkspace />
       ) : null}
 
       {config.section === 'settings' ? (

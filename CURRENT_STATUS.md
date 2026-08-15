@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Ticket Resolution Workflow and Notification
+Notification Delivery Metrics and Reporting
 
 Current Objective
 
-Provide a first-class staff resolution transition, finalized reply behavior, customer reopening, activity history, and configurable customer resolution email.
+Give managers and administrators a date-based view of notification volume, delivery health, retries, events, and channels without exposing recipient or message data.
 
 ---
 
@@ -442,10 +442,24 @@ Current behavior
 - Resolved tickets reject replies in both REST and React interfaces until reopened.
 - Existing reopen behavior now supports resolved and closed tickets and clears final-state timestamps.
 - Agent ticket details expose distinct Resolve, Close, and Reopen actions; customers can reopen resolved tickets.
+- Settings now includes a Delivery Logs workspace backed by the protected notification-log API.
+- Administrators can search recipients, subjects, and errors and filter by status, event, and channel.
+- The workspace provides server pagination, selectable safe diagnostics, refresh, and clear empty/error states.
+- Retry controls appear only when the server returns `can_retry`, preserving atomic claims and the three-attempt limit.
+- Message bodies, headers, stored payloads, and raw metadata remain unavailable to the React application.
+- Notification log retention is option-backed and defaults to 90 days with bounded daily batches.
+- Daily and manual cleanup remove only successful, cancelled, and retry-exhausted records older than the cutoff.
+- Pending, processing, and retry-eligible failed deliveries are never selected for retention cleanup.
+- Delivery Logs exposes protected retention controls and an explicit manual cleanup action.
+- The Reports workspace now renders real notification delivery metrics instead of placeholder ticket counts.
+- `GET /sbay/v1/reports/notifications` requires `sbay_view_reports` and accepts validated date, channel, and event filters.
+- Summary totals include successful, failed, queued, cancelled, retries, success rate, and failure rate.
+- Daily trend rows are zero-filled across the requested range, with event and channel breakdowns using identical filters.
+- Reporting responses contain aggregate operational data only and never expose recipients, subjects, bodies, payloads, headers, or metadata.
 
 Future notification work
 
-- React notification delivery diagnostics workspace
+- Ticket performance reporting
 - External notification providers
 
 ---
@@ -672,6 +686,8 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 38. ✅ Add staff ticket resolution transition, immutable event, activity logging, customer template and preference, finalized reply enforcement, resolved-ticket reopening, React controls, and end-to-end flow coverage.
 
+39. ✅ Add React delivery-log search, filters, pagination, safe detail diagnostics, eligibility-aware manual retry, responsive styling, compiled assets, and flow coverage without exposing stored payloads.
+
 ---
 
 # Current Workflow
@@ -847,11 +863,11 @@ Status
 ```
 Current Sprint
 
-Ticket Resolution Workflow and Notification
+Notification Delivery Metrics and Reporting
 
 Next Target
 
-React notification delivery diagnostics workspace
+Ticket performance reporting
 ```
 
 ---

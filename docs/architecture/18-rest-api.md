@@ -378,11 +378,13 @@ Preview renders optional unsaved draft fields against server-owned sample data w
 
 ## Get Logs
 
-```http id="r27"
-GET /notifications/logs
+```http
+GET /sbay/v1/admin/notifications
+GET /sbay/v1/admin/notifications/{id}
+POST /sbay/v1/admin/notifications/{id}/retry
 ```
 
-Supports:
+Requires `sbay_manage_settings`. Listing supports search, status, event, channel, pagination, and safe ordering. Responses exclude stored message bodies, headers, payloads, and raw metadata. Retry updates the original record and remains subject to atomic claiming and the global three-attempt limit.
 
 - ticket_id
 - status
@@ -520,3 +522,23 @@ Used by:
 ✓ React-first API design
 
 ---
+# Notification Retention
+
+Administrators with the SupportBay settings capability can read and update the
+notification retention policy through `GET|PUT /sbay/v1/admin/notification-retention`.
+They can trigger one bounded cleanup batch through
+`POST /sbay/v1/admin/notification-retention/cleanup`.
+
+Cleanup is restricted to terminal records older than the configured cutoff.
+Pending, processing, and retry-eligible failed deliveries are not deleted.
+
+# Notification Delivery Reports
+
+Managers and administrators with `sbay_view_reports` can request aggregate
+delivery metrics through `GET /sbay/v1/reports/notifications`.
+
+Supported filters are `date_from`, `date_to`, `channel`, and `event`. Date
+ranges use `Y-m-d`, must be ordered, and are limited to 367 days. The response
+contains summary counters and rates plus daily, event, and channel breakdowns.
+It intentionally excludes recipient, subject, content, payload, headers, and
+metadata.

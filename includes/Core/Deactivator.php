@@ -20,6 +20,7 @@ final class Deactivator {
   private static function clearScheduledTasks(): void {
     wp_clear_scheduled_hook('sbay_notification_dispatch');
     wp_clear_scheduled_hook('sbay_notification_retry');
+    wp_clear_scheduled_hook('sbay_notification_cleanup');
   }
 
   /**

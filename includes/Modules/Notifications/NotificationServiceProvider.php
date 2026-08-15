@@ -10,7 +10,9 @@ use SupportBay\Modules\Messages\Events\MessageCreated;
 use SupportBay\Modules\Notifications\Channels\WordPressEmailChannel;
 use SupportBay\Modules\Notifications\Contracts\NotificationChannel;
 use SupportBay\Modules\Notifications\Http\Controllers\NotificationController;
+use SupportBay\Modules\Notifications\Http\Controllers\NotificationMetricController;
 use SupportBay\Modules\Notifications\Http\Controllers\NotificationPreferenceController;
+use SupportBay\Modules\Notifications\Http\Controllers\NotificationRetentionController;
 use SupportBay\Modules\Notifications\Http\Controllers\NotificationTemplateController;
 use SupportBay\Modules\Notifications\Listeners\SendMessageCreatedEmail;
 use SupportBay\Modules\Notifications\Listeners\SendTicketCreatedEmails;
@@ -18,9 +20,13 @@ use SupportBay\Modules\Notifications\Listeners\SendTicketLifecycleEmail;
 use SupportBay\Modules\Notifications\Listeners\SendTicketAssignedEmail;
 use SupportBay\Modules\Notifications\Repositories\NotificationLogRepository;
 use SupportBay\Modules\Notifications\Repositories\NotificationPreferenceRepository;
+use SupportBay\Modules\Notifications\Repositories\NotificationRetentionRepository;
 use SupportBay\Modules\Notifications\Repositories\NotificationTemplateRepository;
 use SupportBay\Modules\Notifications\Services\NotificationRetryWorker;
+use SupportBay\Modules\Notifications\Services\NotificationCleanupWorker;
+use SupportBay\Modules\Notifications\Services\NotificationMetricService;
 use SupportBay\Modules\Notifications\Services\NotificationPreferenceService;
+use SupportBay\Modules\Notifications\Services\NotificationRetentionService;
 use SupportBay\Modules\Notifications\Services\NotificationScheduler;
 use SupportBay\Modules\Notifications\Services\NotificationService;
 use SupportBay\Modules\Notifications\Services\NotificationTemplateService;
@@ -61,15 +67,21 @@ final class NotificationServiceProvider extends ServiceProvider {
     );
     $container->singleton(NotificationService::class);
     $container->singleton(NotificationRetryWorker::class);
+    $container->singleton(NotificationCleanupWorker::class);
     $container->singleton(NotificationScheduler::class);
     $container->singleton(NotificationLogRepository::class);
     $container->singleton(NotificationPreferenceRepository::class);
+    $container->singleton(NotificationRetentionRepository::class);
     $container->singleton(NotificationTemplateRepository::class);
     $container->singleton(NotificationController::class);
+    $container->singleton(NotificationMetricController::class);
     $container->singleton(NotificationPreferenceController::class);
+    $container->singleton(NotificationRetentionController::class);
     $container->singleton(NotificationTemplateController::class);
     $container->singleton(NotificationTemplateService::class);
     $container->singleton(NotificationPreferenceService::class);
+    $container->singleton(NotificationRetentionService::class);
+    $container->singleton(NotificationMetricService::class);
     $container->singleton(DefaultNotificationTemplates::class);
     $container->singleton(SendTicketCreatedEmails::class);
     $container->singleton(SendTicketLifecycleEmail::class);
@@ -85,6 +97,10 @@ final class NotificationServiceProvider extends ServiceProvider {
       'registerRoutes',
     ]);
     add_action('rest_api_init', [
+      $container->get(NotificationMetricController::class),
+      'registerRoutes',
+    ]);
+    add_action('rest_api_init', [
       $container->get(NotificationTemplateController::class),
       'registerRoutes',
     ]);
@@ -92,8 +108,13 @@ final class NotificationServiceProvider extends ServiceProvider {
       $container->get(NotificationPreferenceController::class),
       'registerRoutes',
     ]);
+    add_action('rest_api_init', [
+      $container->get(NotificationRetentionController::class),
+      'registerRoutes',
+    ]);
 
     $container->get(NotificationScheduler::class)->register();
     $container->get(NotificationRetryWorker::class)->register();
+    $container->get(NotificationCleanupWorker::class)->register();
   }
 }

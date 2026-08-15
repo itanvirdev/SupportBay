@@ -6,6 +6,7 @@ namespace SupportBay\Modules\Notifications\Repositories;
 
 use SupportBay\Core\Database\Repository;
 use SupportBay\Modules\Notifications\Data\NotificationLogQuery;
+use SupportBay\Modules\Notifications\Data\NotificationMetricQuery;
 use SupportBay\Modules\Notifications\Database\NotificationLogSchema;
 use SupportBay\Modules\Notifications\Entities\NotificationLog;
 use SupportBay\Modules\Notifications\Enums\NotificationStatus;
@@ -155,6 +156,57 @@ final class NotificationLogRepository extends Repository {
     ];
   }
 
+  /** @return array<string, mixed> */
+  public function metrics(NotificationMetricQuery $query): array {
+    $clauses = ['created_at >= %s', 'created_at <= %s'];
+    $values = [$query->dateFrom . ' 00:00:00', $query->dateTo . ' 23:59:59'];
+
+    foreach (['channel', 'event'] as $field) {
+      if ($query->{$field} !== null && $query->{$field} !== '') {
+        $clauses[] = "{$field} = %s";
+        $values[] = $query->{$field};
+      }
+    }
+
+    $where = 'WHERE ' . implode(' AND ', $clauses);
+    $summary = $this->db->get_row($this->db->prepare(
+      "SELECT COUNT(*) AS total,
+        SUM(status IN (%s, %s)) AS successful,
+        SUM(status = %s) AS failed,
+        SUM(status IN (%s, %s)) AS queued,
+        SUM(status = %s) AS cancelled,
+        COALESCE(SUM(retry_count), 0) AS retries
+       FROM {$this->table()} {$where}",
+      NotificationStatus::SENT->value,
+      NotificationStatus::DELIVERED->value,
+      NotificationStatus::FAILED->value,
+      NotificationStatus::PENDING->value,
+      NotificationStatus::PROCESSING->value,
+      NotificationStatus::CANCELLED->value,
+      ...$values,
+    ), ARRAY_A) ?: [];
+
+    return [
+      'summary' => array_map('intval', [
+        'total' => $summary['total'] ?? 0,
+        'successful' => $summary['successful'] ?? 0,
+        'failed' => $summary['failed'] ?? 0,
+        'queued' => $summary['queued'] ?? 0,
+        'cancelled' => $summary['cancelled'] ?? 0,
+        'retries' => $summary['retries'] ?? 0,
+      ]),
+      'daily' => $this->metricGroups(
+        "DATE(created_at) AS label",
+        $where,
+        $values,
+        'label ASC',
+        'date',
+      ),
+      'events' => $this->metricGroups('event AS label', $where, $values, 'total DESC, label ASC', 'event'),
+      'channels' => $this->metricGroups('channel AS label', $where, $values, 'total DESC, label ASC', 'channel'),
+    ];
+  }
+
   public function markSent(int $id): bool {
     return $this->updateById($id, [
       'status' => NotificationStatus::SENT->value,
@@ -239,7 +291,39 @@ final class NotificationLogRepository extends Repository {
     return $result === 1;
   }
 
-  /** Test cleanup only; production logs remain audit records. */
+  public function deleteExpiredTerminal(string $cutoff, int $limit): int {
+    $ids = $this->db->get_col($this->db->prepare(
+      "SELECT id FROM {$this->table()}
+       WHERE created_at < %s
+         AND (
+           status IN (%s, %s, %s)
+           OR (status = %s AND retry_count >= %d)
+         )
+       ORDER BY id ASC
+       LIMIT %d",
+      $cutoff,
+      NotificationStatus::SENT->value,
+      NotificationStatus::DELIVERED->value,
+      NotificationStatus::CANCELLED->value,
+      NotificationStatus::FAILED->value,
+      3,
+      max(1, min(1000, $limit)),
+    ));
+
+    if ($ids === []) {
+      return 0;
+    }
+
+    $ids = array_map('intval', $ids);
+    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+
+    return (int) $this->db->query($this->db->prepare(
+      "DELETE FROM {$this->table()} WHERE id IN ({$placeholders})",
+      ...$ids,
+    ));
+  }
+
+  /** Deterministic cleanup helper used by flow tests. */
   public function deleteByTicket(int $ticketId): int {
     return (int) $this->db->delete(
       $this->table(),
@@ -248,7 +332,7 @@ final class NotificationLogRepository extends Repository {
     );
   }
 
-  /** Test cleanup only; production logs remain audit records. */
+  /** Deterministic cleanup helper used by flow tests. */
   public function deleteByRecipient(string $recipient): int {
     return (int) $this->db->delete(
       $this->table(),
@@ -290,5 +374,36 @@ final class NotificationLogRepository extends Repository {
     $decoded = json_decode($value, true);
 
     return is_array($decoded) ? $decoded : null;
+  }
+
+  /**
+   * @param array<int, int|string> $values
+   * @return array<int, array<string, int|string>>
+   */
+  private function metricGroups(
+    string $selection,
+    string $where,
+    array $values,
+    string $order,
+    string $label,
+  ): array {
+    $rows = $this->db->get_results($this->db->prepare(
+      "SELECT {$selection}, COUNT(*) AS total,
+        SUM(status IN (%s, %s)) AS successful,
+        SUM(status = %s) AS failed
+       FROM {$this->table()} {$where}
+       GROUP BY label ORDER BY {$order}",
+      NotificationStatus::SENT->value,
+      NotificationStatus::DELIVERED->value,
+      NotificationStatus::FAILED->value,
+      ...$values,
+    ), ARRAY_A);
+
+    return array_map(static fn(array $row): array => [
+      $label => (string) $row['label'],
+      'total' => (int) $row['total'],
+      'successful' => (int) $row['successful'],
+      'failed' => (int) $row['failed'],
+    ], $rows);
   }
 }

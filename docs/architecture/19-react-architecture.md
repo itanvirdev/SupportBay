@@ -423,6 +423,10 @@ Implemented administrator template workspace:
 - installation-wide master email switch
 - independent predefined event/recipient controls
 
+The Settings Delivery Logs workspace uses protected administrator endpoints for paginated delivery history, safe diagnostic detail, and retry. Search and filters remain server-backed. Retry buttons are rendered only from server `can_retry` state, and the frontend model intentionally omits stored content, headers, payloads, and raw metadata.
+
+The Reports workspace loads aggregate notification delivery data from the protected reporting API. It presents date/channel/event filters, delivery-health summaries, a zero-filled daily trend, and event/channel tables. The client model contains no recipient or message fields.
+
 Agent ticket detail exposes distinct Resolve, Close, and Reopen transitions. Resolution and closure hide the reply composer until the ticket is reopened. Customer ticket detail treats both resolved and closed states as finalized and offers the existing reopen action for either state.
 
 All operations use the authenticated SupportBay REST client and WordPress REST nonce. Sanitized preview HTML comes from the server; raw draft HTML is never injected directly into the page.
