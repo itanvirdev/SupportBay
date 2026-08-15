@@ -79,6 +79,64 @@ final class ReactAdminFlowTest extends FlowTest {
       'Settings includes schema-driven, secret-safe provider configuration and lifecycle controls.'
     );
 
+    $settingsWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/SettingsWorkspace.tsx'
+    );
+    $templateWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/NotificationTemplateWorkspace.tsx'
+    );
+    $ticketConversation = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketConversation.tsx'
+    );
+
+    Assert::true(
+      is_string($ticketConversation)
+      && str_contains($ticketConversation, "transition('resolve')")
+      && str_contains($ticketConversation, 'Resolve ticket')
+      && str_contains($ticketConversation, "['resolved','closed'].includes(ticket.status)"),
+      'Agent ticket detail supports resolution and blocks final-state composers.'
+    );
+
+    Assert::true(
+      is_string($settingsWorkspace)
+      && str_contains($settingsWorkspace, 'Email Notifications')
+      && str_contains($settingsWorkspace, 'Integrations')
+      && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace />')
+      && str_contains($settingsWorkspace, '<ProviderWorkspace />'),
+      'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($templateWorkspace)
+      && str_contains($templateWorkspace, "adminGet<NotificationTemplate[]>('admin/notification-templates')")
+      && str_contains($templateWorkspace, "adminGet<NotificationPreferences>('admin/notification-preferences')")
+      && str_contains($templateWorkspace, "adminPut<NotificationPreferences>('admin/notification-preferences', preferences)")
+      && str_contains($templateWorkspace, 'Email Preferences')
+      && str_contains($templateWorkspace, 'Save preferences')
+      && str_contains($templateWorkspace, 'adminPut<NotificationTemplate>(path, payload)')
+      && str_contains($templateWorkspace, '`${path}/preview`')
+      && str_contains($templateWorkspace, '`${path}/test-email`')
+      && str_contains($templateWorkspace, '`${path}/reset`')
+      && str_contains($templateWorkspace, 'dangerouslySetInnerHTML={{ __html: preview.html_content }}')
+      && ! str_contains(strtolower($templateWorkspace), 'smtp'),
+      'Email Notifications uses protected template, preview, reset, and WordPress test-email APIs without SMTP configuration.'
+    );
+
+    $adminBundle = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/dist/supportbay-admin.js'
+    );
+
+    Assert::true(
+      is_string($adminBundle)
+      && str_contains($adminBundle, 'Notification Templates')
+      && str_contains($adminBundle, '/preview')
+      && str_contains($adminBundle, '/test-email')
+      && str_contains($adminBundle, 'notification-preferences')
+      && str_contains($adminBundle, 'Email Preferences')
+      && str_contains($adminBundle, 'Send test email'),
+      'Compiled administrator bundle contains the notification template workspace.'
+    );
+
     $verificationDirectory = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/VerificationDirectory.tsx'
     );

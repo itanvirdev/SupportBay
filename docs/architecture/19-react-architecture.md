@@ -410,6 +410,23 @@ Global error handler:
 
 # Notification System (Frontend)
 
+Implemented administrator template workspace:
+
+- shared Settings navigation for Email Notifications and Integrations
+- predefined template selection by event and recipient
+- active/inactive control
+- subject, HTML, and plain-text editors
+- click-to-insert placeholder controls
+- non-persistent desktop/mobile preview
+- save and reset-to-default actions
+- validated WordPress test-email action
+- installation-wide master email switch
+- independent predefined event/recipient controls
+
+Agent ticket detail exposes distinct Resolve, Close, and Reopen transitions. Resolution and closure hide the reply composer until the ticket is reopened. Customer ticket detail treats both resolved and closed states as finalized and offers the existing reopen action for either state.
+
+All operations use the authenticated SupportBay REST client and WordPress REST nonce. Sanitized preview HTML comes from the server; raw draft HTML is never injected directly into the page.
+
 Handles:
 
 - success messages

@@ -235,11 +235,53 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
           $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
         );
         break;
 
       case 'migration':
         \SupportBay\Dev\DatabaseMigrationFlowTest::run();
+        break;
+
+      case 'notification-api':
+        \SupportBay\Dev\NotificationApiFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationController::class),
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+        );
+        break;
+
+      case 'notification-retry':
+        \SupportBay\Dev\NotificationRetryFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationRetryWorker::class),
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+        );
+        break;
+
+      case 'notification-template':
+        \SupportBay\Dev\NotificationTemplateFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationTemplateService::class),
+        );
+        break;
+
+      case 'notification-template-api':
+        \SupportBay\Dev\NotificationTemplateApiFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationTemplateController::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+        );
+        break;
+
+      case 'notification-preference':
+        \SupportBay\Dev\NotificationPreferenceFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationPreferenceService::class),
+        );
+        break;
+
+      case 'notification-preference-api':
+        \SupportBay\Dev\NotificationPreferenceApiFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationPreferenceController::class),
+        );
         break;
 
       case 'api-webhook':
@@ -249,9 +291,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
-          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
-          $container->get(\SupportBay\Modules\Providers\Services\ProviderConnectionService::class),
+          $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
+          $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
+          $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
         );
         break;
 
@@ -383,9 +425,39 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
           $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
         );
 
         \SupportBay\Dev\DatabaseMigrationFlowTest::run();
+
+        \SupportBay\Dev\NotificationApiFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationController::class),
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+        );
+
+        \SupportBay\Dev\NotificationRetryFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationRetryWorker::class),
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+        );
+
+        \SupportBay\Dev\NotificationTemplateFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationTemplateService::class),
+        );
+
+        \SupportBay\Dev\NotificationTemplateApiFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationTemplateController::class),
+          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
+        );
+
+        \SupportBay\Dev\NotificationPreferenceFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Services\NotificationPreferenceService::class),
+        );
+
+        \SupportBay\Dev\NotificationPreferenceApiFlowTest::run(
+          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationPreferenceController::class),
+        );
 
         \SupportBay\Dev\ApiWebhookFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Http\Controllers\TicketController::class),
@@ -423,6 +495,10 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- portal-react\n";
         echo "- notification\n";
         echo "- migration\n";
+        echo "- notification-api\n";
+        echo "- notification-retry\n";
+        echo "- notification-template\n";
+        echo "- notification-template-api\n";
         echo "- api-webhook\n";
         echo "- admin-react\n";
         echo "- all\n";

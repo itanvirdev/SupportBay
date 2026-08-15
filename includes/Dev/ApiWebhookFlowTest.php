@@ -107,6 +107,10 @@ final class ApiWebhookFlowTest extends FlowTest {
       'Manager ticket split route is registered.'
     );
     Assert::true(
+      isset($routes['/sbay/v1/tickets/(?P<id>\d+)/resolve']),
+      'Capability-protected ticket resolution route is registered.'
+    );
+    Assert::true(
       isset($routes['/sbay/v1/admin/customers/(?P<id>\d+)/profile']),
       'Capability-protected Customer 360 profile route is registered.'
     );

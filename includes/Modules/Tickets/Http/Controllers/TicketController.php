@@ -58,7 +58,7 @@ final class TicketController {
       'args'                => $this->idArgs(),
     ]);
 
-    foreach (['close', 'reopen'] as $action) {
+    foreach (['resolve', 'close', 'reopen'] as $action) {
       register_rest_route(
         self::NAMESPACE,
         '/tickets/(?P<id>\d+)/' . $action,
@@ -192,8 +192,8 @@ final class TicketController {
       return RestResponse::error('Ticket was not found.', 'TICKET_NOT_FOUND', [], 404);
     }
 
-    if ($ticket->isClosed()) {
-      return RestResponse::error('Closed tickets cannot receive replies.', 'TICKET_CLOSED', [], 409);
+    if (! $ticket->status()->canReceiveReplies()) {
+      return RestResponse::error('Finalized tickets cannot receive replies.', 'TICKET_FINALIZED', [], 409);
     }
 
     $type = MessageType::tryFrom(
@@ -223,6 +223,19 @@ final class TicketController {
 
   public function close(WP_REST_Request $request): WP_REST_Response {
     return $this->transition($request, 'close');
+  }
+
+  public function resolve(WP_REST_Request $request): WP_REST_Response {
+    try {
+      $ticket = $this->tickets->resolve(
+        (int) $request->get_param('id'),
+        get_current_user_id(),
+      );
+    } catch (RuntimeException $exception) {
+      return RestResponse::error($exception->getMessage(), 'TICKET_TRANSITION_FAILED', [], 409);
+    }
+
+    return RestResponse::success($ticket->toArray(), 'Ticket resolved.');
   }
 
   public function reopen(WP_REST_Request $request): WP_REST_Response {

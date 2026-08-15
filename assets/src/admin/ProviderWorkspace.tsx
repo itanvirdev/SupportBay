@@ -129,12 +129,7 @@ export function ProviderWorkspace() {
   };
 
   return (
-    <section className="sbay-provider-workspace">
-      <nav aria-label="Settings sections">
-        <span>General</span><span>Security</span><span>User Roles</span><span>Categories</span>
-        <span>Email Notifications</span><span className="is-active">Integrations</span>
-      </nav>
-      <div className="sbay-provider-content">
+    <section className="sbay-provider-content">
         <header>
           <div><small>Installed integrations</small><h2>Providers</h2><p>Manage the integrations registered with this SupportBay installation.</p></div>
           <button type="button" onClick={() => void load()} disabled={loading}>Refresh</button>
@@ -177,7 +172,6 @@ export function ProviderWorkspace() {
             {configuration ? <footer><button type="button" onClick={() => setEditing(null)}>Cancel</button><button type="submit" className="is-primary" disabled={saving}>{saving ? 'Saving…' : 'Save configuration'}</button></footer> : null}
           </form>
         </div> : null}
-      </div>
     </section>
   );
 }

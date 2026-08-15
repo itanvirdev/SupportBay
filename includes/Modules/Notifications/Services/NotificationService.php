@@ -8,21 +8,41 @@ use RuntimeException;
 use Throwable;
 use SupportBay\Modules\Notifications\Contracts\NotificationChannel;
 use SupportBay\Modules\Notifications\Data\NotificationData;
+use SupportBay\Modules\Notifications\Data\NotificationLogQuery;
 use SupportBay\Modules\Notifications\Entities\NotificationLog;
 use SupportBay\Modules\Notifications\Enums\NotificationStatus;
 use SupportBay\Modules\Notifications\Repositories\NotificationLogRepository;
 
 final class NotificationService {
   private const MAXIMUM_RETRY_ATTEMPTS = 3;
+  private const RETRY_BASE_DELAY_SECONDS = 300;
 
   public function __construct(
     private readonly NotificationChannel $channel,
     private readonly NotificationLogRepository $logs,
+    private readonly NotificationScheduler $scheduler,
   ) {
   }
 
   public function send(NotificationData $notification): bool {
-    $logId = $this->logs->create([
+    return $this->deliver($notification, $this->createLog($notification));
+  }
+
+  public function enqueue(NotificationData $notification): int {
+    $logId = $this->createLog(
+      $notification,
+      current_time('mysql'),
+    );
+    $this->scheduler->scheduleDispatch();
+
+    return $logId;
+  }
+
+  private function createLog(
+    NotificationData $notification,
+    ?string $scheduledAt = null,
+  ): int {
+    return $this->logs->create([
       'ticket_id' => $this->metadataId($notification, 'ticket_id'),
       'user_id' => $this->metadataId($notification, 'user_id'),
       'channel' => sanitize_key($this->channel->channel()),
@@ -34,13 +54,12 @@ final class NotificationService {
         'headers' => $notification->headers(),
       ]),
       'status' => NotificationStatus::PENDING->value,
+      'scheduled_at' => $scheduledAt,
       'provider' => $this->channel->provider() !== null
         ? sanitize_key($this->channel->provider())
         : null,
       'metadata' => wp_json_encode($notification->metadata()),
     ]);
-
-    return $this->deliver($notification, $logId);
   }
 
   /**
@@ -74,9 +93,90 @@ final class NotificationService {
     return $this->deliver($notification, $logId);
   }
 
+  public function dispatch(int $logId): bool {
+    $log = $this->logs->find($logId);
+
+    if (! $log || $log->status() !== NotificationStatus::PENDING) {
+      throw new RuntimeException(
+        'This notification is not pending dispatch.'
+      );
+    }
+
+    $this->assertCompatibleChannel($log);
+    $notification = $this->notificationFromLog($log);
+
+    if (! $this->logs->beginDispatch($logId)) {
+      throw new RuntimeException(
+        'This notification dispatch was already claimed.'
+      );
+    }
+
+    return $this->deliver($notification, $logId);
+  }
+
   /** @return NotificationLog[] */
   public function logsForTicket(int $ticketId): array {
     return $this->logs->findByTicket($ticketId);
+  }
+
+  public function findLog(int $logId): ?NotificationLog {
+    return $this->logs->find($logId);
+  }
+
+  /** @return array{items: NotificationLog[], total: int} */
+  public function searchLogs(NotificationLogQuery $query): array {
+    return $this->logs->search($query);
+  }
+
+  /** @return array{processed: int, sent: int, failed: int} */
+  public function retryDue(
+    int $limit = 20,
+    ?string $now = null,
+  ): array {
+    $result = ['processed' => 0, 'sent' => 0, 'failed' => 0];
+    $logs = $this->logs->findDueForRetry(
+      $now ?? current_time('mysql'),
+      self::MAXIMUM_RETRY_ATTEMPTS,
+      $limit,
+    );
+
+    foreach ($logs as $log) {
+      try {
+        $sent = $this->retry($log->id());
+      } catch (RuntimeException) {
+        $sent = false;
+      }
+
+      $result['processed']++;
+      $result[$sent ? 'sent' : 'failed']++;
+    }
+
+    return $result;
+  }
+
+  /** @return array{processed: int, sent: int, failed: int} */
+  public function dispatchDue(
+    int $limit = 20,
+    ?string $now = null,
+  ): array {
+    $result = ['processed' => 0, 'sent' => 0, 'failed' => 0];
+    $logs = $this->logs->findDuePending(
+      $now ?? current_time('mysql'),
+      $limit,
+    );
+
+    foreach ($logs as $log) {
+      try {
+        $sent = $this->dispatch($log->id());
+      } catch (RuntimeException) {
+        $sent = false;
+      }
+
+      $result['processed']++;
+      $result[$sent ? 'sent' : 'failed']++;
+    }
+
+    return $result;
   }
 
   private function metadataId(
@@ -98,6 +198,7 @@ final class NotificationService {
       $this->logs->markFailed(
         $logId,
         'The notification recipient is invalid.',
+        $this->nextRetryAt($logId),
       );
 
       return false;
@@ -109,6 +210,7 @@ final class NotificationService {
       $this->logs->markFailed(
         $logId,
         sanitize_text_field($exception->getMessage()),
+        $this->nextRetryAt($logId),
       );
 
       return false;
@@ -120,10 +222,27 @@ final class NotificationService {
       $this->logs->markFailed(
         $logId,
         'The notification channel reported a delivery failure.',
+        $this->nextRetryAt($logId),
       );
     }
 
     return $sent;
+  }
+
+  private function nextRetryAt(int $logId): ?string {
+    $log = $this->logs->find($logId);
+
+    if (! $log || $log->retryCount() >= self::MAXIMUM_RETRY_ATTEMPTS) {
+      return null;
+    }
+
+    $delay = self::RETRY_BASE_DELAY_SECONDS * (2 ** $log->retryCount());
+    $scheduled = new \DateTimeImmutable(
+      current_time('mysql'),
+      wp_timezone(),
+    );
+
+    return $scheduled->modify("+{$delay} seconds")->format('Y-m-d H:i:s');
   }
 
   private function assertCompatibleChannel(NotificationLog $log): void {

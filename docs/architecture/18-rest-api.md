@@ -235,6 +235,16 @@ POST /tickets/{id}/close
 
 ---
 
+## Resolve Ticket
+
+```http
+POST /tickets/{id}/resolve
+```
+
+Requires the ticket-status capability. Only open, pending, or answered tickets can be resolved.
+
+---
+
 ## Reopen Ticket
 
 ```http id="r16"
@@ -339,6 +349,32 @@ DELETE /departments/{id}
 ---
 
 # Notification Endpoints
+
+## Manage Templates
+
+```http
+GET /sbay/v1/admin/notification-templates
+GET /sbay/v1/admin/notification-templates/{event}/{recipient}
+PUT /sbay/v1/admin/notification-templates/{event}/{recipient}
+POST /sbay/v1/admin/notification-templates/{event}/{recipient}/reset
+POST /sbay/v1/admin/notification-templates/{event}/{recipient}/preview
+POST /sbay/v1/admin/notification-templates/{event}/{recipient}/test-email
+
+GET /sbay/v1/admin/notification-preferences
+PUT /sbay/v1/admin/notification-preferences
+```
+
+Requires:
+
+```text
+sbay_manage_settings
+```
+
+Templates are predefined by event and recipient type. Updates support status, subject, sanitized HTML content, and sanitized plain-text content.
+
+Preview renders optional unsaved draft fields against server-owned sample data without persistence. Test email requires a valid `test_recipient`, sends rendered plain text through WordPress mail, and records the delivery attempt in notification logs.
+
+---
 
 ## Get Logs
 

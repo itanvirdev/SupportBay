@@ -18,6 +18,8 @@ use SupportBay\Modules\Notifications\Data\NotificationData;
 use SupportBay\Modules\Notifications\Enums\NotificationStatus;
 use SupportBay\Modules\Notifications\Repositories\NotificationLogRepository;
 use SupportBay\Modules\Notifications\Services\NotificationService;
+use SupportBay\Modules\Activities\Services\ActivityService;
+use SupportBay\Modules\Activities\Enums\ActivityType;
 
 final class NotificationFlowTest extends FlowTest {
   protected static function title(): string {
@@ -31,7 +33,8 @@ final class NotificationFlowTest extends FlowTest {
     /** @var DepartmentService $departments */
     /** @var NotificationService $notifications */
     /** @var NotificationLogRepository $logs */
-    [$tickets, $messages, $customers, $departments, $notifications, $logs] = $services;
+    /** @var ActivityService $activities */
+    [$tickets, $messages, $customers, $departments, $notifications, $logs, $activities] = $services;
 
     echo "🚀 Starting SupportBay Notification Flow Test...\n\n";
 
@@ -75,9 +78,9 @@ final class NotificationFlowTest extends FlowTest {
     ]);
 
     Assert::count(
-      2,
+      0,
       $deliveries,
-      'Ticket creation notifies the administrator and customer.'
+      'Ticket creation queues email without blocking the request.'
     );
 
     $ticketLogs = $notifications->logsForTicket($ticketId);
@@ -89,11 +92,27 @@ final class NotificationFlowTest extends FlowTest {
     );
 
     Assert::true(
-      $ticketLogs[0]->status() === NotificationStatus::SENT
+      $ticketLogs[0]->status() === NotificationStatus::PENDING
+      && $ticketLogs[0]->scheduledAt() !== null,
+      'Queued notification records are pending immediate dispatch.'
+    );
+
+    Assert::true(
+      $notifications->dispatch($ticketLogs[0]->id())
+      && $notifications->dispatch($ticketLogs[1]->id()),
+      'Pending ticket notifications can be dispatched from their audit records.'
+    );
+
+    $ticketLogs = $notifications->logsForTicket($ticketId);
+
+    Assert::true(
+      count($deliveries) === 2
+      && $ticketLogs[0]->status() === NotificationStatus::SENT
       && $ticketLogs[0]->sentAt() !== null
+      && $ticketLogs[0]->retryCount() === 0
       && $ticketLogs[0]->channel() === 'email'
       && $ticketLogs[0]->provider() === 'wordpress',
-      'Successful email delivery records channel, provider, status, and send time.'
+      'First queued delivery records success without consuming a retry attempt.'
     );
 
     $initial = $messages->create([
@@ -116,6 +135,11 @@ final class NotificationFlowTest extends FlowTest {
       'content'     => 'Customer follow-up.',
     ]);
 
+    $customerReplyLogs = $notifications->logsForTicket($ticketId);
+    $notifications->dispatch(
+      $customerReplyLogs[count($customerReplyLogs) - 1]->id()
+    );
+
     Assert::count(
       3,
       $deliveries,
@@ -129,10 +153,25 @@ final class NotificationFlowTest extends FlowTest {
       'content'     => 'Agent response.',
     ]);
 
+    $agentReplyLogs = $notifications->logsForTicket($ticketId);
+    $notifications->dispatch(
+      $agentReplyLogs[count($agentReplyLogs) - 1]->id()
+    );
+
     Assert::equals(
       'sbay-notify-' . $suffix . '@example.com',
       $deliveries[3]['to'],
       'Agent reply notifies the ticket customer.'
+    );
+
+    $firstAssignmentLogs = array_values(array_filter(
+      $agentReplyLogs,
+      static fn($log): bool => $log->event() === 'ticket_assigned',
+    ));
+    Assert::true(
+      isset($firstAssignmentLogs[0])
+      && $notifications->dispatch($firstAssignmentLogs[0]->id()),
+      'First public staff reply queues assignment email for its responder.'
     );
 
     $internal = $messages->create([
@@ -144,15 +183,109 @@ final class NotificationFlowTest extends FlowTest {
     ]);
 
     Assert::count(
-      4,
+      5,
       $deliveries,
       'Internal notes never send customer notifications.'
     );
 
     Assert::count(
-      4,
+      5,
       $notifications->logsForTicket($ticketId),
       'Only actual public notification attempts create delivery logs.'
+    );
+
+    $tickets->resolve($ticketId, 1);
+    $resolvedLogs = $notifications->logsForTicket($ticketId);
+    $resolvedLog = $resolvedLogs[count($resolvedLogs) - 1];
+    $notifications->dispatch($resolvedLog->id());
+
+    Assert::true(
+      $resolvedLog->event() === 'ticket_resolved'
+      && str_contains((string) $deliveries[5]['subject'], 'resolved'),
+      'Resolving a ticket queues and delivers the customer resolution template.'
+    );
+    $resolutionActivities = array_filter(
+      $activities->getByTicket($ticketId),
+      static fn($activity): bool =>
+        $activity->eventType() === ActivityType::TICKET_RESOLVED,
+    );
+    Assert::count(
+      1,
+      $resolutionActivities,
+      'Resolving a ticket records one actor-aware timeline activity.'
+    );
+
+    $tickets->reopen($ticketId);
+    $resolvedReopenLogs = $notifications->logsForTicket($ticketId);
+    $resolvedReopenLog = $resolvedReopenLogs[count($resolvedReopenLogs) - 1];
+    $notifications->dispatch($resolvedReopenLog->id());
+
+    Assert::true(
+      $resolvedReopenLog->event() === 'ticket_reopened'
+      && str_contains((string) $deliveries[6]['subject'], 'reopened'),
+      'A resolved ticket can be reopened for continued support.'
+    );
+
+    $tickets->close($ticketId);
+    $closedLogs = $notifications->logsForTicket($ticketId);
+    $closedLog = $closedLogs[count($closedLogs) - 1];
+    $notifications->dispatch($closedLog->id());
+
+    Assert::true(
+      $closedLog->event() === 'ticket_closed'
+      && str_contains((string) $deliveries[7]['subject'], 'closed'),
+      'Closing a ticket queues and delivers the customer lifecycle template.'
+    );
+
+    $tickets->reopen($ticketId);
+    $reopenedLogs = $notifications->logsForTicket($ticketId);
+    $reopenedLog = $reopenedLogs[count($reopenedLogs) - 1];
+    $notifications->dispatch($reopenedLog->id());
+
+    Assert::true(
+      $reopenedLog->event() === 'ticket_reopened'
+      && str_contains((string) $deliveries[8]['subject'], 'reopened'),
+      'Reopening a ticket queues and delivers the customer lifecycle template.'
+    );
+
+    Assert::count(
+      9,
+      $notifications->logsForTicket($ticketId),
+      'Resolution, close, and reopen actions add one customer delivery record each.'
+    );
+
+    $agentId = wp_insert_user([
+      'user_login' => 'sbay-notify-agent-' . $suffix,
+      'user_pass' => wp_generate_password(32, true, true),
+      'user_email' => 'sbay-notify-agent-' . $suffix . '@example.com',
+      'display_name' => 'Notification Agent',
+      'role' => 'sbay_agent',
+    ]);
+    Assert::true(is_int($agentId), 'Notification test agent created.');
+
+    $tickets->changeAssignment($ticketId, (int) $agentId, 1);
+    $assignedLogs = $notifications->logsForTicket($ticketId);
+    $assignedLog = $assignedLogs[count($assignedLogs) - 1];
+    $notifications->dispatch($assignedLog->id());
+
+    Assert::true(
+      $assignedLog->event() === 'ticket_reassigned'
+      && ($deliveries[9]['to'] ?? '') === 'sbay-notify-agent-' . $suffix . '@example.com',
+      'Reassigning a ticket queues distinct email to the newly assigned agent.'
+    );
+
+    $tickets->changeAssignment($ticketId, (int) $agentId, 1);
+    Assert::count(
+      10,
+      $notifications->logsForTicket($ticketId),
+      'Assigning the current agent again is a notification no-op.'
+    );
+
+    $tickets->changeAssignment($ticketId, null, 1);
+    Assert::count(
+      10,
+      $notifications->logsForTicket($ticketId),
+      'Unassigning a ticket does not create an email delivery record.'
     );
 
     Assert::false(
@@ -242,14 +375,14 @@ final class NotificationFlowTest extends FlowTest {
     );
 
     Assert::count(
-      6,
+      12,
       $notifications->logsForTicket($ticketId),
       'Retries reuse their original audit records without creating duplicates.'
     );
 
     remove_filter('pre_wp_mail', $capture, 10);
     Assert::equals(
-      6,
+      12,
       $logs->deleteByTicket($ticketId),
       'Test notification delivery logs deleted.'
     );
@@ -260,5 +393,9 @@ final class NotificationFlowTest extends FlowTest {
     $tickets->delete($ticketId);
     $departments->delete($departmentId);
     $customers->deleteWithUser($customerId);
+    if (! function_exists('wp_delete_user')) {
+      require_once ABSPATH . 'wp-admin/includes/user.php';
+    }
+    wp_delete_user((int) $agentId);
   }
 }

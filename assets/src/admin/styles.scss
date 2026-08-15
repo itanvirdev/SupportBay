@@ -123,6 +123,60 @@
 .sbay-provider-dialog footer { padding-top:16px; display:flex; justify-content:flex-end; gap:9px; border-top:1px solid #e8edea; }
 .sbay-provider-dialog footer button { padding:9px 14px; border:1px solid #ccd8d1; border-radius:8px; background:#fff; cursor:pointer; font-weight:700; }
 .sbay-provider-dialog footer button.is-primary { border-color:#216e52; background:#216e52; color:#fff; }
+.sbay-settings-workspace { padding:24px; display:grid; grid-template-columns:220px minmax(0,1fr); gap:34px; border:1px solid #dfe7e2; border-radius:15px; background:#fff; }
+.sbay-settings-workspace>nav { display:grid; align-content:start; gap:6px; }
+.sbay-settings-workspace>nav span,.sbay-settings-workspace>nav button { padding:10px 12px; border:0; border-radius:8px; background:transparent; color:#52615a; font:inherit; text-align:left; }
+.sbay-settings-workspace>nav button { cursor:pointer; }
+.sbay-settings-workspace>nav button.is-active { background:#e7f2ed; color:#216e52; font-weight:700; }
+.sbay-template-workspace>header { margin-bottom:22px; display:flex; align-items:start; justify-content:space-between; gap:20px; }
+.sbay-template-workspace>header small,.sbay-template-editor small { color:#216e52; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.sbay-template-workspace>header h2 { margin:6px 0; font-size:26px; }
+.sbay-template-workspace>header p,.sbay-template-placeholders p,.sbay-template-preview>p { margin:0; color:#697770; }
+.sbay-template-workspace button { padding:9px 13px; border:1px solid #ccd8d1; border-radius:8px; background:#fff; cursor:pointer; font-weight:650; }
+.sbay-template-workspace button:disabled { cursor:not-allowed; opacity:.55; }
+.sbay-template-workspace button.is-primary { border-color:#216e52; background:#216e52; color:#fff; }
+.sbay-notification-preferences { margin-bottom:18px; padding:18px; display:grid; gap:16px; border:1px solid #dfe7e2; border-radius:12px; background:#f8fbf9; }
+.sbay-notification-preferences>header { display:flex; align-items:start; justify-content:space-between; gap:20px; }
+.sbay-notification-preferences h3 { margin:4px 0; font-size:19px; }
+.sbay-notification-preferences p { margin:0; color:#697770; }
+.sbay-notification-preferences>div { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.sbay-notification-preferences>div.is-disabled { opacity:.55; }
+.sbay-notification-preferences article { padding:12px; border:1px solid #dfe7e2; border-radius:9px; background:#fff; }
+.sbay-notification-preferences article>strong { display:block; margin-bottom:9px; text-transform:capitalize; }
+.sbay-notification-preferences article>div { display:flex; flex-wrap:wrap; gap:12px; }
+.sbay-notification-preferences article label,.sbay-switch { display:flex; align-items:center; gap:7px; font-weight:700; text-transform:capitalize; }
+.sbay-notification-preferences input { margin:0; }
+.sbay-notification-preferences>footer { display:flex; justify-content:flex-end; }
+.sbay-template-layout { display:grid; grid-template-columns:240px minmax(0,1fr); gap:18px; align-items:start; }
+.sbay-template-layout>aside { display:grid; overflow:hidden; border:1px solid #dfe7e2; border-radius:11px; }
+.sbay-template-layout>aside button { padding:13px; display:grid; gap:4px; border:0; border-bottom:1px solid #e8edea; border-radius:0; text-align:left; }
+.sbay-template-layout>aside button.is-active { background:#e7f2ed; color:#216e52; }
+.sbay-template-layout>aside span { color:#718078; font-size:12px; text-transform:capitalize; }
+.sbay-template-main { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr); gap:18px; align-items:start; }
+.sbay-template-editor,.sbay-template-preview { padding:18px; display:grid; gap:16px; border:1px solid #dfe7e2; border-radius:12px; background:#fbfcfb; }
+.sbay-template-editor>header,.sbay-template-preview>header { display:flex; align-items:start; justify-content:space-between; gap:16px; }
+.sbay-template-editor h3,.sbay-template-preview h3 { margin:4px 0 0; font-size:19px; }
+.sbay-template-editor label,.sbay-template-preview label { display:grid; gap:7px; font-weight:700; }
+.sbay-template-editor input,.sbay-template-editor select,.sbay-template-editor textarea,.sbay-template-preview input { width:100%; box-sizing:border-box; padding:9px 10px; border:1px solid #bfcfc6; border-radius:8px; background:#fff; font:inherit; }
+.sbay-template-editor textarea { resize:vertical; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; line-height:1.5; }
+.sbay-template-editor>header label { min-width:130px; }
+.sbay-template-placeholders { padding:14px; border:1px solid #dfe7e2; border-radius:9px; background:#fff; }
+.sbay-template-placeholders p { margin:4px 0 10px; font-size:12px; }
+.sbay-template-placeholders>div { display:flex; flex-wrap:wrap; gap:6px; }
+.sbay-template-placeholders button { padding:5px 8px; color:#216e52; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; }
+.sbay-template-editor>footer { padding-top:14px; display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e4eae6; }
+.sbay-template-preview>header>div { display:flex; gap:4px; }
+.sbay-template-preview>header button { padding:6px 9px; font-size:12px; }
+.sbay-template-preview>header button.is-active { border-color:#216e52; background:#e7f2ed; color:#216e52; }
+.sbay-template-preview article { width:100%; box-sizing:border-box; margin:auto; padding:18px; overflow:auto; border:1px solid #dfe7e2; border-radius:9px; background:#fff; transition:max-width .2s ease; }
+.sbay-template-preview article.is-mobile { max-width:360px; }
+.sbay-template-preview article>strong { display:block; padding-bottom:12px; border-bottom:1px solid #e8edea; }
+.sbay-template-preview article>div { min-height:150px; padding:14px 0; line-height:1.55; }
+.sbay-template-preview details { border-top:1px solid #e8edea; }
+.sbay-template-preview summary { padding-top:10px; cursor:pointer; font-weight:700; }
+.sbay-template-preview pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.sbay-template-preview form { padding-top:14px; display:flex; align-items:end; gap:8px; border-top:1px solid #e4eae6; }
+.sbay-template-preview form label { flex:1; }
 .sbay-verification-directory { display:grid; gap:20px; }
 .sbay-verification-directory>header { display:flex; justify-content:space-between; align-items:end; gap:20px; }
 .sbay-verification-directory>header>div { display:grid; justify-items:start; gap:5px; }
@@ -166,6 +220,11 @@
   .sbay-provider-workspace { grid-template-columns:1fr; }
   .sbay-provider-workspace>nav { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .sbay-provider-grid { grid-template-columns:1fr; }
+  .sbay-settings-workspace { grid-template-columns:1fr; }
+  .sbay-settings-workspace>nav { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sbay-template-layout,.sbay-template-main { grid-template-columns:1fr; }
+  .sbay-notification-preferences>div { grid-template-columns:1fr; }
+  .sbay-template-layout>aside { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .sbay-verification-filters { flex-wrap:wrap; }
   .sbay-verification-filters form { flex-basis:100%; }
   .sbay-verification-table>.is-header,.sbay-verification-row { grid-template-columns:minmax(220px,1fr) 110px 110px; }

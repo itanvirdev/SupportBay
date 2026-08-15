@@ -9,12 +9,17 @@ use SupportBay\Core\Events\Contracts\Listener;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Customers\Repositories\WordPressUserRepository;
 use SupportBay\Modules\Notifications\Data\NotificationData;
+use SupportBay\Modules\Notifications\Enums\NotificationRecipientType;
 use SupportBay\Modules\Notifications\Services\NotificationService;
+use SupportBay\Modules\Notifications\Services\NotificationPreferenceService;
+use SupportBay\Modules\Notifications\Services\NotificationTemplateService;
 use SupportBay\Modules\Tickets\Events\TicketCreated;
 
 final class SendTicketCreatedEmails implements Listener {
   public function __construct(
     private readonly NotificationService $notifications,
+    private readonly NotificationTemplateService $templates,
+    private readonly NotificationPreferenceService $preferences,
     private readonly CustomerService $customers,
     private readonly WordPressUserRepository $users,
   ) {
@@ -26,25 +31,33 @@ final class SendTicketCreatedEmails implements Listener {
     }
 
     $ticket = $event->ticket();
-    $subject = sprintf(
-      __('New support ticket #%s: %s', 'supportbay'),
-      $ticket->trackId(),
-      $ticket->subject(),
-    );
-    $content = sprintf(
-      __("A new support ticket has been created.\n\nTicket: #%s\nSubject: %s\nView: %s", 'supportbay'),
-      $ticket->trackId(),
-      $ticket->subject(),
-      home_url('/support/tickets/' . $ticket->id() . '/'),
-    );
+    $context = [
+      'site_name' => get_bloginfo('name'),
+      'site_url' => home_url('/'),
+      'current_date' => wp_date((string) get_option('date_format')),
+      'ticket_id' => $ticket->id(),
+      'track_id' => $ticket->trackId(),
+      'ticket_subject' => $ticket->subject(),
+      'ticket_url' => home_url('/support/tickets/' . $ticket->id() . '/'),
+    ];
+    $agentTemplate = $this->preferences->allows(
+      'ticket_created',
+      NotificationRecipientType::AGENT,
+    ) ? $this->templates->render(
+      'ticket_created',
+      NotificationRecipientType::AGENT,
+      $context,
+    ) : null;
 
-    $this->notifications->send(new NotificationData(
-      event: 'ticket_created',
-      recipient: (string) get_option('admin_email'),
-      subject: $subject,
-      content: $content,
-      metadata: ['ticket_id' => $ticket->id()],
-    ));
+    if ($agentTemplate) {
+      $this->notifications->enqueue(new NotificationData(
+        event: 'ticket_created',
+        recipient: (string) get_option('admin_email'),
+        subject: $agentTemplate->subject,
+        content: $agentTemplate->plainTextContent,
+        metadata: ['ticket_id' => $ticket->id()],
+      ));
+    }
 
     if (! $ticket->hasCustomer()) {
       return;
@@ -62,18 +75,30 @@ final class SendTicketCreatedEmails implements Listener {
       return;
     }
 
-    $this->notifications->send(new NotificationData(
-      event: 'ticket_created',
-      recipient: (string) $user->user_email,
-      subject: sprintf(
-        __('We received your ticket #%s', 'supportbay'),
-        $ticket->trackId(),
-      ),
-      content: $content,
-      metadata: [
-        'ticket_id' => $ticket->id(),
-        'user_id'   => $customer->userId(),
+    $customerTemplate = $this->preferences->allows(
+      'ticket_created',
+      NotificationRecipientType::CUSTOMER,
+    ) ? $this->templates->render(
+      'ticket_created',
+      NotificationRecipientType::CUSTOMER,
+      [
+        ...$context,
+        'customer_name' => (string) $user->display_name,
+        'customer_email' => (string) $user->user_email,
       ],
-    ));
+    ) : null;
+
+    if ($customerTemplate) {
+      $this->notifications->enqueue(new NotificationData(
+        event: 'ticket_created',
+        recipient: (string) $user->user_email,
+        subject: $customerTemplate->subject,
+        content: $customerTemplate->plainTextContent,
+        metadata: [
+          'ticket_id' => $ticket->id(),
+          'user_id'   => $customer->userId(),
+        ],
+      ));
+    }
   }
 }

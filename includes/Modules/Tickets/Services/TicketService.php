@@ -17,6 +17,8 @@ use SupportBay\Modules\Tickets\Events\TicketClosed;
 use SupportBay\Modules\Tickets\Events\TicketCreated;
 use SupportBay\Modules\Tickets\Events\TicketReopened;
 use SupportBay\Modules\Tickets\Events\TicketChanged;
+use SupportBay\Modules\Tickets\Events\TicketAssignmentChanged;
+use SupportBay\Modules\Tickets\Events\TicketResolved;
 use SupportBay\Modules\Tickets\Data\TicketQuery;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Core\Events\EventDispatcher;
@@ -138,19 +140,39 @@ final class TicketService {
     return $closed;
   }
 
+  /** Resolve a ticket that is still accepting replies. */
+  public function resolve(int $id, int $actorId): Ticket {
+    $ticket = $this->findOrFail($id);
+
+    if (! $ticket->status()->canReceiveReplies()) {
+      throw new RuntimeException('Only active tickets can be resolved.');
+    }
+
+    $this->repository->update($id, [
+      'status' => TicketStatus::RESOLVED->value,
+      'resolved_at' => current_time('mysql'),
+    ]);
+
+    $resolved = $this->findOrFail($id);
+    $this->events->dispatch(new TicketResolved($resolved, $actorId));
+
+    return $resolved;
+  }
+
   /**
    * Reopen a closed ticket.
    */
   public function reopen(int $id): Ticket {
     $ticket = $this->findOrFail($id);
 
-    if (! $ticket->isClosed()) {
-      throw new RuntimeException('Only closed tickets can be reopened.');
+    if (! $ticket->canBeReopened()) {
+      throw new RuntimeException('Only resolved or closed tickets can be reopened.');
     }
 
     $this->repository->update($id, [
       'status'      => TicketStatus::OPEN->value,
       'closed_at'   => null,
+      'resolved_at' => null,
       'reopened_at' => current_time('mysql'),
     ]);
 
@@ -161,7 +183,22 @@ final class TicketService {
   }
 
   public function changeAssignment(int $id, ?int $agentId, int $actorId): Ticket {
-    return $this->change($id, ['assigned_agent_id' => $agentId], 'assignment', $actorId);
+    $existing = $this->findOrFail($id);
+
+    if ($existing->assignedAgentId() === $agentId) {
+      return $existing;
+    }
+
+    $this->repository->update($id, ['assigned_agent_id' => $agentId]);
+    $ticket = $this->findOrFail($id);
+    $this->events->dispatch(new TicketChanged($ticket, 'assignment', $actorId));
+    $this->events->dispatch(new TicketAssignmentChanged(
+      ticket: $ticket,
+      previousAgentId: $existing->assignedAgentId(),
+      actorId: $actorId,
+    ));
+
+    return $ticket;
   }
 
   public function changeDepartment(int $id, int $departmentId, int $actorId): Ticket {

@@ -15,6 +15,8 @@ use SupportBay\Modules\Tickets\Events\TicketMerged;
 use SupportBay\Modules\Activities\Listeners\LogTicketMergedActivity;
 use SupportBay\Modules\Tickets\Services\TicketMergeService;
 use SupportBay\Modules\Tickets\Events\TicketSplit;
+use SupportBay\Modules\Tickets\Events\TicketResolved;
+use SupportBay\Modules\Activities\Listeners\LogTicketResolvedActivity;
 use SupportBay\Modules\Activities\Listeners\LogTicketSplitActivity;
 use SupportBay\Modules\Tickets\Services\TicketSplitService;
 
@@ -24,6 +26,7 @@ final class TicketServiceProvider extends ServiceProvider {
     TicketChanged::class => [LogTicketChangedActivity::class],
     TicketMerged::class => [LogTicketMergedActivity::class],
     TicketSplit::class => [LogTicketSplitActivity::class],
+    TicketResolved::class => [LogTicketResolvedActivity::class],
   ];
 
   // protected array $listeners = [
@@ -52,6 +55,7 @@ final class TicketServiceProvider extends ServiceProvider {
     $container->singleton(LogTicketChangedActivity::class);
     $container->singleton(LogTicketMergedActivity::class);
     $container->singleton(LogTicketSplitActivity::class);
+    $container->singleton(LogTicketResolvedActivity::class);
   }
 
   /**

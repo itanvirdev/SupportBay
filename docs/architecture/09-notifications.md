@@ -75,9 +75,62 @@ Email Notifications
 
 ---
 
+# Administrator Delivery Diagnostics
+
+Administrators can inspect notification delivery history through protected REST endpoints.
+
+Supported operations:
+
+- paginated log listing
+- search by recipient, subject, or delivery error
+- channel, event, and status filters
+- individual delivery diagnostics
+- manual retry of eligible pending or failed records
+
+The API may expose operational fields such as status, provider, retry count, timestamps, and delivery errors. It must never expose stored message content, headers, or raw metadata.
+
+Manual retries update the original audit record and retain the global three-attempt limit. They do not create duplicate notification logs.
+
+---
+
 # Email Templates
 
 Administrators can manage predefined email templates.
+
+Foundation behavior:
+
+- templates are stored under the `sbay_notification_templates` WordPress option
+- built-in templates remain the fallback when saved data is missing or invalid
+- ticket-created and public-reply variants are independent for customer and agent recipients
+- subjects use text sanitization, HTML uses `wp_kses_post()`, and plain content uses textarea sanitization before storage
+- `{{placeholder}}` is canonical; `{placeholder}` remains supported for compatibility
+- inactive templates suppress only their matching event/recipient notification
+- queued WordPress email currently sends rendered plain text; sanitized HTML is retained for preview and future formatting controls
+
+Administrator REST API:
+
+- `GET /sbay/v1/admin/notification-templates`
+- `GET /sbay/v1/admin/notification-templates/{event}/{recipient}`
+- `PUT /sbay/v1/admin/notification-templates/{event}/{recipient}`
+- `POST /sbay/v1/admin/notification-templates/{event}/{recipient}/reset`
+- `POST /sbay/v1/admin/notification-templates/{event}/{recipient}/preview`
+- `POST /sbay/v1/admin/notification-templates/{event}/{recipient}/test-email`
+
+All routes require `sbay_manage_settings`. Only predefined event/recipient combinations can be addressed. List and detail responses include editor metadata for statuses, recipient types, and placeholders. Updates may be partial and always pass through the template service sanitization policy.
+
+Preview accepts optional unsaved template fields, sanitizes them, and renders them with deterministic server-owned sample values without persistence. Test email requires a valid recipient, renders the same sanitized draft, and sends its plain-text content through WordPress `wp_mail()`. Test attempts create normal notification audit records and use the existing retry behavior when delivery fails. SupportBay does not manage SMTP settings.
+
+The React Settings workspace exposes Email Notifications alongside Integrations. Administrators can select each predefined recipient variant, edit status/subject/HTML/plain text, insert advertised placeholders, save or reset overrides, render desktop/mobile previews, and send test email. Preview HTML is rendered only from the sanitized server response; the browser does not render the unsanitized editor draft.
+
+Ticket lifecycle delivery listens to the existing `TicketClosed` and `TicketReopened` domain events. A linked customer receives the matching `ticket_closed:customer` or `ticket_reopened:customer` template only when the installation preference and template are both active. The listener resolves customer identity through the customer module, renders normalized ticket context, and queues delivery through the standard notification service. Lifecycle attempts therefore use the same audit, retry, and WordPress mail behavior as creation and reply notifications.
+
+Ticket resolution is a distinct staff transition. `TicketService::resolve()` accepts only replyable statuses, records `resolved_at`, and dispatches `TicketResolved` with the responsible actor. The activity listener records the resolution and the lifecycle notification listener queues `ticket_resolved:customer` when its preference and template are active. Resolved tickets cannot receive replies, but customers and staff may reopen them through the existing reopen transition; reopening clears both resolved and closed timestamps.
+
+Agent assignment delivery listens to the specialized `TicketAssignmentChanged` event, which carries the updated ticket, previous agent ID, and actor ID. An initial assignment renders `ticket_assigned:agent`; changing ownership between agents renders `ticket_reassigned:agent` for the newly assigned user. Both require a WordPress user with `sbay_view_tickets`, an enabled preference, and an active template. Manual, bulk, and first-public-reply workflows share this path through `TicketService::changeAssignment()`. Unassignment is silent, and assigning the current agent again is a domain no-op that creates no event, activity, or notification.
+
+Installation preferences are stored under the `sbay_notification_preferences` WordPress option. They provide a master email switch and independent event/recipient gates derived from the predefined template catalog. Missing values safely default to enabled, while unknown events and recipients are rejected. The two notification listeners check preferences before template rendering or queue creation; the matching template must also remain active.
+
+Administrators manage these controls through `GET` and `PUT /sbay/v1/admin/notification-preferences`. Both methods require `sbay_manage_settings`, partial updates preserve omitted variants, and no transport or SMTP configuration is stored. The React workspace loads preferences with templates and presents the master and per-recipient event controls above the content editor.
 
 Capabilities:
 
@@ -411,7 +464,11 @@ Verify formatting and deliverability.
 
 # Notification Queue
 
-Emails should be queued before sending.
+Ticket and public-reply email delivery is asynchronous. Event listeners persist a pending notification and request an immediate WordPress Cron dispatch, so ticket actions do not wait for the email provider.
+
+The pending audit record is also the queue record. The worker atomically changes it to processing before delivery, which prevents concurrent workers from sending it twice. First delivery does not increment the retry count.
+
+Failed deliveries are rescheduled for automatic retry through WordPress Cron. Only failed records are retryable; pending records await their first dispatch.
 
 Flow:
 
@@ -420,6 +477,8 @@ Event
 Create Notification
 ↓
 Queue Email
+↓
+Atomic Dispatch
 ↓
 Send
 ↓
@@ -467,6 +526,14 @@ Failed emails should be retryable.
 Default Retry Attempts:
 
 3
+
+Automatic retry delays:
+
+- 5 minutes
+- 10 minutes
+- 20 minutes
+
+The retry worker runs every five minutes and processes a bounded batch of 20 due records. Manual and scheduled retries use the same atomic claim, so concurrent workers cannot deliver the same record twice.
 
 ---
 

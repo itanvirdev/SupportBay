@@ -8,7 +8,7 @@ import '../shared/tickets/workspace.scss';
 import { TicketConversation, type ConversationMessage, type ConversationTicket, type TicketAttachment, type TicketContext } from '../shared/tickets/TicketConversation';
 import { CustomerProfile, type CustomerProfileData } from './CustomerProfile';
 import { CustomerDirectory } from './CustomerDirectory';
-import { ProviderWorkspace } from './ProviderWorkspace';
+import { SettingsWorkspace } from './SettingsWorkspace';
 import { VerificationDirectory } from './VerificationDirectory';
 
 interface TicketSummary {
@@ -133,9 +133,8 @@ function AdminApp() {
     setDetail({...detail, ticket: ticket.data, context: context.data});
   };
 
-  const transition = async () => {
+  const transition = async (action: 'resolve' | 'close' | 'reopen') => {
     if (!ticketId || !detail) return;
-    const action = detail.ticket.status === 'closed' ? 'reopen' : 'close';
     const response = await adminPost<ConversationTicket>(`tickets/${ticketId}/${action}`, {});
     setDetail({ ...detail, ticket: response.data });
   };
@@ -198,7 +197,7 @@ function AdminApp() {
       ) : null}
 
       {config.section === 'settings' ? (
-        <ProviderWorkspace />
+        <SettingsWorkspace />
       ) : null}
     </main>
   );

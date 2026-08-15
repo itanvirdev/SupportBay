@@ -11,12 +11,17 @@ use SupportBay\Modules\Customers\Repositories\WordPressUserRepository;
 use SupportBay\Modules\Messages\Events\MessageCreated;
 use SupportBay\Modules\Messages\Repositories\MessageRepository;
 use SupportBay\Modules\Notifications\Data\NotificationData;
+use SupportBay\Modules\Notifications\Enums\NotificationRecipientType;
 use SupportBay\Modules\Notifications\Services\NotificationService;
+use SupportBay\Modules\Notifications\Services\NotificationPreferenceService;
+use SupportBay\Modules\Notifications\Services\NotificationTemplateService;
 use SupportBay\Modules\Tickets\Services\TicketService;
 
 final class SendMessageCreatedEmail implements Listener {
   public function __construct(
     private readonly NotificationService $notifications,
+    private readonly NotificationTemplateService $templates,
+    private readonly NotificationPreferenceService $preferences,
     private readonly TicketService $tickets,
     private readonly CustomerService $customers,
     private readonly MessageRepository $messages,
@@ -50,6 +55,9 @@ final class SendMessageCreatedEmail implements Listener {
 
     $recipient = (string) get_option('admin_email');
     $eventKey = 'customer_reply';
+    $recipientType = NotificationRecipientType::AGENT;
+    $customerName = '';
+    $customerEmail = '';
 
     if (! $message->isFromCustomer()) {
       $customer = $ticket->hasCustomer()
@@ -68,22 +76,41 @@ final class SendMessageCreatedEmail implements Listener {
 
       $recipient = (string) $user->user_email;
       $eventKey = 'ticket_reply';
+      $recipientType = NotificationRecipientType::CUSTOMER;
+      $customerName = (string) $user->display_name;
+      $customerEmail = (string) $user->user_email;
     }
 
-    $this->notifications->send(new NotificationData(
+    if (! $this->preferences->allows($eventKey, $recipientType)) {
+      return;
+    }
+
+    $template = $this->templates->render(
+      $eventKey,
+      $recipientType,
+      [
+        'site_name' => get_bloginfo('name'),
+        'site_url' => home_url('/'),
+        'current_date' => wp_date((string) get_option('date_format')),
+        'customer_name' => $customerName,
+        'customer_email' => $customerEmail,
+        'ticket_id' => $ticket->id(),
+        'track_id' => $ticket->trackId(),
+        'ticket_subject' => $ticket->subject(),
+        'ticket_url' => home_url('/support/tickets/' . $ticket->id() . '/'),
+        'reply_content' => wp_strip_all_tags($message->content()),
+      ],
+    );
+
+    if (! $template) {
+      return;
+    }
+
+    $this->notifications->enqueue(new NotificationData(
       event: $eventKey,
       recipient: $recipient,
-      subject: sprintf(
-        __('New reply on ticket #%s: %s', 'supportbay'),
-        $ticket->trackId(),
-        $ticket->subject(),
-      ),
-      content: sprintf(
-        __("A new reply was added to ticket #%s.\n\n%s\n\nView: %s", 'supportbay'),
-        $ticket->trackId(),
-        wp_strip_all_tags($message->content()),
-        home_url('/support/tickets/' . $ticket->id() . '/'),
-      ),
+      subject: $template->subject,
+      content: $template->plainTextContent,
       metadata: [
         'ticket_id'  => $ticket->id(),
         'message_id' => $message->id(),

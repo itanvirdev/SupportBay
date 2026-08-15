@@ -70,6 +70,16 @@ final class ReactPortalFlowTest extends FlowTest {
       'Ticket creation requires provider-backed Purchase Code/Key entitlement.'
     );
 
+    $ticketDetailPage = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/react/modules/tickets/TicketDetailPage.tsx'
+    );
+    Assert::true(
+      is_string($ticketDetailPage)
+      && str_contains($ticketDetailPage, "['resolved', 'closed'].includes(detail.ticket.status)")
+      && str_contains($ticketDetailPage, 'portalApi.reopenTicket(ticketId)'),
+      'Customer ticket detail treats resolved tickets as final and reopenable.'
+    );
+
     $profilePage = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/react/modules/profile/ProfilePage.tsx'
     );

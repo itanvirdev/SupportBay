@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Notification Retry Foundation
+Ticket Resolution Workflow and Notification
 
 Current Objective
 
-Replay failed notification audit records through their original channel, atomically track attempts, prevent duplicate logs, and enforce the three-attempt limit.
+Provide a first-class staff resolution transition, finalized reply behavior, customer reopening, activity history, and configurable customer resolution email.
 
 ---
 
@@ -390,12 +390,63 @@ Current behavior
 - Invalid recipients are recorded as retryable failures without channel delivery.
 - Failed records can be replayed from their stored payload through the matching channel.
 - Retries update the original audit record and stop after three attempts.
+- Administrators can search and filter notification delivery logs through protected REST endpoints.
+- Administrators can inspect delivery diagnostics and manually retry eligible failures.
+- API responses never expose stored message bodies, headers, or raw metadata.
+- Failed deliveries are scheduled automatically with 5, 10, and 20 minute retry delays.
+- A self-healing WordPress Cron worker processes at most 20 due records per run.
+- Cron and manual retries share the same atomic claim and three-attempt enforcement.
+- Successful or exhausted deliveries have no remaining retry schedule.
+- Ticket and public-reply listeners persist pending notifications instead of sending email inside the originating request.
+- An immediate WordPress Cron hook dispatches pending records, with the recurring worker remaining as fallback.
+- Pending dispatch uses an atomic claim and does not increment the retry count.
+- Pending records are dispatchable; only failed records are retryable.
+- Nine built-in templates cover ticket creation, public replies, ticket lifecycle changes, resolution, assignment, and reassignment.
+- Templates store sanitized subjects, HTML, and plain text in WordPress options.
+- Canonical `{{placeholder}}` and legacy `{placeholder}` formats are rendered safely.
+- Invalid or missing saved templates fall back to built-in defaults.
+- Inactive variants suppress only their matching event and recipient notification.
+- Queued WordPress email delivery currently uses rendered plain text; sanitized HTML is available for preview and future formatting controls.
+- Administrators can list and inspect predefined templates through versioned REST endpoints.
+- Template mutations require the `sbay_manage_settings` capability.
+- Partial updates preserve omitted fields and apply the template service sanitization policy.
+- Reset endpoints remove saved overrides and return the built-in fallback.
+- API metadata exposes allowed statuses, recipient types, and editor placeholders.
+- Administrators can preview sanitized draft changes without saving them.
+- Preview context is generated server-side and cannot be replaced with arbitrary client data.
+- Valid test recipients receive the rendered plain-text draft through WordPress `wp_mail()`.
+- Test delivery attempts use the normal notification audit and failure/retry system.
+- SupportBay does not store or manage SMTP configuration.
+- Settings now provides shared React navigation between Email Notifications and Integrations.
+- The template editor supports status, subject, HTML, plain text, and click-to-insert placeholders.
+- Draft previews support desktop and mobile widths and display only server-sanitized HTML.
+- Administrators can save, reset, refresh, and send a test message from the same workspace.
+- Provider management remains available under the Integrations settings section.
+- Installation-wide notification preferences are stored independently from template content.
+- A master email switch can pause SupportBay email creation without changing templates.
+- Each predefined event/recipient variant can be enabled or disabled independently.
+- Delivery listeners require both the preference and matching template to be active before queueing.
+- Protected REST endpoints expose partial preference updates with strict event and recipient validation.
+- The React Email Notifications workspace provides consolidated master and event-recipient controls.
+- Ticket close and reopen domain events now queue one customer notification when the ticket has a linked customer.
+- Lifecycle delivery uses the same preference, active-template, queue, retry, and audit rules as existing ticket email.
+- Built-in customer templates cover `ticket_closed` and `ticket_reopened` and appear automatically in the React editor.
+- Assignment changes with a resulting agent queue `ticket_assigned:agent` for the newly assigned WordPress user.
+- First-reply self-assignment, manual assignment, and bulk assignment share the same listener path.
+- Unassignment and users without the SupportBay ticket-view capability do not create assignment email.
+- `TicketAssignmentChanged` now carries the updated ticket, previous agent ID, and actor ID.
+- Initial ownership uses `ticket_assigned`; moving ownership between agents uses `ticket_reassigned`.
+- Assigning the already-current agent is a no-op and creates neither activity nor notification.
+- Staff can resolve active tickets through `POST /tickets/{id}/resolve`.
+- Resolution records `resolved_at`, emits `TicketResolved`, creates activity, and queues `ticket_resolved:customer`.
+- Resolved tickets reject replies in both REST and React interfaces until reopened.
+- Existing reopen behavior now supports resolved and closed tickets and clears final-state timestamps.
+- Agent ticket details expose distinct Resolve, Close, and Reopen actions; customers can reopen resolved tickets.
 
 Future notification work
 
-- Queue and scheduled retry workers
-- Editable templates and preview
-- SMTP and external notification providers
+- React notification delivery diagnostics workspace
+- External notification providers
 
 ---
 
@@ -597,6 +648,30 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 26. ✅ Add atomic notification retry claiming, stored-payload replay, channel compatibility checks, three-attempt enforcement, and duplicate-free audit updates.
 
+27. ✅ Add administrator-only notification log list/detail endpoints with pagination, filtering, safe diagnostics, sensitive-payload redaction, and protected manual retries.
+
+28. ✅ Add automatic exponential notification retry scheduling, a bounded five-minute WordPress Cron worker, atomic due processing, deactivation cleanup, and deterministic flow coverage.
+
+29. ✅ Queue initial ticket and reply emails, add atomic pending dispatch with immediate Cron triggering and bounded fallback batches, and separate first-delivery state from retry state.
+
+30. ✅ Add option-backed notification template entities, recipient/status enums, four safe defaults, placeholder rendering, sanitization, fallback/reset behavior, listener integration, and deterministic flow coverage.
+
+31. ✅ Add administrator-only notification template list/detail/update/reset REST endpoints, editor metadata, partial sanitized mutations, safe errors, and deterministic authorization coverage.
+
+32. ✅ Add non-persistent sanitized draft previews, deterministic sample context, validated WordPress test-email delivery, audit logging, safe errors, and API flow coverage.
+
+33. ✅ Add the React Email Notifications settings workspace with shared settings navigation, template selection/editing, placeholder insertion, save/reset, desktop/mobile previews, test email, responsive styling, compiled assets, and flow coverage.
+
+34. ✅ Add option-backed installation notification preferences, a master email switch, independent event-recipient gates, protected REST management, listener enforcement, React controls, and deterministic flow coverage.
+
+35. ✅ Add configurable customer ticket-closed and ticket-reopened templates, preference-derived event controls, asynchronous lifecycle delivery, audit integration, and end-to-end flow coverage.
+
+36. ✅ Add configurable assigned-agent email, SupportBay capability validation, preference and template gates, manual/bulk/first-reply assignment integration, unassignment suppression, and end-to-end flow coverage.
+
+37. ✅ Add immutable previous-assignee event context, distinct agent reassignment template and preference, specialized notification routing, same-assignee no-op enforcement, and end-to-end flow coverage.
+
+38. ✅ Add staff ticket resolution transition, immutable event, activity logging, customer template and preference, finalized reply enforcement, resolved-ticket reopening, React controls, and end-to-end flow coverage.
+
 ---
 
 # Current Workflow
@@ -772,11 +847,11 @@ Status
 ```
 Current Sprint
 
-Notification Retry Foundation
+Ticket Resolution Workflow and Notification
 
 Next Target
 
-Next milestone selection
+React notification delivery diagnostics workspace
 ```
 
 ---

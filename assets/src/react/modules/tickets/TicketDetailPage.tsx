@@ -59,11 +59,11 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
   };
 
   const transitionTicket = async () => {
-    const closing = detail.ticket.status !== 'closed';
+    const reopening = ['resolved', 'closed'].includes(detail.ticket.status);
     const confirmed = window.confirm(
-      closing
-        ? 'Close this ticket? You will not be able to reply until it is reopened.'
-        : 'Reopen this ticket and continue the conversation?',
+      reopening
+        ? 'Reopen this ticket and continue the conversation?'
+        : 'Close this ticket? You will not be able to reply until it is reopened.',
     );
 
     if (!confirmed) {
@@ -74,9 +74,9 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
     setTransitionError(null);
 
     try {
-      const ticket = closing
-        ? await portalApi.closeTicket(ticketId)
-        : await portalApi.reopenTicket(ticketId);
+      const ticket = reopening
+        ? await portalApi.reopenTicket(ticketId)
+        : await portalApi.closeTicket(ticketId);
       setDetail({ ...detail, ticket });
     } catch (exception) {
       setTransitionError(
@@ -128,14 +128,14 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
             {detail.ticket.status}
           </span>
           <button
-            className={detail.ticket.status === 'closed' ? 'sbay-primary-button' : 'sbay-secondary-button'}
+            className={['resolved', 'closed'].includes(detail.ticket.status) ? 'sbay-primary-button' : 'sbay-secondary-button'}
             type="button"
             onClick={transitionTicket}
             disabled={transitioning}
           >
             {transitioning
               ? 'Updating…'
-              : detail.ticket.status === 'closed' ? 'Reopen ticket' : 'Close ticket'}
+              : ['resolved', 'closed'].includes(detail.ticket.status) ? 'Reopen ticket' : 'Close ticket'}
           </button>
         </div>
       </header>

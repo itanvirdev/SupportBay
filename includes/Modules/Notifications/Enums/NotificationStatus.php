@@ -13,7 +13,7 @@ enum NotificationStatus: string {
   case CANCELLED = 'cancelled';
 
   public function canRetry(): bool {
-    return in_array($this, [self::PENDING, self::FAILED], true);
+    return $this === self::FAILED;
   }
 
   public function isSuccessful(): bool {

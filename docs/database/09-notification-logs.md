@@ -102,9 +102,12 @@ delivered (optional)
 failed
 ```
 
-Retryable:
+Dispatchable:
 
 - pending
+
+Retryable:
+
 - failed
 
 Final states:
@@ -129,9 +132,11 @@ Final states:
 
 SupportBay should support retries:
 
-- exponential backoff (future)
+- exponential backoff
 - manual retry by admin
 - scheduled retry worker (cron)
+
+Initial ticket and reply notifications use the same table as their delivery queue. Pending records receive an immediate `scheduled_at` value and are atomically claimed as processing without incrementing `retry_count`. A failed first delivery becomes retryable and receives its exponential retry schedule.
 
 ---
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Notifications\Repositories;
 
 use SupportBay\Core\Database\Repository;
+use SupportBay\Modules\Notifications\Data\NotificationLogQuery;
 use SupportBay\Modules\Notifications\Database\NotificationLogSchema;
 use SupportBay\Modules\Notifications\Entities\NotificationLog;
 use SupportBay\Modules\Notifications\Enums\NotificationStatus;
@@ -56,21 +57,141 @@ final class NotificationLogRepository extends Repository {
     );
   }
 
+  /** @return NotificationLog[] */
+  public function findDueForRetry(
+    string $now,
+    int $maximumAttempts,
+    int $limit = 20,
+  ): array {
+    $rows = $this->db->get_results($this->db->prepare(
+      "SELECT * FROM {$this->table()}
+       WHERE status = %s
+         AND scheduled_at IS NOT NULL
+         AND scheduled_at <= %s
+         AND retry_count < %d
+       ORDER BY scheduled_at ASC, id ASC
+       LIMIT %d",
+      NotificationStatus::FAILED->value,
+      $now,
+      max(1, $maximumAttempts),
+      max(1, min(100, $limit)),
+    ), ARRAY_A);
+
+    return array_map(
+      fn(array $row): NotificationLog => $this->hydrate($row),
+      $rows,
+    );
+  }
+
+  /** @return NotificationLog[] */
+  public function findDuePending(string $now, int $limit = 20): array {
+    $rows = $this->db->get_results($this->db->prepare(
+      "SELECT * FROM {$this->table()}
+       WHERE status = %s
+         AND scheduled_at IS NOT NULL
+         AND scheduled_at <= %s
+       ORDER BY scheduled_at ASC, id ASC
+       LIMIT %d",
+      NotificationStatus::PENDING->value,
+      $now,
+      max(1, min(100, $limit)),
+    ), ARRAY_A);
+
+    return array_map(
+      fn(array $row): NotificationLog => $this->hydrate($row),
+      $rows,
+    );
+  }
+
+  /** @return array{items: NotificationLog[], total: int} */
+  public function search(NotificationLogQuery $query): array {
+    $clauses = [];
+    $values = [];
+
+    foreach (['channel', 'event', 'status'] as $field) {
+      if ($query->{$field} !== null && $query->{$field} !== '') {
+        $clauses[] = "{$field} = %s";
+        $values[] = $query->{$field};
+      }
+    }
+
+    if ($query->search !== null && $query->search !== '') {
+      $like = '%' . $this->db->esc_like($query->search) . '%';
+      $clauses[] = '(recipient LIKE %s OR subject LIKE %s OR error_message LIKE %s)';
+      array_push($values, $like, $like, $like);
+    }
+
+    $where = $clauses !== []
+      ? 'WHERE ' . implode(' AND ', $clauses)
+      : '';
+    $countSql = "SELECT COUNT(*) FROM {$this->table()} {$where}";
+    $total = (int) ($values !== []
+      ? $this->db->get_var($this->db->prepare($countSql, ...$values))
+      : $this->db->get_var($countSql));
+    $orderBy = match ($query->orderBy) {
+      'recipient' => 'recipient',
+      'event' => 'event',
+      'status' => 'status',
+      'sent_at' => 'sent_at',
+      default => 'created_at',
+    };
+    $direction = strtoupper($query->direction) === 'ASC' ? 'ASC' : 'DESC';
+    $sql = "SELECT * FROM {$this->table()} {$where} ORDER BY {$orderBy} {$direction}, id DESC LIMIT %d OFFSET %d";
+    $rows = $this->db->get_results($this->db->prepare(
+      $sql,
+      ...[
+        ...$values,
+        max(1, min(100, $query->perPage)),
+        max(0, ($query->page - 1) * $query->perPage),
+      ],
+    ), ARRAY_A);
+
+    return [
+      'items' => array_map(
+        fn(array $row): NotificationLog => $this->hydrate($row),
+        $rows,
+      ),
+      'total' => $total,
+    ];
+  }
+
   public function markSent(int $id): bool {
     return $this->updateById($id, [
       'status' => NotificationStatus::SENT->value,
       'sent_at' => $this->now(),
       'error_message' => null,
+      'scheduled_at' => null,
+      'updated_at' => $this->now(),
+    ], ['%s', '%s', '%s', '%s', '%s']);
+  }
+
+  public function markFailed(
+    int $id,
+    string $error,
+    ?string $scheduledAt = null,
+  ): bool {
+    return $this->updateById($id, [
+      'status' => NotificationStatus::FAILED->value,
+      'error_message' => $error,
+      'scheduled_at' => $scheduledAt,
       'updated_at' => $this->now(),
     ], ['%s', '%s', '%s', '%s']);
   }
 
-  public function markFailed(int $id, string $error): bool {
-    return $this->updateById($id, [
-      'status' => NotificationStatus::FAILED->value,
-      'error_message' => $error,
-      'updated_at' => $this->now(),
-    ], ['%s', '%s', '%s']);
+  public function schedulePending(int $id, string $scheduledAt): bool {
+    $result = $this->db->query($this->db->prepare(
+      "UPDATE {$this->table()}
+       SET scheduled_at = %s,
+           updated_at = %s
+       WHERE id = %d
+         AND status = %s",
+      $scheduledAt,
+      $this->now(),
+      $id,
+      NotificationStatus::PENDING->value,
+    ));
+
+    return $result === 1;
   }
 
   /**
@@ -85,16 +206,34 @@ final class NotificationLogRepository extends Repository {
        SET status = %s,
            retry_count = retry_count + 1,
            error_message = NULL,
+           scheduled_at = NULL,
            updated_at = %s
        WHERE id = %d
-         AND status IN (%s, %s)
+         AND status = %s
          AND retry_count < %d",
       NotificationStatus::PROCESSING->value,
       $this->now(),
       $id,
-      NotificationStatus::PENDING->value,
       NotificationStatus::FAILED->value,
       max(1, $maximumAttempts),
+    ));
+
+    return $result === 1;
+  }
+
+  public function beginDispatch(int $id): bool {
+    $result = $this->db->query($this->db->prepare(
+      "UPDATE {$this->table()}
+       SET status = %s,
+           error_message = NULL,
+           scheduled_at = NULL,
+           updated_at = %s
+       WHERE id = %d
+         AND status = %s",
+      NotificationStatus::PROCESSING->value,
+      $this->now(),
+      $id,
+      NotificationStatus::PENDING->value,
     ));
 
     return $result === 1;
@@ -106,6 +245,15 @@ final class NotificationLogRepository extends Repository {
       $this->table(),
       ['ticket_id' => $ticketId],
       ['%d'],
+    );
+  }
+
+  /** Test cleanup only; production logs remain audit records. */
+  public function deleteByRecipient(string $recipient): int {
+    return (int) $this->db->delete(
+      $this->table(),
+      ['recipient' => $recipient],
+      ['%s'],
     );
   }
 
