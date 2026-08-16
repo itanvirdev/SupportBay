@@ -8,6 +8,7 @@ export interface AdminConfig {
   canViewVerifications: boolean;
   canExportReports: boolean;
   canManageSavedReplies: boolean;
+  canManageCategories: boolean;
   section: 'tickets' | 'reports' | 'settings';
 }
 

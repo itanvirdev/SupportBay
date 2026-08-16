@@ -1258,6 +1258,18 @@ Saved Reply Dynamic Placeholders ✅
 
 Saved Reply Department Scoping ✅
 
+Ticket Categories Foundation ✅
+
+Customer Ticket Category Selection ✅
+
+Staff Ticket Category Changes and Activity ✅
+
+Ticket Category Queue Filtering and Bulk Classification ✅
+
+Category Management Settings UI ✅
+
+Ticket Category Reporting ✅
+
 Queue ✅
 
 Asynchronous Initial Delivery ✅

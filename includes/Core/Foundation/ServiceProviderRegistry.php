@@ -21,6 +21,7 @@ use SupportBay\Modules\Notifications\NotificationServiceProvider;
 use SupportBay\Modules\Webhooks\WebhookServiceProvider;
 use SupportBay\Modules\Admin\AdminServiceProvider;
 use SupportBay\Modules\SavedReplies\SavedReplyServiceProvider;
+use SupportBay\Modules\Categories\CategoryServiceProvider;
 
 final class ServiceProviderRegistry {
   /**
@@ -60,6 +61,7 @@ final class ServiceProviderRegistry {
     self::addProvider(new VerificationServiceProvider());
     self::addProvider(new NotificationServiceProvider());
     self::addProvider(new SavedReplyServiceProvider());
+    self::addProvider(new CategoryServiceProvider());
     self::addProvider(new WebhookServiceProvider());
     self::addProvider(new AdminServiceProvider());
     self::addProvider(new PortalServiceProvider());

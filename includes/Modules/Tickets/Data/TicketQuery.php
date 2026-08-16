@@ -16,6 +16,8 @@ final class TicketQuery {
     public readonly bool $unassigned = false,
     public readonly ?int $customerId = null,
     public readonly ?int $departmentId = null,
+    public readonly ?int $categoryId = null,
+    public readonly bool $uncategorized = false,
     public readonly bool $needsReply = false,
     public readonly ?string $slaState = null,
     public readonly string $orderBy = 'updated_at',

@@ -49,7 +49,8 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains(implode('', $bootstrap), 'reports')
       && str_contains(implode('', $bootstrap), 'settings')
       && str_contains(implode('', $bootstrap), 'canExportReports')
-      && str_contains(implode('', $bootstrap), 'canManageSavedReplies'),
+      && str_contains(implode('', $bootstrap), 'canManageSavedReplies')
+      && str_contains(implode('', $bootstrap), 'canManageCategories'),
       'Each administrator page receives authenticated API configuration and its active section.'
     );
 
@@ -114,6 +115,9 @@ final class ReactAdminFlowTest extends FlowTest {
     $savedReplyRenderer = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/shared/tickets/savedReplyRenderer.ts'
     );
+    $categoryWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/CategoryWorkspace.tsx'
+    );
 
     Assert::true(
       is_string($reportsWorkspace)
@@ -125,7 +129,10 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($ticketReportWorkspace, 'admin/tickets/options')
       && str_contains($ticketReportWorkspace, 'Daily support activity')
       && str_contains($ticketReportWorkspace, 'By department')
+      && str_contains($ticketReportWorkspace, 'By category')
       && str_contains($ticketReportWorkspace, 'By agent')
+      && str_contains($ticketReportWorkspace, 'category_id')
+      && str_contains($ticketReportWorkspace, 'Uncategorized')
       && str_contains($ticketReportWorkspace, 'First-response SLA')
       && str_contains($ticketReportWorkspace, 'response_bands')
       && is_string($slaWorkspace)
@@ -183,13 +190,28 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, 'Email Notifications')
       && str_contains($settingsWorkspace, 'Delivery Logs')
       && str_contains($settingsWorkspace, 'Saved Replies')
+      && str_contains($settingsWorkspace, 'Categories')
       && str_contains($settingsWorkspace, 'Ticket SLA')
       && str_contains($settingsWorkspace, 'Integrations')
       && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace />')
       && str_contains($settingsWorkspace, '<NotificationLogWorkspace />')
       && str_contains($settingsWorkspace, '<SavedReplyWorkspace />')
+      && str_contains($settingsWorkspace, '<CategoryWorkspace />')
       && str_contains($settingsWorkspace, '<ProviderWorkspace />'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($categoryWorkspace)
+      && str_contains($categoryWorkspace, "adminGet<Category[]>('categories')")
+      && str_contains($categoryWorkspace, "adminPost<Category>('categories'")
+      && str_contains($categoryWorkspace, 'adminPut<Category>(`categories/${selected.id}`')
+      && str_contains($categoryWorkspace, 'adminDelete(`categories/${selected.id}`')
+      && str_contains($categoryWorkspace, 'Global — all departments')
+      && str_contains($categoryWorkspace, 'Create Category')
+      && str_contains($categoryWorkspace, 'Save Changes')
+      && str_contains($categoryWorkspace, 'Categories used by tickets cannot be deleted'),
+      'Settings provides capability-gated category lifecycle management and safe deletion guidance.'
     );
 
     Assert::true(

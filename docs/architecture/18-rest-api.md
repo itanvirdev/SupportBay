@@ -41,6 +41,22 @@ Saved-reply list metadata advertises a fixed catalog of canonical `{{placeholder
 
 Saved replies may set an optional `department_id` applicability scope. Composer list requests pass the current ticket department and receive global replies plus exact matches. Ordinary staff requests without a department receive global replies only. Managers may omit the scope to inspect every record in Settings. Department scope improves relevance and is not treated as a secret-data boundary.
 
+## Customer Ticket Categories
+
+Authenticated customers load active categories for a selected department through `GET /portal/categories?department_id={id}`. The result combines global categories with categories scoped to that department and never exposes inactive records.
+
+`POST /portal/tickets` accepts `category_id`. When the selected department has applicable categories, the field is required. The portal service rejects inactive, missing, and cross-department selections before purchase entitlement resolution or ticket persistence. Departments without applicable categories continue to allow uncategorized tickets for backward compatibility.
+
+Staff ticket context includes the ticket's category name and the active global or department-scoped categories applicable to that ticket. Staff with `sbay_change_ticket_category` may submit the `category` action to `POST /admin/tickets/{id}/actions`, using a category ID or an empty value to clear classification.
+
+The ticket service validates category scope before persistence and emits the existing `TicketChanged` domain event. Category changes therefore produce dedicated `Category Changed` timeline activity. When a department move makes the current category invalid, the service clears it and records both department and category changes.
+
+`GET /tickets` accepts `category_id={id}` for exact classification and `category_id=uncategorized` for tickets without a category. Queue rows include `category_id` and the joined safe `category_name`; historical tickets retain their relationship even if the category is later inactive.
+
+The administrator ticket-options response includes active categories with their optional department scope. The shared queue uses those records for filtering and bulk controls. The `category` bulk action assigns or clears classification through `TicketService::changeCategory()` for every ticket, preserving normal events and returning compatible updates alongside per-ticket scope failures.
+
+Category lifecycle routes require `sbay_manage_categories` for creation, mutation, and deletion. Deleting a category referenced by any ticket returns `409 CATEGORY_IN_USE`; administrators must deactivate it instead, preserving historical classification labels.
+
 ---
 
 # Core Principles
@@ -562,10 +578,13 @@ metadata.
 Managers and administrators with `sbay_view_reports` can request ticket
 performance metrics through `GET /sbay/v1/reports/tickets`.
 
-Supported filters are `date_from`, `date_to`, `department_id`,
-`assigned_agent_id`, and `priority`. The endpoint returns aggregate ticket,
+Supported filters are `date_from`, `date_to`, `department_id`, `category_id`,
+`assigned_agent_id`, and `priority`. `category_id=uncategorized` selects tickets
+without classification. The endpoint returns aggregate ticket,
 staff-response, need-reply, resolved, closed, and average first-response values,
-plus daily, department, and agent breakdowns. Date ranges are limited to 367
+plus daily, department, category, and agent breakdowns. Category groups retain
+historical names for inactive records and label null relationships as
+`Uncategorized`. Date ranges are limited to 367
 days, and trashed tickets are excluded.
 
 # Report Exports

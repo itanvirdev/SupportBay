@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Saved Reply Department Scoping
+Ticket Category Reporting
 
 Current Objective
 
-Make saved replies globally applicable or relevant to one department while preserving manager visibility across all scopes.
+Add category filters, categorized/uncategorized workload breakdowns, and matching CSV sections to ticket performance reports.
 
 ---
 
@@ -836,7 +836,7 @@ Never
 # Next Milestone
 
 ```
-Ticket Categories Foundation
+Ticket Tags Foundation
 ```
 
 ---
@@ -892,20 +892,44 @@ Status
 ```
 Current Sprint
 
-Saved Reply Department Scoping
+Ticket Category Reporting
 
 Completed
 
-- Saved replies optionally reference a department ID.
-- Global replies remain applicable to every department.
-- Staff composer queries return global plus matching department replies.
-- Ordinary staff requests without a department receive global replies only.
-- Managers can inspect and filter all department scopes in Settings.
-- Existing ticket and department domain services remain unchanged.
+- Categories own schema, entity, repository, service, REST controller, provider, and flow test.
+- Categories support active/inactive lifecycle and optional department scope.
+- Slugs are normalized and unique.
+- Managers and administrators receive category-management capability.
+- Tickets store an optional category ID and existing tickets remain uncategorized.
+- Database schema version is 0.8.0.
+- Customer ticket forms load active global and department-scoped categories.
+- Customer ticket creation requires a category when applicable categories exist.
+- Server-side validation rejects inactive and cross-department category selections.
+- Portal-created tickets persist the validated category relationship.
+- Staff ticket context exposes the current category and applicable choices.
+- Agents can assign or clear categories from the ticket detail workspace.
+- Category changes create dedicated ticket timeline activity.
+- Moving a ticket clears a category that is not applicable to the new department.
+- Ticket-category changes use a dedicated agent capability and server-side scope validation.
+- Staff queues expose category IDs and safe category display names.
+- Queue requests support exact category and explicit uncategorized filters.
+- Category choices narrow to global and applicable records when a department filter is selected.
+- Bulk actions can assign or clear categories while preserving per-ticket validation.
+- Mixed-department bulk classification reports incompatible tickets without rolling back valid updates.
+- Settings provides searchable category lifecycle management for administrators.
+- Category forms manage name, slug, description, department scope, status, color, and sort order.
+- Category administration is gated by the dedicated category-management capability.
+- Categories referenced by tickets cannot be deleted and must be deactivated instead.
+- React administrator flow coverage verifies category navigation and CRUD controls.
+- Ticket performance reports support exact category and uncategorized filters.
+- Report filter choices respect the selected department scope.
+- Category workload includes tickets, responses, need-reply, and closed totals.
+- Historical inactive categories retain their names while null records group as Uncategorized.
+- Ticket CSV exports include the same filtered category workload shown on screen.
 
 Next Target
 
-Ticket Categories Foundation
+Ticket Tags Foundation
 ```
 
 ---

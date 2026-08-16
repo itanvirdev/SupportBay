@@ -16,6 +16,7 @@ enum ActivityType: string {
   case PRIORITY_CHANGED    = 'priority_changed';
 
   case DEPARTMENT_CHANGED  = 'department_changed';
+  case CATEGORY_CHANGED    = 'category_changed';
 
   case PURCHASE_VERIFIED   = 'purchase_verified';
 
@@ -55,6 +56,7 @@ enum ActivityType: string {
       self::PRIORITY_CHANGED    => 'Priority Changed',
 
       self::DEPARTMENT_CHANGED  => 'Department Changed',
+      self::CATEGORY_CHANGED    => 'Category Changed',
 
       self::PURCHASE_VERIFIED   => 'Purchase Verified',
 

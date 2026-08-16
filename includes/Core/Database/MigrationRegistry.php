@@ -16,6 +16,7 @@ use SupportBay\Modules\Providers\Database\ProviderSchema;
 use SupportBay\Modules\Verifications\Database\PurchaseVerificationSchema;
 use SupportBay\Modules\Notifications\Database\NotificationLogSchema;
 use SupportBay\Modules\SavedReplies\Database\SavedReplySchema;
+use SupportBay\Modules\Categories\Database\CategorySchema;
 
 final class MigrationRegistry {
   /**
@@ -37,6 +38,7 @@ final class MigrationRegistry {
       PurchaseVerificationSchema::class,
       NotificationLogSchema::class,
       SavedReplySchema::class,
+      CategorySchema::class,
     ];
   }
 }

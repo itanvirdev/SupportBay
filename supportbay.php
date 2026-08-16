@@ -126,6 +126,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'category':
+        \SupportBay\Dev\CategoryFlowTest::run(
+          $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
+        );
+        break;
+
       case 'customer':
         \SupportBay\Dev\CustomerFlowTest::run(
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)
@@ -212,6 +218,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Departments\Services\DepartmentService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\Categories\Services\CategoryService::class
           ),
           $container->get(
             \SupportBay\Modules\Attachments\Services\AttachmentService::class
@@ -313,6 +322,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Messages\Repositories\MessageRepository::class),
           $container->get(\SupportBay\Common\Utilities\CsvExporter::class),
           $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
+          $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
         );
         break;
 
@@ -350,6 +360,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
+          $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
           $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
@@ -461,6 +472,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
             \SupportBay\Modules\Departments\Services\DepartmentService::class
           ),
           $container->get(
+            \SupportBay\Modules\Categories\Services\CategoryService::class
+          ),
+          $container->get(
             \SupportBay\Modules\Attachments\Services\AttachmentService::class
           ),
           $container->get(
@@ -524,6 +538,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
+          $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
           $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),

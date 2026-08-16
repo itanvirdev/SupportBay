@@ -100,11 +100,18 @@ export interface PortalDepartment {
   name: string;
   description: string | null;
 }
+export interface PortalCategory {
+  id: number;
+  name: string;
+  description: string | null;
+  department_id: number | null;
+}
 
 export interface CreateTicketInput {
   subject: string;
   content: string;
   department_id: number;
+  category_id: number | null;
   provider: string;
   purchase_reference: string;
 }

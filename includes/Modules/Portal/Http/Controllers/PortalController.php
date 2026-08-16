@@ -12,6 +12,7 @@ use SupportBay\Modules\Attachments\Entities\Attachment;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Data\CustomerProfileData;
 use SupportBay\Modules\Departments\Entities\Department;
+use SupportBay\Modules\Categories\Entities\Category;
 use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Portal\Services\PortalService;
 use SupportBay\Modules\Tickets\Entities\Ticket;
@@ -152,6 +153,19 @@ final class PortalController {
       'methods'             => 'GET',
       'callback'            => [$this, 'departments'],
       'permission_callback' => [$this, 'permissions'],
+    ]);
+    register_rest_route(self::NAMESPACE, '/portal/categories', [
+      'methods'             => 'GET',
+      'callback'            => [$this, 'categories'],
+      'permission_callback' => [$this, 'permissions'],
+      'args'                => [
+        'department_id' => [
+          'required'          => true,
+          'sanitize_callback' => 'absint',
+          'validate_callback' => static fn(mixed $value): bool =>
+            is_numeric($value) && (int) $value > 0,
+        ],
+      ],
     ]);
 
     register_rest_route(self::NAMESPACE, '/portal/verifications', [
@@ -335,6 +349,7 @@ final class PortalController {
           wp_unslash((string) $request->get_param('content'))
         ),
         'department_id' => absint($request->get_param('department_id')),
+        'category_id' => absint($request->get_param('category_id')) ?: null,
         'provider' => sanitize_key(
           (string) $request->get_param('provider')
         ),
@@ -600,6 +615,26 @@ final class PortalController {
       $providers,
       'Purchase verification providers retrieved.',
       ['total' => count($providers)],
+    );
+  }
+
+  public function categories(WP_REST_Request $request): WP_REST_Response {
+    $categories = array_map(
+      static fn(Category $category): array => [
+        'id'            => $category->id(),
+        'name'          => $category->name(),
+        'description'   => $category->description(),
+        'department_id' => $category->departmentId(),
+      ],
+      $this->portal->categories(
+        absint($request->get_param('department_id'))
+      ),
+    );
+
+    return RestResponse::success(
+      $categories,
+      'Categories retrieved.',
+      ['total' => count($categories)],
     );
   }
 

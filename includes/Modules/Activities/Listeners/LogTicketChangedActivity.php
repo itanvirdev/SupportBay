@@ -16,6 +16,7 @@ final class LogTicketChangedActivity implements Listener {
     $type = match ($event->change()) {
       'assignment' => $event->ticket()->isAssigned() ? ActivityType::TICKET_ASSIGNED : ActivityType::TICKET_UNASSIGNED,
       'department' => ActivityType::DEPARTMENT_CHANGED,
+      'category' => ActivityType::CATEGORY_CHANGED,
       'priority' => ActivityType::PRIORITY_CHANGED,
       default => ActivityType::STATE_CHANGED,
     };

@@ -124,6 +124,9 @@ final class TicketController {
     $priority = sanitize_key((string) $request->get_param('priority'));
     $assignment = sanitize_key((string) $request->get_param('assignment'));
     $agentId = absint($request->get_param('agent_id')) ?: null;
+    $category = sanitize_text_field(
+      (string) $request->get_param('category_id')
+    );
     $result = $this->tickets->searchQueue(new TicketQuery(
       page: $page,
       perPage: $perPage,
@@ -134,6 +137,10 @@ final class TicketController {
       assignedAgentId: $agentId ?? ($assignment === 'mine' ? get_current_user_id() : null),
       unassigned: $assignment === 'unassigned',
       departmentId: absint($request->get_param('department_id')) ?: null,
+      categoryId: $category !== 'uncategorized'
+        ? (absint($category) ?: null)
+        : null,
+      uncategorized: $category === 'uncategorized',
       needsReply: rest_sanitize_boolean($request->get_param('need_reply')),
       slaState: TicketSlaState::tryFrom(sanitize_key((string) $request->get_param('sla_state')))?->value,
       orderBy: sanitize_key((string) $request->get_param('orderby')),
@@ -286,6 +293,7 @@ final class TicketController {
       'assignment' => ['sanitize_callback' => 'sanitize_key'],
       'agent_id' => ['sanitize_callback' => 'absint'],
       'department_id' => ['sanitize_callback' => 'absint'],
+      'category_id' => ['sanitize_callback' => 'sanitize_text_field'],
       'need_reply' => ['default' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
       'orderby' => ['default' => 'updated_at', 'sanitize_callback' => 'sanitize_key'],
       'order' => ['default' => 'desc', 'sanitize_callback' => 'sanitize_key'],

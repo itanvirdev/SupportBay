@@ -21,6 +21,7 @@ use WP_Error;
 use WP_REST_Request;
 use SupportBay\Common\Utilities\CsvExporter;
 use SupportBay\Modules\Tickets\Services\TicketSlaPolicyService;
+use SupportBay\Modules\Categories\Services\CategoryService;
 
 final class TicketMetricFlowTest extends FlowTest {
   protected static function title(): string { return 'Ticket Metric Flow Test'; }
@@ -32,13 +33,20 @@ final class TicketMetricFlowTest extends FlowTest {
     /** @var MessageRepository $messages */
     /** @var CsvExporter $csvExporter */
     /** @var TicketSlaPolicyService $sla */
-    [$metrics, $controller, $tickets, $messages, $csvExporter, $sla] = $services;
+    /** @var CategoryService $categories */
+    [$metrics, $controller, $tickets, $messages, $csvExporter, $sla, $categories] = $services;
     $today = current_time('Y-m-d');
     $now = $today . ' 00:00:00';
     $ticketIds = [];
     $messageIds = [];
     $agentId = 900000000 + wp_rand(1, 9999999);
     $existingSla = get_option('sbay_ticket_sla_policy', null);
+    $category = $categories->create([
+      'name' => 'Metric Category ' . strtolower(
+        wp_generate_password(8, false, false)
+      ),
+      'department_id' => 1,
+    ]);
 
     try {
       $sla->update(['enabled' => true, 'first_response_minutes' => [
@@ -59,6 +67,7 @@ final class TicketMetricFlowTest extends FlowTest {
           'track_id' => strtoupper(substr(wp_generate_password(9, false, false), 0, 9)),
           'customer_id' => 1,
           'department_id' => 1,
+          'category_id' => $index < 2 ? $category->id() : null,
           'assigned_agent_id' => $agentId,
           'subject' => 'Metric flow ' . $index,
           'created_by_type' => AuthorType::CUSTOMER->value,
@@ -110,8 +119,29 @@ final class TicketMetricFlowTest extends FlowTest {
       Assert::true(
         count($report['daily']) === 1
         && $report['daily'][0]['tickets'] === 3
-        && $report['departments'][0]['tickets'] === 3,
-        'Ticket report applies filters consistently to daily and department breakdowns.',
+        && $report['departments'][0]['tickets'] === 3
+        && count($report['categories']) === 2
+        && array_sum(array_column($report['categories'], 'tickets')) === 3,
+        'Ticket report applies filters consistently and groups categorized and uncategorized workload.',
+      );
+      $categoryReport = $metrics->report(new TicketMetricQuery(
+        dateFrom: $today,
+        dateTo: $today,
+        categoryId: $category->id(),
+        assignedAgentId: $agentId,
+      ));
+      $uncategorizedReport = $metrics->report(new TicketMetricQuery(
+        dateFrom: $today,
+        dateTo: $today,
+        uncategorized: true,
+        assignedAgentId: $agentId,
+      ));
+      Assert::true(
+        $categoryReport['summary']['tickets'] === 2
+        && $categoryReport['categories'][0]['category'] === $category->name()
+        && $uncategorizedReport['summary']['tickets'] === 1
+        && $uncategorizedReport['categories'][0]['category'] === 'Uncategorized',
+        'Ticket reports support exact category and uncategorized filters.',
       );
       $csv = $metrics->export(new TicketMetricQuery(
         dateFrom: $today,
@@ -122,7 +152,8 @@ final class TicketMetricFlowTest extends FlowTest {
         str_starts_with($csv, "\xEF\xBB\xBF")
         && str_contains($csv, 'Ticket performance summary')
         && str_contains($csv, 'Daily activity')
-        && str_contains($csv, 'Agent workload'),
+        && str_contains($csv, 'Agent workload')
+        && str_contains($csv, 'Category workload'),
         'Ticket report exports the filtered summary and breakdowns as UTF-8 CSV.',
       );
 
@@ -152,6 +183,7 @@ final class TicketMetricFlowTest extends FlowTest {
     } finally {
       foreach ($messageIds as $id) { $messages->delete($id); }
       foreach ($ticketIds as $id) { $tickets->delete($id); }
+      $categories->delete($category->id());
       if ($existingSla === null) { delete_option('sbay_ticket_sla_policy'); }
       else { update_option('sbay_ticket_sla_policy', $existingSla, false); }
       wp_set_current_user(0);

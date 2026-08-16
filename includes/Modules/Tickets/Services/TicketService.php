@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Tickets\Services;
 
+use InvalidArgumentException;
 use RuntimeException;
 use SupportBay\Common\Enums\AuthorType;
 use SupportBay\Common\Enums\SourceType;
@@ -20,6 +21,7 @@ use SupportBay\Modules\Tickets\Events\TicketChanged;
 use SupportBay\Modules\Tickets\Events\TicketAssignmentChanged;
 use SupportBay\Modules\Tickets\Events\TicketResolved;
 use SupportBay\Modules\Tickets\Data\TicketQuery;
+use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Core\Events\EventDispatcher;
 
@@ -27,6 +29,7 @@ final class TicketService {
   public function __construct(
     private readonly TicketRepository $repository,
     private readonly VerificationService $verifications,
+    private readonly CategoryService $categories,
     private readonly EventDispatcher $events,
     private readonly TicketSlaPolicyService $sla,
   ) {
@@ -209,7 +212,60 @@ final class TicketService {
   }
 
   public function changeDepartment(int $id, int $departmentId, int $actorId): Ticket {
-    return $this->change($id, ['department_id' => $departmentId], 'department', $actorId);
+    $existing = $this->findOrFail($id);
+    $updates = ['department_id' => $departmentId];
+    $categoryCleared = false;
+
+    if ($existing->categoryId() !== null) {
+      try {
+        $this->categories->validateSelection(
+          $existing->categoryId(),
+          $departmentId,
+        );
+      } catch (InvalidArgumentException) {
+        $updates['category_id'] = null;
+        $categoryCleared = true;
+      }
+    }
+
+    $ticket = $this->change(
+      $id,
+      $updates,
+      'department',
+      $actorId,
+    );
+
+    if ($categoryCleared) {
+      $this->events->dispatch(
+        new TicketChanged($ticket, 'category', $actorId)
+      );
+    }
+
+    return $ticket;
+  }
+
+  public function changeCategory(
+    int $id,
+    ?int $categoryId,
+    int $actorId,
+  ): Ticket {
+    $existing = $this->findOrFail($id);
+
+    if ($existing->categoryId() === $categoryId) {
+      return $existing;
+    }
+
+    $this->categories->validateSelection(
+      $categoryId,
+      $existing->departmentId(),
+    );
+
+    return $this->change(
+      $id,
+      ['category_id' => $categoryId],
+      'category',
+      $actorId,
+    );
   }
 
   public function changePriority(int $id, TicketPriority $priority, int $actorId): Ticket {
@@ -247,10 +303,11 @@ final class TicketService {
         $updated[] = match ($action) {
           TicketBulkAction::ASSIGNMENT => $this->changeAssignment($ticketId, absint($value) ?: null, $actorId),
           TicketBulkAction::DEPARTMENT => $this->changeDepartment($ticketId, absint($value), $actorId),
+          TicketBulkAction::CATEGORY => $this->changeCategory($ticketId, absint($value) ?: null, $actorId),
           TicketBulkAction::PRIORITY => $this->changePriority($ticketId, TicketPriority::from(sanitize_key((string) $value)), $actorId),
           TicketBulkAction::STATE => $this->changeState($ticketId, TicketState::from(sanitize_key((string) $value)), $actorId),
         };
-      } catch (\ValueError|RuntimeException $exception) {
+      } catch (InvalidArgumentException|\ValueError|RuntimeException $exception) {
         $failed[$ticketId] = $exception->getMessage();
       }
     }

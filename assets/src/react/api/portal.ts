@@ -2,6 +2,7 @@ import { apiDownload, apiGet, apiGetResponse, apiPost, apiUpload } from './clien
 import type {
   CreateTicketInput,
   PortalDepartment,
+  PortalCategory,
   PortalAttachment,
   PortalMessage,
   PortalOverview,
@@ -40,6 +41,10 @@ export const portalApi = {
   downloadAttachment: (attachmentId: number) =>
     apiDownload(`portal/attachments/${attachmentId}/download`),
   departments: () => apiGet<PortalDepartment[]>('portal/departments'),
+  categories: (departmentId: number) =>
+    apiGet<PortalCategory[]>(
+      `portal/categories?department_id=${departmentId}`,
+    ),
   verifications: () =>
     apiGet<PortalVerification[]>('portal/verifications'),
   purchaseProviders: () =>

@@ -23,6 +23,10 @@ final class TicketQueueItem {
       'customer_avatar_url' => $this->row['customer_avatar_url'] ?: null,
       'department_id' => (int) $this->row['department_id'],
       'department_name' => $this->row['department_name'] ?: null,
+      'category_id' => $this->row['category_id'] !== null
+        ? (int) $this->row['category_id']
+        : null,
+      'category_name' => $this->row['category_name'] ?: null,
       'reply_count' => (int) $this->row['reply_count'],
       'needs_reply' => (bool) $this->row['needs_reply'],
       'sla_state' => (string) ($this->row['sla_state'] ?? 'disabled'),

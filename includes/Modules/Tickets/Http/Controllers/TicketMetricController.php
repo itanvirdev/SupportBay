@@ -92,10 +92,18 @@ final class TicketMetricController {
 
   private function query(WP_REST_Request $request): TicketMetricQuery {
     $today = new DateTimeImmutable(current_time('Y-m-d'));
+    $category = sanitize_text_field(
+      (string) $request->get_param('category_id')
+    );
+
     return new TicketMetricQuery(
       dateFrom: sanitize_text_field((string) $request->get_param('date_from')) ?: $today->modify('-29 days')->format('Y-m-d'),
       dateTo: sanitize_text_field((string) $request->get_param('date_to')) ?: $today->format('Y-m-d'),
       departmentId: absint($request->get_param('department_id')) ?: null,
+      categoryId: $category !== 'uncategorized'
+        ? (absint($category) ?: null)
+        : null,
+      uncategorized: $category === 'uncategorized',
       assignedAgentId: absint($request->get_param('assigned_agent_id')) ?: null,
       priority: sanitize_key((string) $request->get_param('priority')) ?: null,
     );

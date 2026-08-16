@@ -11,6 +11,7 @@ use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
+use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
@@ -35,6 +36,7 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     /** @var VerificationService $verifications */
     /** @var MessageService $messages */
     /** @var DepartmentService $departments */
+    /** @var CategoryService $categories */
     /** @var AttachmentService $attachments */
     /** @var IntegrationManager $integrations */
     /** @var ProviderService $providers */
@@ -44,6 +46,7 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       $verifications,
       $messages,
       $departments,
+      $categories,
       $attachments,
       $integrations,
       $providers,
@@ -119,6 +122,12 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'name' => 'Portal Test Department ' . strtoupper(
         wp_generate_password(6, false, false)
       ),
+    ]);
+    $category = $categories->create([
+      'name'          => 'Portal Category ' . strtoupper(
+        wp_generate_password(6, false, false)
+      ),
+      'department_id' => $departmentId,
     ]);
 
     $ticketId = $tickets->create([
@@ -333,6 +342,24 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Portal exposes active ticket departments.'
     );
 
+    $categoryRequest = new WP_REST_Request(
+      'GET',
+      '/sbay/v1/portal/categories'
+    );
+    $categoryRequest->set_query_params([
+      'department_id' => $departmentId,
+    ]);
+    $categoryResponse = rest_do_request($categoryRequest);
+
+    Assert::true(
+      in_array(
+        $category->id(),
+        array_column($categoryResponse->get_data()['data'] ?? [], 'id'),
+        true,
+      ),
+      'Portal exposes categories applicable to the selected department.'
+    );
+
     $providerResponse = rest_do_request(
       new WP_REST_Request('GET', '/sbay/v1/portal/purchase-providers')
     );
@@ -354,11 +381,30 @@ final class CustomerPortalApiFlowTest extends FlowTest {
 
     $providers->enable($providerId);
 
+    $missingCategoryRequest = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/portal/tickets'
+    );
+    $missingCategoryRequest->set_body_params([
+      'subject'            => 'Missing category request',
+      'content'            => 'This ticket must not be created.',
+      'department_id'      => $departmentId,
+      'provider'           => 'fake-purchase',
+      'purchase_reference' => $verifications->find($verificationId)->providerReference(),
+    ]);
+
+    Assert::equals(
+      422,
+      rest_do_request($missingCategoryRequest)->get_status(),
+      'Portal requires a category when the department has applicable categories.'
+    );
+
     $expiredRequest = new WP_REST_Request('POST', '/sbay/v1/portal/tickets');
     $expiredRequest->set_body_params([
       'subject' => 'Expired support request',
       'content' => 'This ticket must not be created.',
       'department_id' => $departmentId,
+      'category_id' => $category->id(),
       'provider' => 'fake-purchase',
       'purchase_reference' => $expiredReference,
     ]);
@@ -378,6 +424,7 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'subject'                  => 'Created from customer portal',
       'content'                  => 'This is the opening portal message.',
       'department_id'            => $departmentId,
+      'category_id'              => $category->id(),
       'provider'                  => 'fake-purchase',
       'purchase_reference'        => $verifications->find($verificationId)->providerReference(),
     ]);
@@ -652,6 +699,11 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::true(
       $customers->deleteWithUser($customerId),
       'Test customer and WordPress user deleted.'
+    );
+
+    Assert::true(
+      $categories->delete($category->id()),
+      'Test category deleted.'
     );
 
     Assert::true(

@@ -12,6 +12,7 @@ use SupportBay\Core\Integrations\IntegrationManager;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
+use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Http\Controllers\TicketController;
@@ -33,10 +34,11 @@ final class ApiWebhookFlowTest extends FlowTest {
     /** @var MessageService $messages */
     /** @var CustomerService $customers */
     /** @var DepartmentService $departments */
+    /** @var CategoryService $categories */
     /** @var ProviderService $providers */
     /** @var VerificationService $verifications */
     /** @var IntegrationManager $integrations */
-    [$controller, $tickets, $messages, $customers, $departments, $providers, $verifications, $integrations] = $services;
+    [$controller, $tickets, $messages, $customers, $departments, $categories, $providers, $verifications, $integrations] = $services;
 
     echo "🚀 Starting SupportBay API and Webhook Flow Test...\n\n";
 
@@ -119,7 +121,7 @@ final class ApiWebhookFlowTest extends FlowTest {
       'Paginated Customer Directory route is registered.'
     );
 
-    foreach (['customers', 'departments', 'providers', 'verifications'] as $resource) {
+    foreach (['customers', 'departments', 'categories', 'providers', 'verifications'] as $resource) {
       Assert::true(
         isset($routes['/sbay/v1/' . $resource]),
         sprintf('Administrator %s route is registered.', $resource)
@@ -167,9 +169,18 @@ final class ApiWebhookFlowTest extends FlowTest {
       'name' => 'API Test ' . $suffix,
       'slug' => 'api-test-' . $suffix,
     ]);
+    $otherDepartmentId = $departments->create([
+      'name' => 'API Other ' . $suffix,
+      'slug' => 'api-other-' . $suffix,
+    ]);
+    $category = $categories->create([
+      'name'          => 'API Category ' . $suffix,
+      'department_id' => $departmentId,
+    ]);
     $ticketId = $tickets->create([
       'customer_id'   => $customerId,
       'department_id' => $departmentId,
+      'category_id'   => $category->id(),
       'subject'       => 'API and webhook test',
     ]);
     $message = $messages->create([
@@ -209,9 +220,106 @@ final class ApiWebhookFlowTest extends FlowTest {
       $contextResponse->get_status() === 200
       && $context['customer']['email'] !== ''
       && $context['information']['department'] !== null
+      && $context['information']['category'] !== null
+      && in_array($category->id(), array_column($context['options']['categories'], 'id'), true)
       && is_array($context['activities']),
       'Agent ticket context composes safe customer, department, and activity data.'
     );
+
+    $inUseCategoryDelete = rest_do_request(
+      new WP_REST_Request(
+        'DELETE',
+        '/sbay/v1/categories/' . $category->id()
+      )
+    );
+    Assert::equals(
+      409,
+      $inUseCategoryDelete->get_status(),
+      'Categories referenced by tickets must be deactivated instead of deleted.'
+    );
+
+    $categoryChange = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/admin/tickets/' . $ticketId . '/actions'
+    );
+    $categoryChange->set_param('action', 'category');
+    $categoryChange->set_param('value', '');
+    $categoryChangeResponse = rest_do_request($categoryChange);
+    $categoryContext = rest_do_request(
+      new WP_REST_Request(
+        'GET',
+        '/sbay/v1/admin/tickets/' . $ticketId . '/context'
+      )
+    )->get_data()['data'];
+
+    Assert::true(
+      $categoryChangeResponse->get_status() === 200
+      && $tickets->find($ticketId)?->categoryId() === null
+      && array_filter(
+        $categoryContext['activities'],
+        static fn(array $activity): bool =>
+          $activity['label'] === 'Category Changed',
+      ) !== [],
+      'Staff category changes persist and create timeline activity.'
+    );
+
+    $categoryChange->set_param('value', $category->id());
+    Assert::equals(
+      200,
+      rest_do_request($categoryChange)->get_status(),
+      'Staff can select a category applicable to the ticket department.'
+    );
+
+    $departmentChange = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/admin/tickets/' . $ticketId . '/actions'
+    );
+    $departmentChange->set_param('action', 'department');
+    $departmentChange->set_param('value', $otherDepartmentId);
+    Assert::true(
+      rest_do_request($departmentChange)->get_status() === 200
+      && $tickets->find($ticketId)?->categoryId() === null,
+      'Moving a ticket clears a category that is invalid for the new department.'
+    );
+
+    $categoryChange->set_param('value', $category->id());
+    Assert::equals(
+      422,
+      rest_do_request($categoryChange)->get_status(),
+      'Staff cannot select a category scoped to another department.'
+    );
+
+    $departmentChange->set_param('value', $departmentId);
+    rest_do_request($departmentChange);
+    $categoryChange->set_param('value', $category->id());
+    rest_do_request($categoryChange);
+
+    $categoryFilter = new WP_REST_Request('GET', '/sbay/v1/tickets');
+    $categoryFilter->set_param('category_id', $category->id());
+    $categoryFilterResponse = rest_do_request($categoryFilter)->get_data();
+    Assert::true(
+      $categoryFilterResponse['meta']['total'] >= 1
+      && $categoryFilterResponse['data'][0]['category_id'] === $category->id()
+      && $categoryFilterResponse['data'][0]['category_name'] === $category->name(),
+      'Ticket queue filters by category and exposes its safe display name.'
+    );
+
+    $categoryChange->set_param('value', '');
+    rest_do_request($categoryChange);
+    $categoryFilter->set_param('category_id', 'uncategorized');
+    $uncategorizedResponse = rest_do_request($categoryFilter)->get_data();
+    Assert::true(
+      $uncategorizedResponse['meta']['total'] >= 1
+      && in_array(
+        $ticketId,
+        array_column($uncategorizedResponse['data'], 'id'),
+        true,
+      ),
+      'Ticket queue explicitly filters uncategorized tickets.'
+    );
+
+    $categoryChange->set_param('value', $category->id());
+    rest_do_request($categoryChange);
 
     $filteredRequest = new WP_REST_Request('GET', '/sbay/v1/tickets');
     $filteredRequest->set_param('search', 'API and webhook test');
@@ -385,6 +493,31 @@ final class ApiWebhookFlowTest extends FlowTest {
 
     remove_action('supportbay_webhook_dispatch', $captureWebhook);
 
+    $otherTicketId = $tickets->create([
+      'customer_id' => $customerId,
+      'department_id' => $otherDepartmentId,
+      'subject' => 'API bulk category scope test',
+    ]);
+    $categoryChange->set_param('value', '');
+    rest_do_request($categoryChange);
+
+    $bulkCategory = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/admin/tickets/bulk-actions'
+    );
+    $bulkCategory->set_param('ticket_ids', [$ticketId, $otherTicketId]);
+    $bulkCategory->set_param('action', 'category');
+    $bulkCategory->set_param('value', $category->id());
+    $bulkCategoryResponse = rest_do_request($bulkCategory);
+    Assert::true(
+      $bulkCategoryResponse->get_status() === 200
+      && $bulkCategoryResponse->get_data()['meta']['updated'] === 1
+      && $bulkCategoryResponse->get_data()['meta']['failed'] === 1
+      && $tickets->find($ticketId)?->categoryId() === $category->id()
+      && $tickets->find($otherTicketId)?->categoryId() === null,
+      'Bulk classification updates compatible tickets and reports scoped failures.'
+    );
+
     $bulkPriority = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/bulk-actions');
     $bulkPriority->set_param('ticket_ids', [$ticketId]);
     $bulkPriority->set_param('action', 'priority');
@@ -455,7 +588,10 @@ final class ApiWebhookFlowTest extends FlowTest {
     $tickets->delete($ticketId);
     $tickets->delete($splitTicketId);
     $tickets->delete($targetTicketId);
+    $tickets->delete($otherTicketId);
+    $categories->delete($category->id());
     $departments->delete($departmentId);
+    $departments->delete($otherDepartmentId);
     $customers->deleteWithUser($customerId);
   }
 }

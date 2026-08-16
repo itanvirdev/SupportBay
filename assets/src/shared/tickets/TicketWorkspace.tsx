@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 export interface WorkspaceTicket {
   id: number;
@@ -12,6 +12,8 @@ export interface WorkspaceTicket {
   customer_name?: string | null;
   customer_avatar_url?: string | null;
   department_name?: string | null;
+  category_id?: number | null;
+  category_name?: string | null;
   reply_count?: number;
   needs_reply?: boolean;
   sla_state?: 'disabled'|'met'|'on_track'|'due_soon'|'breached';
@@ -39,6 +41,7 @@ export interface TicketQueryParams {
   assignment: string;
   agentId: string;
   departmentId: string;
+  categoryId: string;
   needReply: boolean;
   slaState: string;
   orderby: string;
@@ -50,7 +53,7 @@ interface TicketWorkspaceProps {
   load: (query: TicketQueryParams) => Promise<TicketPage>;
   openTicket: (ticket: WorkspaceTicket) => void;
   createTicket?: () => void;
-  options?: {agents:Array<{id:number;name:string}>;departments:Array<{id:number;name:string}>};
+  options?: {agents:Array<{id:number;name:string}>;departments:Array<{id:number;name:string}>;categories:Array<{id:number;name:string;department_id:number|null}>};
   bulk?: (ticketIds: number[], action: string, value: string) => Promise<void>;
   openCustomers?: () => void;
   openVerifications?: () => void;
@@ -67,6 +70,7 @@ export function ticketQueryString(query: TicketQueryParams): string {
     assignment: query.assignment,
     agent_id: query.agentId,
     department_id: query.departmentId,
+    category_id: query.categoryId,
     need_reply: String(query.needReply),
     sla_state: query.slaState,
     orderby: query.orderby,
@@ -76,7 +80,7 @@ export function ticketQueryString(query: TicketQueryParams): string {
 
 const defaults: TicketQueryParams = {
   page: 1, perPage: 20, search: '', status: '', state: 'active', priority: '',
-  assignment: '', agentId:'', departmentId:'', needReply:false, slaState:'', orderby: 'updated_at', order: 'desc',
+  assignment: '', agentId:'', departmentId:'', categoryId:'', needReply:false, slaState:'', orderby: 'updated_at', order: 'desc',
 };
 
 const slaLabel = (ticket: WorkspaceTicket) => {
@@ -96,6 +100,14 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
   const [refresh, setRefresh] = useState(0);
   const [bulkAction, setBulkAction] = useState('');
   const [bulkPending, setBulkPending] = useState(false);
+  const filterCategories = useMemo(
+    () => options?.categories.filter((category) =>
+      !query.departmentId
+      || category.department_id === null
+      || category.department_id === Number(query.departmentId)
+    ) ?? [],
+    [options, query.departmentId],
+  );
 
   const update = (changes: Partial<TicketQueryParams>) => setQuery((current) => ({ ...current, ...changes, page: changes.page ?? 1 }));
   const reload = useCallback(() => {
@@ -156,12 +168,13 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
         </div>
         <form onSubmit={submitSearch}><input aria-label="Search tickets" onChange={(event) => setDraftSearch(event.target.value)} placeholder="Search keyword or ticket ID" value={draftSearch} /><button aria-label="Submit search">⌕</button></form>
         <div className="sbay-ticket-filter-row">
-          {mode==='staff'?<select aria-label="Department" value={query.departmentId} onChange={event=>update({departmentId:event.target.value})}><option value="">All Departments</option>{options?.departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
+          {mode==='staff'?<select aria-label="Department" value={query.departmentId} onChange={event=>update({departmentId:event.target.value,categoryId:''})}><option value="">All Departments</option>{options?.departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
+          {mode==='staff'?<select aria-label="Category" value={query.categoryId} onChange={event=>update({categoryId:event.target.value})}><option value="">All Categories</option><option value="uncategorized">Uncategorized</option>{filterCategories.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
           {mode==='staff'?<select aria-label="Agent" value={query.agentId} onChange={event=>update({agentId:event.target.value,assignment:''})}><option value="">All Agents</option>{options?.agents.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
           {mode==='staff'?<select aria-label="SLA state" value={query.slaState} onChange={event=>update({slaState:event.target.value})}><option value="">All SLA States</option><option value="breached">SLA Breached</option><option value="due_soon">SLA Due Soon</option><option value="on_track">SLA On Track</option><option value="met">SLA Met</option></select>:null}
           <select aria-label="Priority" value={query.priority} onChange={(event) => update({ priority: event.target.value })}><option value="">All Priorities</option><option value="normal">Normal</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>
           <select aria-label="Sort tickets" value={`${query.orderby}:${query.order}`} onChange={(event) => { const [orderby, order] = event.target.value.split(':'); update({ orderby, order }); }}><option value="updated_at:desc">Updated (Newest First)</option><option value="sla_due:asc">SLA Due First</option><option value="need_reply:desc">Need Reply First</option><option value="updated_at:asc">Updated (Oldest First)</option><option value="created_at:desc">Created (Newest First)</option><option value="priority:desc">Priority (Highest First)</option></select>
-          <button disabled={query.search === '' && query.priority === '' && query.status === '' && query.state === 'active' && query.assignment === '' && query.agentId === '' && query.departmentId === '' && query.slaState === '' && !query.needReply} onClick={() => { setDraftSearch(''); setQuery(defaults); }}>Reset Filters</button>
+          <button disabled={query.search === '' && query.priority === '' && query.status === '' && query.state === 'active' && query.assignment === '' && query.agentId === '' && query.departmentId === '' && query.categoryId === '' && query.slaState === '' && !query.needReply} onClick={() => { setDraftSearch(''); setQuery(defaults); }}>Reset Filters</button>
         </div>
       </div>
 
@@ -174,14 +187,14 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
         {!result ? <p className="sbay-ticket-empty">Loading tickets…</p> : result.items.length === 0 ? <p className="sbay-ticket-empty">No tickets match these filters.</p> : result.items.map((ticket) => (
           <div className="sbay-ticket-row" key={ticket.id}>
             {mode === 'staff' ? <input aria-label={`Select ${ticket.subject}`} checked={selected.includes(ticket.id)} onChange={() => setSelected((current) => current.includes(ticket.id) ? current.filter((id) => id !== ticket.id) : [...current, ticket.id])} type="checkbox" /> : <span className="sbay-ticket-avatar">{ticket.subject.charAt(0)}</span>}
-            <button className="sbay-ticket-title" onClick={() => openTicket(ticket)}><strong>{ticket.subject} {ticket.customer_name?<small>by {ticket.customer_name}</small>:null}</strong><span><i>{ticket.status}</i> #{ticket.track_id} · {ticket.department_name||'No department'} · {ticket.priority}{mode==='staff'&&slaLabel(ticket)?<em className={`sbay-sla-badge is-${ticket.sla_state}`} title={ticket.sla_due_at?`Due ${new Date(ticket.sla_due_at.replace(' ','T')).toLocaleString()}`:undefined}>{slaLabel(ticket)}</em>:null}</span></button>
+            <button className="sbay-ticket-title" onClick={() => openTicket(ticket)}><strong>{ticket.subject} {ticket.customer_name?<small>by {ticket.customer_name}</small>:null}</strong><span><i>{ticket.status}</i> #{ticket.track_id} · {ticket.department_name||'No department'} · {ticket.category_name||'Uncategorized'} · {ticket.priority}{mode==='staff'&&slaLabel(ticket)?<em className={`sbay-sla-badge is-${ticket.sla_state}`} title={ticket.sla_due_at?`Due ${new Date(ticket.sla_due_at.replace(' ','T')).toLocaleString()}`:undefined}>{slaLabel(ticket)}</em>:null}</span></button>
             {mode==='staff'?<span>{ticket.reply_count??0}{ticket.needs_reply?<i className="sbay-need-reply">Need Reply</i>:null}</span>:<span className={`sbay-ticket-priority sbay-ticket-priority--${ticket.priority}`}>{ticket.priority}</span>}
             {mode === 'staff' ? <span>{ticket.agent_name||'Unassigned'}</span> : null}
             <span>{new Date(ticket.updated_at || ticket.created_at).toLocaleDateString()}</span>
           </div>
         ))}
         <footer>
-          {mode === 'staff' ? <div><select aria-label="Bulk actions" disabled={!selected.length || bulkPending} value={bulkAction} onChange={(event) => setBulkAction(event.target.value)}><option value="">Bulk Actions</option><optgroup label="Assignment"><option value="assignment:me">Assign to Me</option><option value="assignment:0">Unassign</option>{options?.agents.map((agent) => <option value={`assignment:${agent.id}`} key={`agent-${agent.id}`}>Assign to {agent.name}</option>)}</optgroup><optgroup label="Department">{options?.departments.map((department) => <option value={`department:${department.id}`} key={`department-${department.id}`}>Move to {department.name}</option>)}</optgroup><optgroup label="Priority"><option value="priority:normal">Priority: Normal</option><option value="priority:medium">Priority: Medium</option><option value="priority:high">Priority: High</option><option value="priority:urgent">Priority: Urgent</option></optgroup><optgroup label="State"><option value="state:trash">Move to Trash</option><option value="state:active">Restore</option></optgroup></select><button disabled={!bulkAction || bulkPending} onClick={applyBulkAction}>{bulkPending ? 'Applying…' : 'Apply'}</button></div> : <span />}
+          {mode === 'staff' ? <div><select aria-label="Bulk actions" disabled={!selected.length || bulkPending} value={bulkAction} onChange={(event) => setBulkAction(event.target.value)}><option value="">Bulk Actions</option><optgroup label="Assignment"><option value="assignment:me">Assign to Me</option><option value="assignment:0">Unassign</option>{options?.agents.map((agent) => <option value={`assignment:${agent.id}`} key={`agent-${agent.id}`}>Assign to {agent.name}</option>)}</optgroup><optgroup label="Department">{options?.departments.map((department) => <option value={`department:${department.id}`} key={`department-${department.id}`}>Move to {department.name}</option>)}</optgroup><optgroup label="Category"><option value="category:0">Clear Category</option>{options?.categories.map((category) => <option value={`category:${category.id}`} key={`category-${category.id}`}>Category: {category.name}</option>)}</optgroup><optgroup label="Priority"><option value="priority:normal">Priority: Normal</option><option value="priority:medium">Priority: Medium</option><option value="priority:high">Priority: High</option><option value="priority:urgent">Priority: Urgent</option></optgroup><optgroup label="State"><option value="state:trash">Move to Trash</option><option value="state:active">Restore</option></optgroup></select><button disabled={!bulkAction || bulkPending} onClick={applyBulkAction}>{bulkPending ? 'Applying…' : 'Apply'}</button></div> : <span />}
           <span>Showing {first}–{last} of {result?.total ?? 0}</span>
         </footer>
       </div>

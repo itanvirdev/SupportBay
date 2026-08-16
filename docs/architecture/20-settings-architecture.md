@@ -70,6 +70,8 @@ option_value: JSON
 
 # Settings Categories
 
+Ticket Categories is a capability-gated React workspace backed by the versioned category REST API. Administrators can search and filter records, create or edit global and department-scoped categories, control active state, color, and sort order, and delete only unused records. In-use categories must be deactivated so existing tickets retain their classification context.
+
 SupportBay settings are grouped into modules:
 
 ---

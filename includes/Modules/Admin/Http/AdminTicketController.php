@@ -12,6 +12,7 @@ use SupportBay\Common\Enums\AuthorType;
 use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Customers\Services\CustomerService;
+use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Services\TicketMergeService;
@@ -30,6 +31,7 @@ final class AdminTicketController {
     private readonly TicketService $tickets,
     private readonly CustomerService $customers,
     private readonly DepartmentService $departments,
+    private readonly CategoryService $categories,
     private readonly VerificationService $verifications,
     private readonly ActivityService $activities,
     private readonly MessageService $messages,
@@ -129,6 +131,9 @@ final class AdminTicketController {
     }
 
     $department = $this->departments->find($ticket->departmentId());
+    $category = $ticket->categoryId() !== null
+      ? $this->categories->find($ticket->categoryId())
+      : null;
     $verification = $ticket->purchaseVerificationId() !== null
       ? $this->verifications->find($ticket->purchaseVerificationId())
       : null;
@@ -139,6 +144,7 @@ final class AdminTicketController {
       'information' => [
         'agent' => $agent ? $agent->display_name : null,
         'department' => $department?->name(),
+        'category' => $category?->name(),
         'priority' => $ticket->priority()->value,
         'status' => $ticket->status()->value,
         'source' => $ticket->source()->value,
@@ -166,6 +172,14 @@ final class AdminTicketController {
       )),
       'options' => [
         'departments' => array_map(static fn($item): array => ['id' => $item->id(), 'name' => $item->name()], $this->departments->active()),
+        'categories' => array_map(
+          static fn($item): array => [
+            'id' => $item->id(),
+            'name' => $item->name(),
+            'department_id' => $item->departmentId(),
+          ],
+          $this->categories->applicable($ticket->departmentId()),
+        ),
         'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['role__in' => ['sbay_agent', 'sbay_manager', 'administrator']])),
       ],
     ], 'Ticket context retrieved.');
@@ -174,6 +188,11 @@ final class AdminTicketController {
   public function options(): WP_REST_Response {
     return RestResponse::success([
       'departments' => array_map(static fn($item): array => ['id' => $item->id(), 'name' => $item->name()], $this->departments->active()),
+      'categories' => array_map(static fn($item): array => [
+        'id' => $item->id(),
+        'name' => $item->name(),
+        'department_id' => $item->departmentId(),
+      ], $this->categories->active()),
       'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['role__in' => ['sbay_agent', 'sbay_manager', 'administrator']])),
     ], 'Ticket queue options retrieved.');
   }
@@ -184,6 +203,7 @@ final class AdminTicketController {
     $value = $request->get_param('value');
     $capability = match ($action) {
       'assignment' => 'sbay_assign_ticket', 'department' => 'sbay_move_ticket_department',
+      'category' => CapabilityManager::CHANGE_TICKET_CATEGORY,
       'priority' => 'sbay_change_ticket_priority', 'state' => CapabilityManager::CHANGE_TICKET_STATUS,
       default => '',
     };
@@ -195,10 +215,11 @@ final class AdminTicketController {
       $ticket = match ($action) {
         'assignment' => $this->tickets->changeAssignment($id, absint($value) ?: null, get_current_user_id()),
         'department' => $this->tickets->changeDepartment($id, absint($value), get_current_user_id()),
+        'category' => $this->tickets->changeCategory($id, absint($value) ?: null, get_current_user_id()),
         'priority' => $this->tickets->changePriority($id, TicketPriority::from(sanitize_key((string) $value)), get_current_user_id()),
         'state' => $this->tickets->changeState($id, TicketState::from(sanitize_key((string) $value)), get_current_user_id()),
       };
-    } catch (\ValueError|RuntimeException $exception) {
+    } catch (\InvalidArgumentException|\ValueError|RuntimeException $exception) {
       return RestResponse::error($exception->getMessage(), 'TICKET_ACTION_FAILED', [], 422);
     }
     return RestResponse::success($ticket->toArray(), 'Ticket updated.');
@@ -218,6 +239,7 @@ final class AdminTicketController {
     $capability = match ($action) {
       TicketBulkAction::ASSIGNMENT => 'sbay_assign_ticket',
       TicketBulkAction::DEPARTMENT => 'sbay_move_ticket_department',
+      TicketBulkAction::CATEGORY => CapabilityManager::CHANGE_TICKET_CATEGORY,
       TicketBulkAction::PRIORITY => 'sbay_change_ticket_priority',
       TicketBulkAction::STATE => CapabilityManager::CHANGE_TICKET_STATUS,
     };

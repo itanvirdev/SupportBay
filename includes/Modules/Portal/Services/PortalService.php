@@ -15,6 +15,8 @@ use SupportBay\Modules\Customers\Data\CustomerProfileData;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Departments\Services\DepartmentService;
+use SupportBay\Modules\Categories\Entities\Category;
+use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
@@ -38,6 +40,7 @@ final class PortalService {
     private readonly VerificationService $verifications,
     private readonly MessageService $messages,
     private readonly DepartmentService $departments,
+    private readonly CategoryService $categories,
     private readonly AttachmentService $attachments,
     private readonly IntegrationManager $integrations,
     private readonly OAuthLoginService $oauth,
@@ -186,6 +189,15 @@ final class PortalService {
     return $this->departments->active();
   }
 
+  /** @return Category[] */
+  public function categories(int $departmentId): array {
+    if (! $this->departments->find($departmentId)?->isActive()) {
+      return [];
+    }
+
+    return $this->categories->applicable($departmentId);
+  }
+
   /** @return array<int, array{slug: string, name: string}> */
   public function purchaseProviders(): array {
     $providers = [];
@@ -278,6 +290,17 @@ final class PortalService {
       );
     }
 
+    $applicableCategories = $this->categories->applicable($departmentId);
+    $categoryId = absint($data['category_id'] ?? 0) ?: null;
+
+    if ($applicableCategories !== [] && $categoryId === null) {
+      throw new InvalidArgumentException(
+        'Please select an available category.'
+      );
+    }
+
+    $this->categories->validateSelection($categoryId, $departmentId);
+
     $subject = trim((string) ($data['subject'] ?? ''));
     $content = trim((string) ($data['content'] ?? ''));
 
@@ -322,6 +345,7 @@ final class PortalService {
       'created_by_type'          => AuthorType::CUSTOMER->value,
       'purchase_verification_id' => $verification->id(),
       'department_id'            => $departmentId,
+      'category_id'              => $categoryId,
       'subject'                  => $subject,
       'priority'                 => $department->defaultPriority()->value,
       'source'                   => SourceType::WEB->value,

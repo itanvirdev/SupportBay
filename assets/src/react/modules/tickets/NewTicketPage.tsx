@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
-import type { PortalDepartment, PortalPurchaseProvider } from '../../api/types';
+import type { PortalCategory, PortalDepartment, PortalPurchaseProvider } from '../../api/types';
 import { FilePicker } from '../../components/FilePicker';
 
 interface NewTicketPageProps {
@@ -10,12 +10,15 @@ interface NewTicketPageProps {
 export function NewTicketPage({ navigate }: NewTicketPageProps) {
   const [departments, setDepartments] = useState<PortalDepartment[]>([]);
   const [providers, setProviders] = useState<PortalPurchaseProvider[]>([]);
+  const [categories, setCategories] = useState<PortalCategory[]>([]);
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
   const [departmentId, setDepartmentId] = useState(0);
+  const [categoryId, setCategoryId] = useState(0);
   const [provider, setProvider] = useState('');
   const [purchaseReference, setPurchaseReference] = useState('');
   const [loading, setLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
@@ -32,6 +35,25 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!departmentId) {
+      setCategories([]);
+      setCategoryId(0);
+      return;
+    }
+
+    setCategoriesLoading(true);
+    setCategories([]);
+    setCategoryId(0);
+    portalApi.categories(departmentId)
+      .then((items) => {
+        setCategories(items);
+        setCategoryId(items[0]?.id ?? 0);
+      })
+      .catch(() => setError('Ticket categories could not be loaded.'))
+      .finally(() => setCategoriesLoading(false));
+  }, [departmentId]);
+
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
@@ -42,6 +64,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
         subject,
         content,
         department_id: departmentId,
+        category_id: categoryId || null,
         provider,
         purchase_reference: purchaseReference.trim(),
       });
@@ -83,7 +106,6 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
             <span>Subject</span>
             <input value={subject} onChange={(event) => setSubject(event.target.value)} required maxLength={255} />
           </label>
-          <FilePicker files={files} onChange={setFiles} disabled={submitting} />
           <label>
             <span>Department</span>
             <select value={departmentId} onChange={(event) => setDepartmentId(Number(event.target.value))} required>
@@ -92,6 +114,17 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
               ))}
             </select>
           </label>
+          {categoriesLoading ? <p className="sbay-empty">Loading categories…</p> : categories.length ? (
+            <label>
+              <span>Category</span>
+              <select value={categoryId} onChange={(event) => setCategoryId(Number(event.target.value))} required>
+                {categories.map((category) => (
+                  <option value={category.id} key={category.id}>{category.name}</option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <FilePicker files={files} onChange={setFiles} disabled={submitting} />
           <label>
             <span>Purchase provider</span>
             <select value={provider} onChange={(event) => setProvider(event.target.value)} required>
@@ -111,7 +144,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
           </label>
           {departments.length === 0 ? <p className="sbay-form-error">No support departments are currently available.</p> : providers.length === 0 ? <p className="sbay-form-error">Purchase verification is currently unavailable.</p> : null}
           {error ? <p className="sbay-form-error" role="alert">{error}</p> : null}
-          <button className="sbay-primary-button" type="submit" disabled={submitting || departments.length === 0 || providers.length === 0}>
+          <button className="sbay-primary-button" type="submit" disabled={submitting || categoriesLoading || departments.length === 0 || providers.length === 0 || (categories.length > 0 && categoryId === 0)}>
             {submitting ? 'Creating…' : 'Create ticket'}
           </button>
         </form>
