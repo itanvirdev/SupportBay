@@ -43,11 +43,11 @@ final class CapabilityManager {
       self::CHANGE_TICKET_CATEGORY,
       self::CHANGE_TICKET_TAGS,
       self::CHANGE_TICKET_CUSTOM_FIELDS,
-      'sbay_take_ticket_ownership', self::VIEW_VERIFICATIONS,
+      'sbay_take_ticket_ownership', 'sbay_assign_ticket', self::VIEW_VERIFICATIONS,
       self::USE_SAVED_REPLIES,
     ];
     $manager = array_merge($agent, [
-      'sbay_assign_ticket', 'sbay_reassign_ticket', 'sbay_escalate_ticket',
+      'sbay_reassign_ticket', 'sbay_escalate_ticket',
       'sbay_merge_ticket',
       'sbay_split_ticket',
       self::MANAGE_DEPARTMENTS, self::CREATE_DEPARTMENT,

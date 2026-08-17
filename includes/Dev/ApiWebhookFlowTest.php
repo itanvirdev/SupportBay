@@ -475,6 +475,27 @@ final class ApiWebhookFlowTest extends FlowTest {
     $wordpressUser->set_role('sbay_agent');
     wp_set_current_user($userId);
 
+    $agentHandoff = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/' . $ticketId . '/actions');
+    $agentHandoff->set_param('action', 'assignment');
+    $agentHandoff->set_param('value', 1);
+    Assert::true(
+      rest_do_request($agentHandoff)->get_status() === 200
+      && $tickets->find($ticketId)?->assignedAgentId() === 1,
+      'Agents can transfer a ticket to another eligible support user from ticket details.',
+    );
+    $agentHandoff->set_param('value', '');
+    Assert::true(
+      rest_do_request($agentHandoff)->get_status() === 200
+      && $tickets->find($ticketId)?->assignedAgentId() === null,
+      'Agents can unassign a ticket from ticket details when a different owner is needed.',
+    );
+    $agentHandoff->set_param('value', 999999999);
+    Assert::equals(
+      422,
+      rest_do_request($agentHandoff)->get_status(),
+      'Ticket handoff rejects users who are not eligible SupportBay staff.',
+    );
+
     Assert::equals(
       200,
       rest_do_request(new WP_REST_Request('GET', '/sbay/v1/tickets'))->get_status(),

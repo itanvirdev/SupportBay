@@ -212,6 +212,13 @@ final class TicketService {
   public function changeAssignment(int $id, ?int $agentId, int $actorId): Ticket {
     $existing = $this->findOrFail($id);
 
+    if ($agentId !== null) {
+      $agent = get_userdata($agentId);
+      if (! $agent || ! user_can($agent, \SupportBay\Core\Authorization\CapabilityManager::VIEW_TICKETS)) {
+        throw new InvalidArgumentException('Please select an available support agent or manager.');
+      }
+    }
+
     if ($existing->assignedAgentId() === $agentId) {
       return $existing;
     }

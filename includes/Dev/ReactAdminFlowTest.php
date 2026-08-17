@@ -188,6 +188,13 @@ final class ReactAdminFlowTest extends FlowTest {
     );
 
     Assert::true(
+      str_contains($ticketConversation, "value={ticket.assigned_agent_id??''}")
+      && str_contains($ticketConversation, "mutate('assignment'")
+      && str_contains($ticketConversation, '<option value="">Unassigned</option>'),
+      'Ticket details show the current owner and allow authorized staff handoff or unassignment.',
+    );
+
+    Assert::true(
       str_contains($ticketConversation, 'context.custom_fields.map')
       && str_contains($ticketConversation, "mutate('custom_field'")
       && str_contains($ticketConversation, 'field.type===\'select\'')

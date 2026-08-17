@@ -124,6 +124,7 @@ Handles customer tickets.
 - sbay_change_ticket_status
 - sbay_change_ticket_priority
 - sbay_move_ticket_department
+- sbay_assign_ticket
 - sbay_take_ticket_ownership
 - sbay_view_purchase_verification
 
@@ -156,7 +157,6 @@ Supervises support operations.
 
 Includes all Agent capabilities plus:
 
-- sbay_assign_ticket
 - sbay_reassign_ticket
 - sbay_escalate_ticket
 - sbay_manage_departments

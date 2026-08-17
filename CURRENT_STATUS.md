@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Custom Field Bulk Update Workflow
+First Reply Ownership and Agent Handoff
 
 Current Objective
 
-Apply validated custom-field values to selected staff tickets with safe partial-failure reporting.
+Auto-claim unassigned tickets on the first public staff reply and allow safe ticket-detail handoff.
 
 ---
 
@@ -836,7 +836,7 @@ Never
 # Next Milestone
 
 ```
-Ticket Automation Rules Foundation
+Awaiting MVP Feature Confirmation
 ```
 
 ---
@@ -1001,9 +1001,17 @@ Completed
 - The shared staff queue renders definition and type-aware bulk controls and reports outcome counts.
 - API and React flow coverage verify structured payloads, partial success, clearing, and UI wiring.
 
+- The first public agent or manager reply automatically claims an unassigned ticket.
+- Customer replies, internal notes, and later replies never overwrite an existing owner.
+- Agents, managers, and administrators can assign, unassign, or transfer individual tickets from ticket details.
+- Assignment targets must be eligible SupportBay staff with ticket-view permission.
+- Bulk assignment remains restricted to managers and administrators.
+- Ticket details show the current owner and preserve normal activity and notification workflows.
+- API and React flow coverage verifies agent handoff, unassignment, current-owner rendering, and bulk restrictions.
+
 Next Target
 
-Ticket Automation Rules Foundation
+Awaiting MVP Feature Confirmation
 ```
 
 ---

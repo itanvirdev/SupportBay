@@ -682,3 +682,9 @@ Filtering uses a correlated `EXISTS` subquery, preserving one result and one cou
 `POST /sbay/v1/admin/tickets/bulk-actions` accepts the `custom_field` action with a structured `value` containing `field_id` and `value`. Requests require `sbay_change_ticket_custom_fields` and remain bounded to 100 unique positive ticket IDs.
 
 The controller delegates each selected ticket to `CustomFieldService::setValue()`. Type, choice, required-state, active-state, and department-scope rules therefore remain identical to individual edits. Compatible tickets succeed while invalid tickets return keyed failure messages; successful changes retain their normal actor-attributed, value-safe audit events. Empty values clear optional fields.
+
+# First Reply Ownership and Agent Handoff
+
+The first public reply from an agent or manager assigns an unassigned ticket to that responder. Customer replies and internal notes never claim ownership, and an existing assignee is never replaced by this automation.
+
+Agents, managers, and administrators may assign, unassign, or transfer an individual ticket from its detail action endpoint. Assignment targets must be existing WordPress users with SupportBay ticket-view permission. Bulk assignment remains restricted to managers and administrators through `sbay_reassign_ticket`. Every actual ownership change continues through `TicketService::changeAssignment()`, preserving activity and assignment/reassignment notification behavior.

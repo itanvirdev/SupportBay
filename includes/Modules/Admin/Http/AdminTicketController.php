@@ -272,7 +272,7 @@ final class AdminTicketController {
     }
 
     $capability = match ($action) {
-      TicketBulkAction::ASSIGNMENT => 'sbay_assign_ticket',
+      TicketBulkAction::ASSIGNMENT => 'sbay_reassign_ticket',
       TicketBulkAction::DEPARTMENT => 'sbay_move_ticket_department',
       TicketBulkAction::CATEGORY => CapabilityManager::CHANGE_TICKET_CATEGORY,
       TicketBulkAction::TAG_ADD, TicketBulkAction::TAG_REMOVE => CapabilityManager::CHANGE_TICKET_TAGS,

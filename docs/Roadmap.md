@@ -623,6 +623,8 @@ Custom Field Change Audit Trail ✅
 
 Custom Field Bulk Update Workflow ✅
 
+First Reply Ownership and Agent Handoff ✅
+
 ### Stage 6 — React
 
 Build:

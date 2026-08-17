@@ -1296,6 +1296,8 @@ Custom Field Change Audit Trail ✅
 
 Custom Field Bulk Update Workflow ✅
 
+First Reply Ownership and Agent Handoff ✅
+
 Queue ✅
 
 Asynchronous Initial Delivery ✅
