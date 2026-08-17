@@ -48,6 +48,7 @@ function matchRoute(pathname: string): RouteMatch {
 
 function App() {
   const config = getConfig();
+  const portalPath = new URL(config.portalUrl, window.location.origin).pathname.replace(/\/$/, '');
   const [overview, setOverview] = useState<PortalOverview | null>(null);
   const [pathname, setPathname] = useState(window.location.pathname);
   const [failed, setFailed] = useState(false);
@@ -63,25 +64,27 @@ function App() {
   }, []);
 
   const navigate = (path: string) => {
-    window.history.pushState({}, '', path);
-    setPathname(path);
+    const target=path.startsWith('/support')?`${portalPath}${path.slice('/support'.length)}`:path;
+    window.history.pushState({}, '', target);
+    setPathname(target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const authMode = /^\/support\/register\/?$/.test(pathname) ? 'register' : 'login';
-  const authRoute = /^\/support\/(?:login|register)\/?$/.test(pathname);
+  const canonicalPath=pathname.startsWith(portalPath)?`/support${pathname.slice(portalPath.length)}`:pathname;
+  const authMode = config.registrationEnabled && /^\/support\/register\/?$/.test(canonicalPath) ? 'register' : 'login';
+  const authRoute = /^\/support\/(?:login|register)\/?$/.test(canonicalPath);
 
   if (!config.authenticated) {
     if (!authRoute) {
       const redirect = encodeURIComponent(`${pathname}${window.location.search}`);
-      window.history.replaceState({}, '', `/support/login/?redirect=${redirect}`);
+      window.history.replaceState({}, '', `${portalPath}/login/?redirect=${redirect}`);
     }
     return <AuthPage mode={authMode} navigate={navigate}/>;
   }
 
   if (authRoute) {
-    window.history.replaceState({}, '', '/support/');
-    setTimeout(()=>setPathname('/support/'),0);
+    window.history.replaceState({}, '', `${portalPath}/`);
+    setTimeout(()=>setPathname(`${portalPath}/`),0);
   }
 
   if (failed) {
@@ -92,7 +95,7 @@ function App() {
     return <PortalState loading message="Loading your support workspace…" />;
   }
 
-  const route = matchRoute(pathname);
+  const route = matchRoute(canonicalPath);
   let page = <DashboardPage overview={overview} navigate={navigate} />;
 
   if (route.active === 'tickets') {

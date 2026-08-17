@@ -8,6 +8,7 @@ use SupportBay\Core\Testing\Assert;
 use SupportBay\Core\Testing\FlowTest;
 use SupportBay\Modules\Auth\Http\CustomerAuthController;
 use SupportBay\Modules\Customers\Services\CustomerService;
+use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 use WP_REST_Request;
 
 final class CustomerAuthenticationFlowTest extends FlowTest {
@@ -16,11 +17,14 @@ final class CustomerAuthenticationFlowTest extends FlowTest {
   protected static function execute(...$services): void {
     /** @var CustomerAuthController $auth */
     /** @var CustomerService $customers */
-    [$auth,$customers] = $services;
+    /** @var GeneralSettingsService $settings */
+    [$auth,$customers,$settings] = $services;
     if (did_action('rest_api_init') === 0) { do_action('rest_api_init', rest_get_server()); }
     Assert::true(isset(rest_get_server()->get_routes()['/sbay/v1/auth/login']), 'Public customer authentication routes are registered.');
     $previousRegistration = get_option('users_can_register');
+    $previousSettings = $settings->get();
     update_option('users_can_register', 1);
+    $settings->update(['disable_registration_form'=>false]);
     wp_set_current_user(0);
     $suffix = strtolower(wp_generate_password(8, false, false));
     $username = 'sbay-auth-' . $suffix;
@@ -36,7 +40,7 @@ final class CustomerAuthenticationFlowTest extends FlowTest {
       $response = $auth->register($register);
       $user = get_user_by('email', $email);
       $userId = $user ? (int)$user->ID : 0;
-      Assert::true($response->get_status() === 201 && $userId > 0 && in_array('subscriber', $user->roles, true), 'Registration creates a native WordPress Subscriber.');
+      Assert::true($response->get_status() === 201 && $userId > 0 && in_array($settings->clientUserDefaultRole(), $user->roles, true), 'Registration assigns the administrator-selected WordPress client role.');
       $customerId = $customers->findByUser($userId)?->id() ?? 0;
       Assert::true($customerId > 0, 'Registration links the Subscriber to a SupportBay customer record.');
       $auth->logout();
@@ -49,6 +53,7 @@ final class CustomerAuthenticationFlowTest extends FlowTest {
       wp_set_current_user(1);
       if ($customerId > 0) { $customers->deleteWithUser($customerId); }
       update_option('users_can_register', $previousRegistration);
+      $settings->update(['disable_registration_form'=>$previousSettings['disable_registration_form']]);
       wp_set_current_user(0);
     }
   }

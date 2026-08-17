@@ -1041,4 +1041,13 @@ Department Settings Foundation
 - Native password reset remains the recovery flow.
 - Authentication and React portal flow coverage verifies routes, Subscriber creation, customer linking, and login.
 
+### General Registration Setting
+
+- General → Main includes an immediate-save registration override switch with an accessible explanatory tooltip.
+- Enabled allows SupportBay Subscriber registration even when WordPress “Anyone can register” is off.
+- Disabled strictly follows the native WordPress registration setting.
+- Portal bootstrap and registration enforcement share the same settings service.
+- Main settings can disable registration absolutely, store the guest-ticket policy, and let administrators choose the validated WordPress role assigned on registration; Subscriber remains the fallback.
+- Activation provisions and selects a real Support page instead of relying on a synthetic route. `[supportbay]` mounts independently on any page, while shortcode mode controls rendering of the designated portal page.
+
 ---

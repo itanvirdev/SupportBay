@@ -60,6 +60,8 @@ final class Application {
       1,
     );
 
+    add_action('init', [Activator::class, 'ensurePortalPage'], 2);
+
     ServiceProviderRegistry::register($this->container);
 
     $this->booted = true;

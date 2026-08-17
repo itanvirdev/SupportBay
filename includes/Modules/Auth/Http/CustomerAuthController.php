@@ -7,12 +7,16 @@ namespace SupportBay\Modules\Auth\Http;
 use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Services\CustomerService;
+use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
 final class CustomerAuthController {
-  public function __construct(private readonly CustomerService $customers) {}
+  public function __construct(
+    private readonly CustomerService $customers,
+    private readonly GeneralSettingsService $settings,
+  ) {}
 
   public function registerRoutes(): void {
     register_rest_route('sbay/v1', '/auth/session', ['methods'=>'GET','callback'=>[$this,'session'],'permission_callback'=>[$this,'publicPermission']]);
@@ -36,7 +40,7 @@ final class CustomerAuthController {
     $user = wp_get_current_user();
     return RestResponse::success([
       'authenticated' => $user->exists(),
-      'registration_enabled' => (bool) get_option('users_can_register'),
+      'registration_enabled' => $this->settings->registrationEnabled(),
       'user' => $user->exists() ? ['id'=>(int)$user->ID,'name'=>sanitize_text_field($user->display_name)] : null,
     ], 'Authentication session retrieved.');
   }
@@ -49,11 +53,11 @@ final class CustomerAuthController {
     if ($user instanceof WP_Error) { return RestResponse::error('The username/email or password is incorrect.', 'LOGIN_FAILED', [], 401); }
     wp_set_current_user($user->ID);
     $this->customers->ensureWordPressCustomer((int)$user->ID);
-    return RestResponse::success(['redirect'=>home_url('/support/')], 'Login successful.');
+    return RestResponse::success(['redirect'=>$this->settings->portalUrl()], 'Login successful.');
   }
 
   public function register(WP_REST_Request $request): WP_REST_Response {
-    if (! get_option('users_can_register')) { return RestResponse::error('Registration is currently disabled.', 'REGISTRATION_DISABLED', [], 403); }
+    if (! $this->settings->registrationEnabled()) { return RestResponse::error('Registration is currently disabled.', 'REGISTRATION_DISABLED', [], 403); }
     $email = sanitize_email(wp_unslash((string)$request->get_param('email')));
     $password = (string)$request->get_param('password');
     $confirmation = (string)$request->get_param('password_confirmation');
@@ -63,17 +67,17 @@ final class CustomerAuthController {
     if (! hash_equals($password, $confirmation)) { return RestResponse::error('Passwords do not match.', 'REGISTRATION_PASSWORD_MISMATCH', [], 422); }
     if (email_exists($email)) { return RestResponse::error('That email is already registered.', 'REGISTRATION_EXISTS', [], 409); }
     $username = $this->uniqueUsername($email);
-    $userId = wp_insert_user(['user_login'=>$username,'user_email'=>$email,'user_pass'=>$password,'first_name'=>$firstName,'last_name'=>$lastName,'display_name'=>trim($firstName.' '.$lastName),'role'=>'subscriber']);
+    $userId = wp_insert_user(['user_login'=>$username,'user_email'=>$email,'user_pass'=>$password,'first_name'=>$firstName,'last_name'=>$lastName,'display_name'=>trim($firstName.' '.$lastName),'role'=>$this->settings->clientUserDefaultRole()]);
     if ($userId instanceof WP_Error) { return RestResponse::error($userId->get_error_message(), 'REGISTRATION_FAILED', [], 422); }
     $this->customers->ensureWordPressCustomer((int)$userId, CustomerSource::REGISTRATION);
     wp_set_current_user((int)$userId);
     wp_set_auth_cookie((int)$userId, true, is_ssl());
-    return RestResponse::success(['redirect'=>home_url('/support/')], 'Registration successful.', [], 201);
+    return RestResponse::success(['redirect'=>$this->settings->portalUrl()], 'Registration successful.', [], 201);
   }
 
   public function logout(): WP_REST_Response {
     wp_logout();
-    return RestResponse::success(['redirect'=>home_url('/support/login/')], 'Logout successful.');
+    return RestResponse::success(['redirect'=>trailingslashit($this->settings->portalUrl()).'login/'], 'Logout successful.');
   }
 
   private function uniqueUsername(string $email): string {

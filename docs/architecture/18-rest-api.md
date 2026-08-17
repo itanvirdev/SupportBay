@@ -141,6 +141,16 @@ All API responses follow a strict structure:
 
 The React customer portal exposes `/support/login/` and `/support/register/` while WordPress remains the session and password authority. `POST /auth/login`, `POST /auth/register`, `GET /auth/session`, and `POST /auth/logout` use REST nonces and same-origin cookies. Registration follows the native `users_can_register` setting, creates a WordPress Subscriber, and links it to a SupportBay customer record. The legacy `sbay_customer` role is migrated to Subscriber and removed.
 
+`GET` and `PUT /settings/general` manage the protected SupportBay registration override. When enabled, customer registration is permitted even if WordPress `users_can_register` is disabled. When off, the effective state strictly follows WordPress. Both the portal bootstrap and registration endpoint resolve the same service-owned effective value.
+
+Main settings also include an absolute registration-form disable flag, a guest-ticket creation policy flag, and the client default role. Administrators choose the default from roles currently registered in WordPress; the backend validates that the role still exists and falls back to Subscriber if it is removed. Subscriber is the recommended customer default. The registration disable flag takes precedence over both the SupportBay override and WordPress registration.
+
+Activation creates or reuses a published WordPress page named Support, inserts `[supportbay]`, and saves that page as the initial Support Portal Page; there is no synthetic hard-coded portal URL. Administrators may select another published page. The selected page always renders the isolated SupportBay portal document. Shortcode mode is an independent option that enables `[supportbay]` on other WordPress pages through their active theme. Each entry point derives its portal URL, authentication redirects, client navigation, and virtual child-route rewrites from its own page permalink.
+
+The selected portal page is marked through WordPress's native `display_post_states` filter as `SupportBay`. WordPress combines it with existing states using its standard comma-separated presentation, for example `Front Page, SupportBay`.
+
+When the selected portal page is also the static Front Page, its permalink path is the site root. React preserves the empty base path instead of falling back to `/support`, and narrowly scoped root-level rewrites handle only SupportBay virtual routes such as login, tickets, purchases, and profile.
+
 SupportBay uses **mixed authentication layers**:
 
 ## 1. WordPress Auth (Logged-in users)

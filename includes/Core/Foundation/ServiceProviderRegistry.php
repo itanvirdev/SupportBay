@@ -25,6 +25,7 @@ use SupportBay\Modules\Categories\CategoryServiceProvider;
 use SupportBay\Modules\Tags\TagServiceProvider;
 use SupportBay\Modules\CustomFields\CustomFieldServiceProvider;
 use SupportBay\Modules\Roles\RoleServiceProvider;
+use SupportBay\Modules\Settings\SettingsServiceProvider;
 
 final class ServiceProviderRegistry {
   /**
@@ -59,6 +60,7 @@ final class ServiceProviderRegistry {
     self::addProvider(new MessageServiceProvider());
     self::addProvider(new AttachmentServiceProvider());
     self::addProvider(new CustomerServiceProvider());
+    self::addProvider(new SettingsServiceProvider());
     self::addProvider(new AuthServiceProvider());
     self::addProvider(new ProviderServiceProvider());
     self::addProvider(new VerificationServiceProvider());

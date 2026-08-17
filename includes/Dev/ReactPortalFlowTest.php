@@ -21,6 +21,18 @@ final class ReactPortalFlowTest extends FlowTest {
 
     PortalPage::registerRewriteRule();
 
+    Assert::true(shortcode_exists('supportbay'), 'The [supportbay] customer portal shortcode is registered.');
+    $portalSettings=get_option('sbay_settings',[]);
+    $portalSettings=is_array($portalSettings)?$portalSettings:[];
+    update_option('sbay_settings',array_merge($portalSettings,['shortcode_mode'=>true]));
+    Assert::true(str_contains($portalPage->shortcode(), 'supportbay-customer-portal'), 'Shortcode mode mounts the portal independently of the selected portal page.');
+    update_option('sbay_settings',$portalSettings);
+    $portalPageId=absint($portalSettings['support_portal_page_id']??0);
+    $portalPost=$portalPageId>0?get_post($portalPageId):null;
+    if ($portalPost instanceof \WP_Post) {
+      Assert::true(($portalPage->postStates([], $portalPost)['supportbay']??'')==='SupportBay','The selected page is identified by a native SupportBay page state.');
+    }
+
     Assert::true(
       isset($wp_rewrite->extra_rules_top['^support(?:/.*)?$']),
       'Customer portal rewrite is registered.'

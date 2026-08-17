@@ -27,14 +27,15 @@ export function AuthPage({mode,navigate}:AuthPageProps){
         ?await apiPost<{redirect:string}>('auth/login',{login,password,remember})
         :await apiPost<{redirect:string}>('auth/register',{first_name:firstName,last_name:lastName,email,password,password_confirmation:confirmPassword});
       const requested=new URLSearchParams(window.location.search).get('redirect');
-      const target=requested&&requested.startsWith('/support/')&&!requested.startsWith('/support/login')&&!requested.startsWith('/support/register')?requested:response.redirect;
+      const portalPath=new URL(config.portalUrl,window.location.origin).pathname;
+      const target=requested&&requested.startsWith(portalPath)?requested:response.redirect;
       window.location.assign(target);
     }catch(reason){setError(reason instanceof Error?reason.message:'Authentication failed.');setBusy(false);}
   };
 
   return <main className="sbay-auth-page"><section className="sbay-auth-card">
     <header><div className="sbay-auth-brand"><span aria-hidden="true">S</span><strong>{config.siteName}</strong></div></header>
-    <nav><a href={config.homeUrl} aria-label="Home"><span aria-hidden="true">⌂</span></a>{mode==='login'?<button type="button" onClick={()=>navigate('/support/register/')}><span aria-hidden="true">♙</span> Register</button>:<button type="button" onClick={()=>navigate('/support/login/')}><span aria-hidden="true">♙</span> Login</button>}</nav>
+    <nav><a href={config.homeUrl} aria-label="Home"><span aria-hidden="true">⌂</span></a>{mode==='login'&&config.registrationEnabled?<button type="button" onClick={()=>navigate('/support/register/')}><span aria-hidden="true">♙</span> Register</button>:mode==='register'?<button type="button" onClick={()=>navigate('/support/login/')}><span aria-hidden="true">♙</span> Login</button>:null}</nav>
     <form onSubmit={submit}><h1>{mode==='login'?'Login':'Register'}</h1>
       {mode==='register'?<><div className="sbay-auth-name-fields"><label><span>First Name</span><input value={firstName} onChange={event=>setFirstName(event.target.value)} autoComplete="given-name" required maxLength={100}/></label><label><span>Last Name</span><input value={lastName} onChange={event=>setLastName(event.target.value)} autoComplete="family-name" required maxLength={100}/></label></div><label><span>Email Address</span><input type="email" value={email} onChange={event=>setEmail(event.target.value)} autoComplete="email" required/></label></>:<label><span>Username or Email Address</span><input value={login} onChange={event=>setLogin(event.target.value)} autoComplete="username" required/></label>}
       <label><span>Password</span><div className="sbay-password-input"><input type={showPassword?'text':'password'} value={password} onChange={event=>setPassword(event.target.value)} autoComplete={mode==='login'?'current-password':'new-password'} required minLength={mode==='register'?8:undefined}/><button type="button" aria-label={showPassword?'Hide password':'Show password'} onClick={()=>setShowPassword(!showPassword)}>{showPassword?'Hide':'Show'}</button></div></label>

@@ -92,6 +92,9 @@ final class ReactAdminFlowTest extends FlowTest {
     $departmentWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/DepartmentWorkspace.tsx'
     );
+    $generalWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/GeneralWorkspace.tsx'
+    );
     $templateWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/NotificationTemplateWorkspace.tsx'
     );
@@ -260,16 +263,33 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, 'Departments')
       && str_contains($settingsWorkspace, 'Ticket SLA')
       && str_contains($settingsWorkspace, 'Integrations')
-      && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace />')
-      && str_contains($settingsWorkspace, '<NotificationLogWorkspace />')
-      && str_contains($settingsWorkspace, '<SavedReplyWorkspace />')
-      && str_contains($settingsWorkspace, '<CategoryWorkspace />')
-      && str_contains($settingsWorkspace, '<TagWorkspace />')
-      && str_contains($settingsWorkspace, '<CustomFieldWorkspace />')
-      && str_contains($settingsWorkspace, '<RoleWorkspace />')
-      && str_contains($settingsWorkspace, '<DepartmentWorkspace />')
-      && str_contains($settingsWorkspace, '<ProviderWorkspace />'),
+      && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace/>')
+      && str_contains($settingsWorkspace, '<NotificationLogWorkspace/>')
+      && str_contains($settingsWorkspace, '<SavedReplyWorkspace/>')
+      && str_contains($settingsWorkspace, '<CategoryWorkspace/>')
+      && str_contains($settingsWorkspace, '<TagWorkspace/>')
+      && str_contains($settingsWorkspace, '<CustomFieldWorkspace/>')
+      && str_contains($settingsWorkspace, '<RoleWorkspace/>')
+      && str_contains($settingsWorkspace, '<DepartmentWorkspace/>')
+      && str_contains($settingsWorkspace, '<GeneralWorkspace')
+      && str_contains($settingsWorkspace, '<ProviderWorkspace/>'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($generalWorkspace)
+      && str_contains($generalWorkspace, "adminGet<GeneralSettings>('settings/general')")
+      && str_contains($generalWorkspace, "adminPut<GeneralSettings>('settings/general'")
+      && str_contains($generalWorkspace, 'Override WordPress registration setting.')
+      && str_contains($generalWorkspace, 'Disable registration form.')
+      && str_contains($generalWorkspace, 'Disable guest ticket creation.')
+      && str_contains($generalWorkspace, 'Client User Default Role')
+      && str_contains($generalWorkspace, 'settings.role_options.map')
+      && str_contains($generalWorkspace, 'Support Portal Page')
+      && str_contains($generalWorkspace, 'shortcode on other pages')
+      && str_contains($generalWorkspace, '[supportbay]')
+      && str_contains($generalWorkspace, 'Turn OFF to strictly follow'),
+      'General settings exposes the documented SupportBay registration override.',
     );
 
     Assert::true(

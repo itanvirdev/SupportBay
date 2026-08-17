@@ -17,6 +17,7 @@ final class Activator {
 
     self::storeVersion();
     self::createDefaultOptions();
+    self::ensurePortalPage();
     CapabilityManager::register();
     self::logActivation();
 
@@ -44,10 +45,32 @@ final class Activator {
       'default_department' => 'support',
       'file_upload_enabled' => true,
       'rich_text_enabled' => false,
+      'registration_override' => false,
+      'disable_registration_form' => false,
+      'disable_guest_ticket_creation' => true,
+      'client_user_default_role' => 'subscriber',
+      'support_portal_page_id' => 0,
+      'shortcode_mode' => false,
     ];
 
     if (! get_option('sbay_settings')) {
       add_option('sbay_settings', $defaults);
+    }
+  }
+
+  public static function ensurePortalPage(): void {
+    $settings=get_option('sbay_settings',[]);
+    $settings=is_array($settings)?$settings:[];
+    $pageId=absint($settings['support_portal_page_id']??0);
+    if ($pageId>0&&get_post_status($pageId)==='publish') { return; }
+    $page=get_page_by_path('support',OBJECT,'page');
+    if (! $page) {
+      $created=wp_insert_post(['post_title'=>'Support','post_name'=>'support','post_content'=>'[supportbay]','post_status'=>'publish','post_type'=>'page']);
+      $pageId=is_wp_error($created)?0:(int)$created;
+    } else { $pageId=(int)$page->ID; }
+    if ($pageId>0) {
+      $settings['support_portal_page_id']=$pageId;
+      update_option('sbay_settings',$settings,false);
     }
   }
 

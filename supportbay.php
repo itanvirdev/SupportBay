@@ -161,6 +161,13 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         \SupportBay\Dev\CustomerAuthenticationFlowTest::run(
           $container->get(\SupportBay\Modules\Auth\Http\CustomerAuthController::class),
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
+          $container->get(\SupportBay\Modules\Settings\Services\GeneralSettingsService::class),
+        );
+        break;
+
+      case 'general-settings':
+        \SupportBay\Dev\GeneralSettingsFlowTest::run(
+          $container->get(\SupportBay\Modules\Settings\Services\GeneralSettingsService::class),
         );
         break;
 
