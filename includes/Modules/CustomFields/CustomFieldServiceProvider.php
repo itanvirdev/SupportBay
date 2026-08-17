@@ -9,12 +9,19 @@ use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\CustomFields\Http\Controllers\CustomFieldController;
 use SupportBay\Modules\CustomFields\Repositories\CustomFieldRepository;
 use SupportBay\Modules\CustomFields\Services\CustomFieldService;
+use SupportBay\Modules\CustomFields\Events\TicketCustomFieldValueChanged;
+use SupportBay\Modules\Activities\Listeners\LogTicketCustomFieldValueChangedActivity;
 
 final class CustomFieldServiceProvider extends ServiceProvider {
+  protected array $listeners = [
+    TicketCustomFieldValueChanged::class => [LogTicketCustomFieldValueChangedActivity::class],
+  ];
+
   public function register(Container $container): void {
     $container->singleton(CustomFieldRepository::class);
     $container->singleton(CustomFieldService::class);
     $container->singleton(CustomFieldController::class);
+    $container->singleton(LogTicketCustomFieldValueChangedActivity::class);
   }
 
   public function boot(Container $container): void {

@@ -140,6 +140,14 @@ priority_changed
 
 department_changed
 
+custom_field_set
+
+custom_field_updated
+
+custom_field_cleared
+
+Custom-field audit records identify the definition and action but never copy old or new values into activity descriptions or payloads.
+
 ---
 
 ## Verification Events

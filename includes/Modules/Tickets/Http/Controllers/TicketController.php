@@ -142,6 +142,11 @@ final class TicketController {
         : null,
       uncategorized: $category === 'uncategorized',
       tagId: absint($request->get_param('tag_id')) ?: null,
+      customFieldId: absint($request->get_param('custom_field_id')) ?: null,
+      customFieldValue: $request->get_param('custom_field_value') !== null
+        && (string) $request->get_param('custom_field_value') !== ''
+          ? sanitize_textarea_field(wp_unslash((string) $request->get_param('custom_field_value')))
+          : null,
       needsReply: rest_sanitize_boolean($request->get_param('need_reply')),
       slaState: TicketSlaState::tryFrom(sanitize_key((string) $request->get_param('sla_state')))?->value,
       orderBy: sanitize_key((string) $request->get_param('orderby')),
@@ -296,6 +301,8 @@ final class TicketController {
       'department_id' => ['sanitize_callback' => 'absint'],
       'category_id' => ['sanitize_callback' => 'sanitize_text_field'],
       'tag_id' => ['sanitize_callback' => 'absint'],
+      'custom_field_id' => ['sanitize_callback' => 'absint'],
+      'custom_field_value' => ['sanitize_callback' => 'sanitize_textarea_field'],
       'need_reply' => ['default' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
       'orderby' => ['default' => 'updated_at', 'sanitize_callback' => 'sanitize_key'],
       'order' => ['default' => 'desc', 'sanitize_callback' => 'sanitize_key'],

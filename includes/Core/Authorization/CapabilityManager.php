@@ -26,6 +26,7 @@ final class CapabilityManager {
   public const MANAGE_TAGS = 'sbay_manage_tags';
   public const CHANGE_TICKET_TAGS = 'sbay_change_ticket_tags';
   public const MANAGE_CUSTOM_FIELDS = 'sbay_manage_custom_fields';
+  public const CHANGE_TICKET_CUSTOM_FIELDS = 'sbay_change_ticket_custom_fields';
 
   /** Register protected SupportBay roles and capabilities. */
   public static function register(): void {
@@ -41,6 +42,7 @@ final class CapabilityManager {
       'sbay_change_ticket_priority', 'sbay_move_ticket_department',
       self::CHANGE_TICKET_CATEGORY,
       self::CHANGE_TICKET_TAGS,
+      self::CHANGE_TICKET_CUSTOM_FIELDS,
       'sbay_take_ticket_ownership', self::VIEW_VERIFICATIONS,
       self::USE_SAVED_REPLIES,
     ];

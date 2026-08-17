@@ -105,6 +105,11 @@ final class TicketMetricController {
         : null,
       uncategorized: $category === 'uncategorized',
       tagId: absint($request->get_param('tag_id')) ?: null,
+      customFieldId: absint($request->get_param('custom_field_id')) ?: null,
+      customFieldValue: $request->get_param('custom_field_value') !== null
+        && (string) $request->get_param('custom_field_value') !== ''
+          ? sanitize_textarea_field(wp_unslash((string) $request->get_param('custom_field_value')))
+          : null,
       assignedAgentId: absint($request->get_param('assigned_agent_id')) ?: null,
       priority: sanitize_key((string) $request->get_param('priority')) ?: null,
     );

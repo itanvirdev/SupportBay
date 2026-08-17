@@ -68,6 +68,16 @@ final class CustomFieldRepository extends Repository {
     ) !== false;
   }
 
+  public function findValue(int $ticketId, int $fieldId): ?TicketCustomFieldValue {
+    $row = $this->db->get_row($this->db->prepare(
+      'SELECT * FROM ' . TicketCustomFieldValueSchema::tableName()
+        . ' WHERE ticket_id = %d AND field_id = %d LIMIT 1',
+      $ticketId,
+      $fieldId,
+    ), ARRAY_A);
+    return is_array($row) ? $this->hydrateValue($row) : null;
+  }
+
   /** @return TicketCustomFieldValue[] */
   public function valuesForTicket(int $ticketId): array {
     $rows = $this->db->get_results($this->db->prepare(

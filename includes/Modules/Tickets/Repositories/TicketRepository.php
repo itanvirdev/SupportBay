@@ -21,6 +21,7 @@ use SupportBay\Modules\Departments\Database\DepartmentSchema;
 use SupportBay\Modules\Categories\Database\CategorySchema;
 use SupportBay\Modules\Tags\Database\TicketTagSchema;
 use SupportBay\Modules\Tags\Database\TagSchema;
+use SupportBay\Modules\CustomFields\Database\TicketCustomFieldValueSchema;
 
 final class TicketRepository extends Repository {
 
@@ -220,6 +221,16 @@ final class TicketRepository extends Repository {
       $clauses[] = 'EXISTS (SELECT 1 FROM ' . TicketTagSchema::tableName() . ' tag_filter WHERE tag_filter.ticket_id = t.id AND tag_filter.tag_id = %d)';
       $values[] = $query->tagId;
     }
+    if ($query->customFieldId !== null) {
+      $customFieldClause = 'EXISTS (SELECT 1 FROM ' . TicketCustomFieldValueSchema::tableName()
+        . ' queue_custom_filter WHERE queue_custom_filter.ticket_id = t.id AND queue_custom_filter.field_id = %d';
+      $values[] = $query->customFieldId;
+      if ($query->customFieldValue !== null) {
+        $customFieldClause .= ' AND queue_custom_filter.value = %s';
+        $values[] = $query->customFieldValue;
+      }
+      $clauses[] = $customFieldClause . ')';
+    }
     if ($query->unassigned) { $clauses[] = 't.assigned_agent_id IS NULL'; }
     elseif ($query->assignedAgentId !== null) { $clauses[] = 't.assigned_agent_id = %d'; $values[] = $query->assignedAgentId; }
     if ($query->search) {
@@ -276,6 +287,16 @@ final class TicketRepository extends Repository {
     if ($query->tagId !== null) {
       $clauses[] = 'EXISTS (SELECT 1 FROM ' . TicketTagSchema::tableName() . ' metric_tag_filter WHERE metric_tag_filter.ticket_id = t.id AND metric_tag_filter.tag_id = %d)';
       $values[] = $query->tagId;
+    }
+    if ($query->customFieldId !== null) {
+      $customFieldClause = 'EXISTS (SELECT 1 FROM ' . TicketCustomFieldValueSchema::tableName()
+        . ' metric_custom_filter WHERE metric_custom_filter.ticket_id = t.id AND metric_custom_filter.field_id = %d';
+      $values[] = $query->customFieldId;
+      if ($query->customFieldValue !== null) {
+        $customFieldClause .= ' AND metric_custom_filter.value = %s';
+        $values[] = $query->customFieldValue;
+      }
+      $clauses[] = $customFieldClause . ')';
     }
     if ($query->assignedAgentId !== null) {
       $clauses[] = 't.assigned_agent_id = %d';
@@ -381,6 +402,19 @@ final class TicketRepository extends Repository {
         'tickets DESC, group_key ASC',
         'tag',
       ),
+      'custom_fields' => $query->customFieldId !== null
+        ? $this->ticketMetricGroups(
+          "metric_custom_value.value AS group_key",
+          $where,
+          $values,
+          $joins . ' INNER JOIN ' . TicketCustomFieldValueSchema::tableName()
+            . ' metric_custom_value ON metric_custom_value.ticket_id = t.id AND metric_custom_value.field_id = '
+            . (int) $query->customFieldId,
+          $needReply,
+          'tickets DESC, group_key ASC',
+          'value',
+        )
+        : [],
       'agents' => $this->ticketMetricGroups(
         "COALESCE(au.display_name, 'Unassigned') AS group_key",
         $where,

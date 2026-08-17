@@ -120,6 +120,9 @@ body.supportbay-portal { padding-top: 0 !important; }
 .sbay-linked-product { margin-top: 22px; padding: 18px; border-radius: 14px; background: var(--sbay-bg); }
 .sbay-linked-product h3 { margin: 13px 0 5px; }
 .sbay-linked-product p { margin: 0; color: var(--sbay-muted); font-size: 13px; }
+.sbay-ticket-custom-data { margin-top: 22px; }
+.sbay-ticket-custom-data h3 { margin: 0 0 10px; font-size: 15px; }
+.sbay-ticket-custom-data dd { max-width: 62%; overflow-wrap: anywhere; text-align: right; text-transform: none; }
 .sbay-reply-form { margin: 8px -24px 0; padding: 22px 24px; border-top: 1px solid var(--sbay-line); background: #f8faf8; }
 .sbay-reply-form label { display: block; margin-bottom: 9px; font-weight: 750; }
 .sbay-reply-form textarea, .sbay-ticket-form textarea, .sbay-ticket-form input, .sbay-ticket-form select { width: 100%; border: 1px solid #cbd7d0; border-radius: 10px; padding: 12px 13px; color: var(--sbay-ink); background: #fff; font: inherit; }
@@ -158,6 +161,9 @@ body.supportbay-portal { padding-top: 0 !important; }
 .sbay-ticket-form { display: grid; gap: 19px; padding: 26px; border: 1px solid var(--sbay-line); border-radius: 18px; background: #fff; }
 .sbay-ticket-form label > span { display: block; margin-bottom: 8px; font-weight: 750; }
 .sbay-ticket-form label small { color: var(--sbay-muted); font-weight: 500; }
+.sbay-ticket-form .sbay-checkbox-field { display: flex; align-items: center; gap: 10px; }
+.sbay-ticket-form .sbay-checkbox-field input { width: auto; margin: 0; }
+.sbay-ticket-form .sbay-checkbox-field > span { margin: 0; }
 .sbay-ticket-form .sbay-primary-button { justify-self: start; }
 
 .sbay-purchase-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }

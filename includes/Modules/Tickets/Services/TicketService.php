@@ -323,6 +323,7 @@ final class TicketService {
           TicketBulkAction::CATEGORY => $this->changeCategory($ticketId, absint($value) ?: null, $actorId),
           TicketBulkAction::TAG_ADD => $this->changeTag($ticketId, absint($value), $actorId, true),
           TicketBulkAction::TAG_REMOVE => $this->changeTag($ticketId, absint($value), $actorId, false),
+          TicketBulkAction::CUSTOM_FIELD => throw new InvalidArgumentException('Custom-field bulk changes must use the Custom Field service.'),
           TicketBulkAction::PRIORITY => $this->changePriority($ticketId, TicketPriority::from(sanitize_key((string) $value)), $actorId),
           TicketBulkAction::STATE => $this->changeState($ticketId, TicketState::from(sanitize_key((string) $value)), $actorId),
         };

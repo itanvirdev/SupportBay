@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
-import type { PortalCategory, PortalDepartment, PortalPurchaseProvider } from '../../api/types';
+import type { PortalCategory, PortalCustomField, PortalDepartment, PortalPurchaseProvider } from '../../api/types';
 import { FilePicker } from '../../components/FilePicker';
 
 interface NewTicketPageProps {
@@ -11,6 +11,8 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
   const [departments, setDepartments] = useState<PortalDepartment[]>([]);
   const [providers, setProviders] = useState<PortalPurchaseProvider[]>([]);
   const [categories, setCategories] = useState<PortalCategory[]>([]);
+  const [customFields, setCustomFields] = useState<PortalCustomField[]>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<number, string>>({});
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
   const [departmentId, setDepartmentId] = useState(0);
@@ -39,18 +41,26 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
     if (!departmentId) {
       setCategories([]);
       setCategoryId(0);
+      setCustomFields([]);
+      setCustomFieldValues({});
       return;
     }
 
     setCategoriesLoading(true);
     setCategories([]);
     setCategoryId(0);
-    portalApi.categories(departmentId)
-      .then((items) => {
-        setCategories(items);
-        setCategoryId(items[0]?.id ?? 0);
+    setCustomFields([]);
+    setCustomFieldValues({});
+    Promise.all([
+      portalApi.categories(departmentId),
+      portalApi.customFields(departmentId),
+    ])
+      .then(([categoryItems, fieldItems]) => {
+        setCategories(categoryItems);
+        setCategoryId(categoryItems[0]?.id ?? 0);
+        setCustomFields(fieldItems);
       })
-      .catch(() => setError('Ticket categories could not be loaded.'))
+      .catch(() => setError('Ticket options could not be loaded.'))
       .finally(() => setCategoriesLoading(false));
   }, [departmentId]);
 
@@ -67,6 +77,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
         category_id: categoryId || null,
         provider,
         purchase_reference: purchaseReference.trim(),
+        custom_fields: customFieldValues,
       });
       const detail = await portalApi.ticket(ticket.id);
       const openingMessage = detail.messages[0];
@@ -124,6 +135,42 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
               </select>
             </label>
           ) : null}
+          {customFields.map((field) => {
+            const value = customFieldValues[field.id] ?? '';
+            const update = (nextValue: string) => setCustomFieldValues((current) => ({
+              ...current,
+              [field.id]: nextValue,
+            }));
+
+            if (field.type === 'textarea') {
+              return <label key={field.id}><span>{field.name}</span><textarea value={value} onChange={(event) => update(event.target.value)} required={field.is_required} rows={4} /></label>;
+            }
+            if (field.type === 'select') {
+              return (
+                <label key={field.id}>
+                  <span>{field.name}</span>
+                  <select value={value} onChange={(event) => update(event.target.value)} required={field.is_required}>
+                    <option value="">Select {field.name}</option>
+                    {field.options.map((option) => <option value={option} key={option}>{option}</option>)}
+                  </select>
+                </label>
+              );
+            }
+            if (field.type === 'checkbox') {
+              return (
+                <label className="sbay-checkbox-field" key={field.id}>
+                  <input type="checkbox" checked={value === '1'} onChange={(event) => update(event.target.checked ? '1' : '0')} required={field.is_required} />
+                  <span>{field.name}</span>
+                </label>
+              );
+            }
+            return (
+              <label key={field.id}>
+                <span>{field.name}</span>
+                <input type={field.type} value={value} onChange={(event) => update(event.target.value)} required={field.is_required} />
+              </label>
+            );
+          })}
           <FilePicker files={files} onChange={setFiles} disabled={submitting} />
           <label>
             <span>Purchase provider</span>

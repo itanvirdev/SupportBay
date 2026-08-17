@@ -117,7 +117,7 @@ function AdminApp() {
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
-  const mutateTicket = async (action: string, value: string | number) => {
+  const mutateTicket = async (action: string, value: unknown) => {
     if (!ticketId || !detail) return;
     const ticket = await adminPost<ConversationTicket>(`admin/tickets/${ticketId}/actions`, { action, value });
     const context = await adminGet<TicketContext>(`admin/tickets/${ticketId}/context`);
@@ -130,12 +130,16 @@ function AdminApp() {
     setDetail({ ...detail, ticket: response.data });
   };
 
-  const bulkTickets = async (ticketIds: number[], action: string, value: string) => {
-    await adminPost('admin/tickets/bulk-actions', {
+  const bulkTickets = async (ticketIds: number[], action: string, value: unknown) => {
+    const response = await adminPost('admin/tickets/bulk-actions', {
       ticket_ids: ticketIds,
       action,
       value,
     });
+    return {
+      updated: Number(response.meta.updated) || 0,
+      failed: Number(response.meta.failed) || 0,
+    };
   };
 
   const mergeTicket = async (targetId: number) => {

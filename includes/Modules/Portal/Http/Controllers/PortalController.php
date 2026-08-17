@@ -13,6 +13,7 @@ use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Data\CustomerProfileData;
 use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Categories\Entities\Category;
+use SupportBay\Modules\CustomFields\Entities\CustomField;
 use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Portal\Services\PortalService;
 use SupportBay\Modules\Tickets\Entities\Ticket;
@@ -157,6 +158,19 @@ final class PortalController {
     register_rest_route(self::NAMESPACE, '/portal/categories', [
       'methods'             => 'GET',
       'callback'            => [$this, 'categories'],
+      'permission_callback' => [$this, 'permissions'],
+      'args'                => [
+        'department_id' => [
+          'required'          => true,
+          'sanitize_callback' => 'absint',
+          'validate_callback' => static fn(mixed $value): bool =>
+            is_numeric($value) && (int) $value > 0,
+        ],
+      ],
+    ]);
+    register_rest_route(self::NAMESPACE, '/portal/custom-fields', [
+      'methods'             => 'GET',
+      'callback'            => [$this, 'customFields'],
       'permission_callback' => [$this, 'permissions'],
       'args'                => [
         'department_id' => [
@@ -356,6 +370,7 @@ final class PortalController {
         'purchase_reference' => sanitize_text_field(
           wp_unslash((string) $request->get_param('purchase_reference'))
         ),
+        'custom_fields' => (array) $request->get_param('custom_fields'),
       ]);
     } catch (InvalidArgumentException|RuntimeException $exception) {
       return RestResponse::error(
@@ -407,6 +422,15 @@ final class PortalController {
       'verification' => $verification
         ? $this->verificationData($verification)
         : null,
+      'custom_fields' => array_map(
+        static fn(array $item): array => [
+          'id' => $item['field']->id(),
+          'name' => $item['field']->name(),
+          'type' => $item['field']->type()->value,
+          'value' => $item['value']->value(),
+        ],
+        $this->portal->ticketCustomFieldValues($ticket->id()),
+      ),
     ], 'Ticket retrieved.');
   }
 
@@ -635,6 +659,30 @@ final class PortalController {
       $categories,
       'Categories retrieved.',
       ['total' => count($categories)],
+    );
+  }
+
+  public function customFields(WP_REST_Request $request): WP_REST_Response {
+    $fields = array_map(
+      static fn(CustomField $field): array => [
+        'id'            => $field->id(),
+        'name'          => $field->name(),
+        'slug'          => $field->slug(),
+        'type'          => $field->type()->value,
+        'options'       => $field->options(),
+        'is_required'   => $field->isRequired(),
+        'department_id' => $field->departmentId(),
+        'sort_order'    => $field->sortOrder(),
+      ],
+      $this->portal->customFields(
+        absint($request->get_param('department_id'))
+      ),
+    );
+
+    return RestResponse::success(
+      $fields,
+      'Custom fields retrieved.',
+      ['total' => count($fields)],
     );
   }
 

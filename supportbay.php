@@ -146,6 +146,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
           $container->get(\SupportBay\Modules\CustomFields\Http\Controllers\CustomFieldController::class),
+          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
         );
         break;
 
@@ -168,6 +169,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Providers\Services\ProviderConfiguration::class),
           $container->get(\SupportBay\Core\Security\SecretCipher::class),
           $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
+          $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderConnectionService::class),
         );
         break;
@@ -247,6 +249,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Providers\Services\ProviderService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\CustomFields\Services\CustomFieldService::class
           )
         );
         break;
@@ -341,6 +346,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
           $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
           $container->get(\SupportBay\Modules\Tags\Services\TagService::class),
+          $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
         );
         break;
 
@@ -382,6 +388,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
           $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
+          $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
         );
         break;
 
@@ -500,6 +507,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           ),
           $container->get(
             \SupportBay\Modules\Providers\Services\ProviderService::class
+          ),
+          $container->get(
+            \SupportBay\Modules\CustomFields\Services\CustomFieldService::class
           )
         );
 
@@ -560,6 +570,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
           $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
+          $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
         );
 
         \SupportBay\Dev\ReactAdminFlowTest::run(

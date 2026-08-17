@@ -10,6 +10,7 @@ export interface AdminConfig {
   canManageSavedReplies: boolean;
   canManageCategories: boolean;
   canManageTags: boolean;
+  canManageCustomFields: boolean;
   section: 'tickets' | 'reports' | 'settings';
 }
 

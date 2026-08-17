@@ -12,6 +12,7 @@ use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Categories\Services\CategoryService;
+use SupportBay\Modules\CustomFields\Services\CustomFieldService;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
@@ -40,6 +41,7 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     /** @var AttachmentService $attachments */
     /** @var IntegrationManager $integrations */
     /** @var ProviderService $providers */
+    /** @var CustomFieldService $customFields */
     [
       $customers,
       $tickets,
@@ -50,6 +52,7 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       $attachments,
       $integrations,
       $providers,
+      $customFields,
     ] = $services;
 
     $purchaseProvider = new FakePurchaseProvider();
@@ -129,6 +132,19 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       ),
       'department_id' => $departmentId,
     ]);
+    $customField = $customFields->create([
+      'name'             => 'Site URL',
+      'type'             => 'url',
+      'is_required'      => true,
+      'customer_visible' => true,
+      'department_id'    => $departmentId,
+    ]);
+    $privateCustomField = $customFields->create([
+      'name'             => 'Internal account tier',
+      'type'             => 'text',
+      'customer_visible' => false,
+      'department_id'    => $departmentId,
+    ]);
 
     $ticketId = $tickets->create([
       'customer_id'              => $customerId,
@@ -136,6 +152,16 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'subject'                  => 'Portal Test Ticket',
       'purchase_verification_id' => $verificationId,
     ]);
+    $customFields->setValue(
+      $ticketId,
+      $customField->id(),
+      'https://example.com/customer-site',
+    );
+    $customFields->setValue(
+      $ticketId,
+      $privateCustomField->id(),
+      'Staff only',
+    );
 
     $reply = $messages->create([
       'ticket_id'  => $ticketId,
@@ -309,6 +335,14 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Ticket detail excludes internal notes.'
     );
 
+    Assert::true(
+      count($detailData['data']['custom_fields'] ?? []) === 1
+      && ($detailData['data']['custom_fields'][0]['id'] ?? null) === $customField->id()
+      && ($detailData['data']['custom_fields'][0]['value'] ?? null) === 'https://example.com/customer-site'
+      && ! str_contains(wp_json_encode($detailData['data']['custom_fields']), 'Staff only'),
+      'Ticket detail exposes stored customer-visible values without leaking staff-only fields.'
+    );
+
     $verificationResponse = rest_do_request(
       new WP_REST_Request('GET', '/sbay/v1/portal/verifications')
     );
@@ -358,6 +392,24 @@ final class CustomerPortalApiFlowTest extends FlowTest {
         true,
       ),
       'Portal exposes categories applicable to the selected department.'
+    );
+
+    $customFieldRequest = new WP_REST_Request(
+      'GET',
+      '/sbay/v1/portal/custom-fields'
+    );
+    $customFieldRequest->set_query_params([
+      'department_id' => $departmentId,
+    ]);
+    $customFieldResponse = rest_do_request($customFieldRequest);
+
+    Assert::true(
+      in_array(
+        $customField->id(),
+        array_column($customFieldResponse->get_data()['data'] ?? [], 'id'),
+        true,
+      ),
+      'Portal exposes applicable customer-visible custom fields.'
     );
 
     $providerResponse = rest_do_request(
@@ -416,6 +468,25 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Portal rejects Purchase Code/Key records whose support has expired.'
     );
 
+    $missingCustomFieldRequest = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/portal/tickets'
+    );
+    $missingCustomFieldRequest->set_body_params([
+      'subject' => 'Missing custom field request',
+      'content' => 'This ticket must not be created.',
+      'department_id' => $departmentId,
+      'category_id' => $category->id(),
+      'provider' => 'fake-purchase',
+      'purchase_reference' => $verifications->find($verificationId)->providerReference(),
+    ]);
+
+    Assert::equals(
+      422,
+      rest_do_request($missingCustomFieldRequest)->get_status(),
+      'Portal enforces required customer custom fields.'
+    );
+
     $createRequest = new WP_REST_Request(
       'POST',
       '/sbay/v1/portal/tickets'
@@ -427,6 +498,9 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'category_id'              => $category->id(),
       'provider'                  => 'fake-purchase',
       'purchase_reference'        => $verifications->find($verificationId)->providerReference(),
+      'custom_fields'             => [
+        $customField->id() => 'https://example.com/support',
+      ],
     ]);
     $createResponse = rest_do_request($createRequest);
     $createData = $createResponse->get_data();
@@ -441,6 +515,12 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::true(
       $createdTicketId > 0,
       'Portal returns the created ticket.'
+    );
+
+    Assert::equals(
+      'https://example.com/support',
+      $customFields->valuesForTicket($createdTicketId)[0]->value() ?? null,
+      'Portal stores validated custom field values on the created ticket.'
     );
 
     Assert::equals(
@@ -671,6 +751,10 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Test internal attachment and local file deleted.'
     );
 
+    $customFields->removeValue($createdTicketId, $customField->id());
+    $customFields->removeValue($ticketId, $customField->id());
+    $customFields->removeValue($ticketId, $privateCustomField->id());
+
     Assert::true(
       $tickets->delete($createdTicketId),
       'Portal-created test ticket deleted.'
@@ -704,6 +788,16 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::true(
       $categories->delete($category->id()),
       'Test category deleted.'
+    );
+
+    Assert::true(
+      $customFields->delete($customField->id()),
+      'Test custom field deleted.'
+    );
+
+    Assert::true(
+      $customFields->delete($privateCustomField->id()),
+      'Test private custom field deleted.'
     );
 
     Assert::true(

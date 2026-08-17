@@ -206,6 +206,21 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
             <div><dt>Priority</dt><dd>{detail.ticket.priority}</dd></div>
             <div><dt>Source</dt><dd>{detail.ticket.source}</dd></div>
           </dl>
+          {detail.custom_fields.length > 0 ? (
+            <div className="sbay-ticket-custom-data">
+              <h3>Additional information</h3>
+              <dl>{detail.custom_fields.map((field) => (
+                <div key={field.id}>
+                  <dt>{field.name}</dt>
+                  <dd>{field.type === 'checkbox'
+                    ? field.value === '1' ? 'Yes' : 'No'
+                    : field.type === 'url'
+                      ? <a href={field.value} target="_blank" rel="noreferrer">{field.value}</a>
+                      : field.value}</dd>
+                </div>
+              ))}</dl>
+            </div>
+          ) : null}
           {detail.verification ? (
             <div className="sbay-linked-product">
               <span className="sbay-verified">Verified purchase</span>

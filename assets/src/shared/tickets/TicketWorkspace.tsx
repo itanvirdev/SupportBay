@@ -44,6 +44,8 @@ export interface TicketQueryParams {
   departmentId: string;
   categoryId: string;
   tagId: string;
+  customFieldId: string;
+  customFieldValue: string;
   needReply: boolean;
   slaState: string;
   orderby: string;
@@ -55,8 +57,8 @@ interface TicketWorkspaceProps {
   load: (query: TicketQueryParams) => Promise<TicketPage>;
   openTicket: (ticket: WorkspaceTicket) => void;
   createTicket?: () => void;
-  options?: {agents:Array<{id:number;name:string}>;departments:Array<{id:number;name:string}>;categories:Array<{id:number;name:string;department_id:number|null}>;tags:Array<{id:number;name:string;color:string|null}>};
-  bulk?: (ticketIds: number[], action: string, value: string) => Promise<void>;
+  options?: {agents:Array<{id:number;name:string}>;departments:Array<{id:number;name:string}>;categories:Array<{id:number;name:string;department_id:number|null}>;tags:Array<{id:number;name:string;color:string|null}>;custom_fields:Array<{id:number;name:string;type:string;options:string[];department_id:number|null}>};
+  bulk?: (ticketIds: number[], action: string, value: unknown) => Promise<{updated:number;failed:number}>;
   openCustomers?: () => void;
   openVerifications?: () => void;
 }
@@ -74,6 +76,8 @@ export function ticketQueryString(query: TicketQueryParams): string {
     department_id: query.departmentId,
     category_id: query.categoryId,
     tag_id: query.tagId,
+    custom_field_id: query.customFieldId,
+    custom_field_value: query.customFieldValue,
     need_reply: String(query.needReply),
     sla_state: query.slaState,
     orderby: query.orderby,
@@ -83,7 +87,7 @@ export function ticketQueryString(query: TicketQueryParams): string {
 
 const defaults: TicketQueryParams = {
   page: 1, perPage: 20, search: '', status: '', state: 'active', priority: '',
-  assignment: '', agentId:'', departmentId:'', categoryId:'', tagId:'', needReply:false, slaState:'', orderby: 'updated_at', order: 'desc',
+  assignment: '', agentId:'', departmentId:'', categoryId:'', tagId:'', customFieldId:'', customFieldValue:'', needReply:false, slaState:'', orderby: 'updated_at', order: 'desc',
 };
 
 const slaLabel = (ticket: WorkspaceTicket) => {
@@ -100,8 +104,10 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
   const [result, setResult] = useState<TicketPage | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [bulkNotice, setBulkNotice] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
   const [bulkAction, setBulkAction] = useState('');
+  const [bulkCustomFieldValue, setBulkCustomFieldValue] = useState('');
   const [bulkPending, setBulkPending] = useState(false);
   const filterCategories = useMemo(
     () => options?.categories.filter((category) =>
@@ -111,6 +117,17 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
     ) ?? [],
     [options, query.departmentId],
   );
+  const filterCustomFields = useMemo(
+    () => options?.custom_fields.filter((field) =>
+      !query.departmentId
+      || field.department_id === null
+      || field.department_id === Number(query.departmentId)
+    ) ?? [],
+    [options, query.departmentId],
+  );
+  const selectedCustomField = options?.custom_fields.find((field) => field.id === Number(query.customFieldId));
+  const bulkCustomFieldId = bulkAction.startsWith('custom_field:') ? Number(bulkAction.split(':')[1]) : 0;
+  const bulkCustomField = options?.custom_fields.find((field) => field.id === bulkCustomFieldId);
 
   const update = (changes: Partial<TicketQueryParams>) => setQuery((current) => ({ ...current, ...changes, page: changes.page ?? 1 }));
   const reload = useCallback(() => {
@@ -130,12 +147,18 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
   const applyBulkAction = async () => {
     if (!bulk || !selected.length || !bulkAction) return;
     const [action, value = ''] = bulkAction.split(':');
+    const payload = action === 'custom_field'
+      ? { field_id: Number(value), value: bulkCustomFieldValue }
+      : value;
     setBulkPending(true);
     setError(null);
+    setBulkNotice(null);
     try {
-      await bulk(selected, action, value);
+      const outcome = await bulk(selected, action, payload);
+      setBulkNotice(`Bulk action updated ${outcome.updated} ticket${outcome.updated===1?'':'s'}${outcome.failed?`; ${outcome.failed} failed`:'.'}`);
       setSelected([]);
       setBulkAction('');
+      setBulkCustomFieldValue('');
       setRefresh((current) => current + 1);
     } catch (reason: unknown) {
       setError(reason instanceof Error ? reason.message : 'Bulk ticket action failed.');
@@ -146,6 +169,13 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
   const allSelected = Boolean(result?.items.length) && result?.items.every((ticket) => selected.includes(ticket.id));
   const first = result && result.total ? ((result.page - 1) * query.perPage) + 1 : 0;
   const last = result ? Math.min(result.page * query.perPage, result.total) : 0;
+  const bulkCustomFieldControl = bulkCustomField?.type === 'select'
+    ? <select aria-label="Bulk custom field value" value={bulkCustomFieldValue} onChange={(event)=>setBulkCustomFieldValue(event.target.value)}><option value="">Clear value</option>{bulkCustomField.options.map(option=><option key={option}>{option}</option>)}</select>
+    : bulkCustomField?.type === 'checkbox'
+      ? <select aria-label="Bulk custom field value" value={bulkCustomFieldValue} onChange={(event)=>setBulkCustomFieldValue(event.target.value)}><option value="">Clear value</option><option value="1">Checked</option><option value="0">Not checked</option></select>
+      : bulkCustomField
+        ? <input aria-label="Bulk custom field value" type={['number','date','email','url'].includes(bulkCustomField.type)?bulkCustomField.type:'text'} value={bulkCustomFieldValue} onChange={(event)=>setBulkCustomFieldValue(event.target.value)} placeholder="Leave empty to clear"/>
+        : null;
 
   return (
     <section className={`sbay-ticket-workspace sbay-ticket-workspace--${mode}`}>
@@ -161,6 +191,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
           {createTicket ? <button className="is-primary" onClick={createTicket}>＋ Add Ticket</button> : null}
         </div>
       </div>
+      {bulkNotice?<p className="sbay-ticket-bulk-notice" role="status">{bulkNotice}</p>:null}
 
       <div className="sbay-ticket-filters">
         <div className="sbay-ticket-statuses">
@@ -171,14 +202,16 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
         </div>
         <form onSubmit={submitSearch}><input aria-label="Search tickets" onChange={(event) => setDraftSearch(event.target.value)} placeholder="Search keyword or ticket ID" value={draftSearch} /><button aria-label="Submit search">⌕</button></form>
         <div className="sbay-ticket-filter-row">
-          {mode==='staff'?<select aria-label="Department" value={query.departmentId} onChange={event=>update({departmentId:event.target.value,categoryId:''})}><option value="">All Departments</option>{options?.departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
+          {mode==='staff'?<select aria-label="Department" value={query.departmentId} onChange={event=>update({departmentId:event.target.value,categoryId:'',customFieldId:'',customFieldValue:''})}><option value="">All Departments</option>{options?.departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
           {mode==='staff'?<select aria-label="Category" value={query.categoryId} onChange={event=>update({categoryId:event.target.value})}><option value="">All Categories</option><option value="uncategorized">Uncategorized</option>{filterCategories.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
           {mode==='staff'?<select aria-label="Tag" value={query.tagId} onChange={event=>update({tagId:event.target.value})}><option value="">All Tags</option>{options?.tags.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
+          {mode==='staff'?<select aria-label="Custom field" value={query.customFieldId} onChange={event=>update({customFieldId:event.target.value,customFieldValue:''})}><option value="">All Custom Fields</option>{filterCustomFields.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
+          {mode==='staff'&&query.customFieldId?(selectedCustomField?.type==='select'?<select aria-label="Custom field value" value={query.customFieldValue} onChange={event=>update({customFieldValue:event.target.value})}><option value="">Any Value</option>{selectedCustomField.options.map(option=><option key={option}>{option}</option>)}</select>:selectedCustomField?.type==='checkbox'?<select aria-label="Custom field value" value={query.customFieldValue} onChange={event=>update({customFieldValue:event.target.value})}><option value="">Any Value</option><option value="1">Checked</option><option value="0">Not Checked</option></select>:<input aria-label="Custom field value" value={query.customFieldValue} onChange={event=>update({customFieldValue:event.target.value})} placeholder="Exact custom field value"/>):null}
           {mode==='staff'?<select aria-label="Agent" value={query.agentId} onChange={event=>update({agentId:event.target.value,assignment:''})}><option value="">All Agents</option>{options?.agents.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
           {mode==='staff'?<select aria-label="SLA state" value={query.slaState} onChange={event=>update({slaState:event.target.value})}><option value="">All SLA States</option><option value="breached">SLA Breached</option><option value="due_soon">SLA Due Soon</option><option value="on_track">SLA On Track</option><option value="met">SLA Met</option></select>:null}
           <select aria-label="Priority" value={query.priority} onChange={(event) => update({ priority: event.target.value })}><option value="">All Priorities</option><option value="normal">Normal</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>
           <select aria-label="Sort tickets" value={`${query.orderby}:${query.order}`} onChange={(event) => { const [orderby, order] = event.target.value.split(':'); update({ orderby, order }); }}><option value="updated_at:desc">Updated (Newest First)</option><option value="sla_due:asc">SLA Due First</option><option value="need_reply:desc">Need Reply First</option><option value="updated_at:asc">Updated (Oldest First)</option><option value="created_at:desc">Created (Newest First)</option><option value="priority:desc">Priority (Highest First)</option></select>
-          <button disabled={query.search === '' && query.priority === '' && query.status === '' && query.state === 'active' && query.assignment === '' && query.agentId === '' && query.departmentId === '' && query.categoryId === '' && query.tagId === '' && query.slaState === '' && !query.needReply} onClick={() => { setDraftSearch(''); setQuery(defaults); }}>Reset Filters</button>
+          <button disabled={query.search === '' && query.priority === '' && query.status === '' && query.state === 'active' && query.assignment === '' && query.agentId === '' && query.departmentId === '' && query.categoryId === '' && query.tagId === '' && query.customFieldId === '' && query.slaState === '' && !query.needReply} onClick={() => { setDraftSearch(''); setQuery(defaults); }}>Reset Filters</button>
         </div>
       </div>
 
@@ -198,7 +231,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
           </div>
         ))}
         <footer>
-          {mode === 'staff' ? <div><select aria-label="Bulk actions" disabled={!selected.length || bulkPending} value={bulkAction} onChange={(event) => setBulkAction(event.target.value)}><option value="">Bulk Actions</option><optgroup label="Assignment"><option value="assignment:me">Assign to Me</option><option value="assignment:0">Unassign</option>{options?.agents.map((agent) => <option value={`assignment:${agent.id}`} key={`agent-${agent.id}`}>Assign to {agent.name}</option>)}</optgroup><optgroup label="Department">{options?.departments.map((department) => <option value={`department:${department.id}`} key={`department-${department.id}`}>Move to {department.name}</option>)}</optgroup><optgroup label="Category"><option value="category:0">Clear Category</option>{options?.categories.map((category) => <option value={`category:${category.id}`} key={`category-${category.id}`}>Category: {category.name}</option>)}</optgroup><optgroup label="Tags">{options?.tags.flatMap(tag=>[<option value={`tag_add:${tag.id}`} key={`tag-add-${tag.id}`}>Add tag: {tag.name}</option>,<option value={`tag_remove:${tag.id}`} key={`tag-remove-${tag.id}`}>Remove tag: {tag.name}</option>])}</optgroup><optgroup label="Priority"><option value="priority:normal">Priority: Normal</option><option value="priority:medium">Priority: Medium</option><option value="priority:high">Priority: High</option><option value="priority:urgent">Priority: Urgent</option></optgroup><optgroup label="State"><option value="state:trash">Move to Trash</option><option value="state:active">Restore</option></optgroup></select><button disabled={!bulkAction || bulkPending} onClick={applyBulkAction}>{bulkPending ? 'Applying…' : 'Apply'}</button></div> : <span />}
+          {mode === 'staff' ? <div><select aria-label="Bulk actions" disabled={!selected.length || bulkPending} value={bulkAction} onChange={(event) => {setBulkAction(event.target.value);setBulkCustomFieldValue('');}}><option value="">Bulk Actions</option><optgroup label="Assignment"><option value="assignment:me">Assign to Me</option><option value="assignment:0">Unassign</option>{options?.agents.map((agent) => <option value={`assignment:${agent.id}`} key={`agent-${agent.id}`}>Assign to {agent.name}</option>)}</optgroup><optgroup label="Department">{options?.departments.map((department) => <option value={`department:${department.id}`} key={`department-${department.id}`}>Move to {department.name}</option>)}</optgroup><optgroup label="Category"><option value="category:0">Clear Category</option>{options?.categories.map((category) => <option value={`category:${category.id}`} key={`category-${category.id}`}>Category: {category.name}</option>)}</optgroup><optgroup label="Tags">{options?.tags.flatMap(tag=>[<option value={`tag_add:${tag.id}`} key={`tag-add-${tag.id}`}>Add tag: {tag.name}</option>,<option value={`tag_remove:${tag.id}`} key={`tag-remove-${tag.id}`}>Remove tag: {tag.name}</option>])}</optgroup><optgroup label="Custom Fields">{options?.custom_fields.map(field=><option value={`custom_field:${field.id}`} key={`custom-field-${field.id}`}>Set field: {field.name}</option>)}</optgroup><optgroup label="Priority"><option value="priority:normal">Priority: Normal</option><option value="priority:medium">Priority: Medium</option><option value="priority:high">Priority: High</option><option value="priority:urgent">Priority: Urgent</option></optgroup><optgroup label="State"><option value="state:trash">Move to Trash</option><option value="state:active">Restore</option></optgroup></select>{bulkCustomFieldControl}<button disabled={!bulkAction || bulkPending} onClick={applyBulkAction}>{bulkPending ? 'Applying…' : 'Apply'}</button></div> : <span />}
           <span>Showing {first}–{last} of {result?.total ?? 0}</span>
         </footer>
       </div>

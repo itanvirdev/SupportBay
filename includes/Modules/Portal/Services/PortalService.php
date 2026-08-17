@@ -17,6 +17,8 @@ use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Categories\Entities\Category;
 use SupportBay\Modules\Categories\Services\CategoryService;
+use SupportBay\Modules\CustomFields\Entities\CustomField;
+use SupportBay\Modules\CustomFields\Services\CustomFieldService;
 use SupportBay\Modules\Messages\Entities\Message;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
@@ -41,6 +43,7 @@ final class PortalService {
     private readonly MessageService $messages,
     private readonly DepartmentService $departments,
     private readonly CategoryService $categories,
+    private readonly CustomFieldService $customFields,
     private readonly AttachmentService $attachments,
     private readonly IntegrationManager $integrations,
     private readonly OAuthLoginService $oauth,
@@ -301,6 +304,11 @@ final class PortalService {
 
     $this->categories->validateSelection($categoryId, $departmentId);
 
+    $customFieldValues = $this->customFields->validateCustomerValues(
+      $departmentId,
+      (array) ($data['custom_fields'] ?? []),
+    );
+
     $subject = trim((string) ($data['subject'] ?? ''));
     $content = trim((string) ($data['content'] ?? ''));
 
@@ -352,14 +360,32 @@ final class PortalService {
     ]);
 
     try {
-      $this->messages->create([
+      $message = $this->messages->create([
         'ticket_id'   => $ticketId,
         'author_id'   => $customer->userId(),
         'author_type' => AuthorType::CUSTOMER->value,
         'type'        => MessageType::REPLY->value,
         'content'     => $content,
       ]);
-    } catch (RuntimeException $exception) {
+
+      $savedCustomFieldIds = [];
+      foreach ($customFieldValues as $fieldId => $value) {
+        $this->customFields->setValue(
+          $ticketId,
+          $fieldId,
+          $value,
+          $customer->userId(),
+          AuthorType::CUSTOMER,
+        );
+        $savedCustomFieldIds[] = $fieldId;
+      }
+    } catch (InvalidArgumentException|RuntimeException $exception) {
+      foreach ($savedCustomFieldIds ?? [] as $fieldId) {
+        $this->customFields->removeValue($ticketId, $fieldId);
+      }
+      if (isset($message)) {
+        $this->messages->delete($message->id());
+      }
       $this->tickets->delete($ticketId);
 
       throw $exception;
@@ -372,6 +398,21 @@ final class PortalService {
     }
 
     return $ticket;
+  }
+
+  /** @return CustomField[] */
+  public function customFields(int $departmentId): array {
+    return $this->customFields->applicable($departmentId, true);
+  }
+
+  /**
+   * Return customer-visible stored custom-field values for an owned ticket.
+   *
+   * @return array<int, array{field: CustomField, value: \SupportBay\Modules\CustomFields\Entities\TicketCustomFieldValue}>
+   */
+  public function ticketCustomFieldValues(int $ticketId): array {
+    $ticket = $this->ticket($ticketId);
+    return $this->customFields->customerValuesForTicket($ticket->id());
   }
 
   private function maskProviderReference(string $reference): string {

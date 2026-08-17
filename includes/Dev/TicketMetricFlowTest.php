@@ -23,6 +23,7 @@ use SupportBay\Common\Utilities\CsvExporter;
 use SupportBay\Modules\Tickets\Services\TicketSlaPolicyService;
 use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\Tags\Services\TagService;
+use SupportBay\Modules\CustomFields\Services\CustomFieldService;
 
 final class TicketMetricFlowTest extends FlowTest {
   protected static function title(): string { return 'Ticket Metric Flow Test'; }
@@ -36,7 +37,8 @@ final class TicketMetricFlowTest extends FlowTest {
     /** @var TicketSlaPolicyService $sla */
     /** @var CategoryService $categories */
     /** @var TagService $tags */
-    [$metrics, $controller, $tickets, $messages, $csvExporter, $sla, $categories, $tags] = $services;
+    /** @var CustomFieldService $customFields */
+    [$metrics, $controller, $tickets, $messages, $csvExporter, $sla, $categories, $tags, $customFields] = $services;
     $today = current_time('Y-m-d');
     $now = $today . ' 00:00:00';
     $ticketIds = [];
@@ -51,6 +53,12 @@ final class TicketMetricFlowTest extends FlowTest {
     ]);
     $tag = $tags->create(['name' => 'Metric Tag ' . strtolower(wp_generate_password(8, false, false))]);
     $secondTag = $tags->create(['name' => 'Escalated ' . strtolower(wp_generate_password(8, false, false))]);
+    $customField = $customFields->create([
+      'name' => 'Metric Environment ' . strtolower(wp_generate_password(8, false, false)),
+      'type' => 'select',
+      'options' => ['Production', 'Staging'],
+      'department_id' => 1,
+    ]);
 
     try {
       $sla->update(['enabled' => true, 'first_response_minutes' => [
@@ -100,6 +108,9 @@ final class TicketMetricFlowTest extends FlowTest {
       $tags->attach($ticketIds[0], $tag->id());
       $tags->attach($ticketIds[1], $tag->id());
       $tags->attach($ticketIds[0], $secondTag->id());
+      $customFields->setValue($ticketIds[0], $customField->id(), 'Production');
+      $customFields->setValue($ticketIds[1], $customField->id(), 'Production');
+      $customFields->setValue($ticketIds[2], $customField->id(), 'Staging');
 
       $report = $metrics->report(new TicketMetricQuery(
         dateFrom: $today,
@@ -164,6 +175,19 @@ final class TicketMetricFlowTest extends FlowTest {
         && array_sum(array_column($tagReport['tags'], 'tickets')) === 3,
         'Ticket reports filter unique tickets by tag while preserving multi-tag workload membership.',
       );
+      $customFieldReport = $metrics->report(new TicketMetricQuery(
+        dateFrom: $today,
+        dateTo: $today,
+        customFieldId: $customField->id(),
+        customFieldValue: 'Production',
+        assignedAgentId: $agentId,
+      ));
+      Assert::true(
+        $customFieldReport['summary']['tickets'] === 2
+        && $customFieldReport['custom_fields'][0]['value'] === 'Production'
+        && $customFieldReport['custom_fields'][0]['tickets'] === 2,
+        'Ticket reports filter exact custom-field values and expose the selected-field workload.',
+      );
       $csv = $metrics->export(new TicketMetricQuery(
         dateFrom: $today,
         dateTo: $today,
@@ -175,7 +199,8 @@ final class TicketMetricFlowTest extends FlowTest {
         && str_contains($csv, 'Daily activity')
         && str_contains($csv, 'Agent workload')
         && str_contains($csv, 'Category workload')
-        && str_contains($csv, 'Tag workload'),
+        && str_contains($csv, 'Tag workload')
+        && str_contains($csv, 'Custom field workload'),
         'Ticket report exports the filtered summary and breakdowns as UTF-8 CSV.',
       );
 
@@ -192,13 +217,15 @@ final class TicketMetricFlowTest extends FlowTest {
       Assert::true($controller->permissions() === true, 'Authorized administrators can view ticket reports.');
       Assert::true($controller->exportPermissions() === true, 'Administrators can export ticket reports.');
       $request = new WP_REST_Request('GET', '/sbay/v1/reports/tickets');
-      $request->set_query_params(['date_from' => $today, 'date_to' => $today, 'department_id' => 1, 'tag_id' => $tag->id(), 'assigned_agent_id' => $agentId]);
+      $request->set_query_params(['date_from' => $today, 'date_to' => $today, 'department_id' => 1, 'tag_id' => $tag->id(), 'custom_field_id' => $customField->id(), 'custom_field_value' => 'Production', 'assigned_agent_id' => $agentId]);
       $response = rest_do_request($request);
       Assert::true(
         $response->get_status() === 200
         && $response->get_data()['data']['filters']['tag_id'] === $tag->id()
+        && $response->get_data()['data']['filters']['custom_field_id'] === $customField->id()
+        && $response->get_data()['data']['filters']['custom_field_value'] === 'Production'
         && $response->get_data()['data']['summary']['tickets'] === 2,
-        'Protected ticket report endpoint applies the requested tag filter.'
+        'Protected ticket report endpoint applies tag and custom-field filters.'
       );
       $exportRequest = new WP_REST_Request('GET', '/sbay/v1/reports/tickets/export');
       $exportRequest->set_query_params(['date_from' => $today, 'date_to' => $today, 'assigned_agent_id' => $agentId]);
@@ -211,6 +238,7 @@ final class TicketMetricFlowTest extends FlowTest {
     } finally {
       foreach ($messageIds as $id) { $messages->delete($id); }
       foreach ($ticketIds as $id) {
+        $customFields->removeValue($id, $customField->id());
         $tags->detach($id, $tag->id());
         $tags->detach($id, $secondTag->id());
         $tickets->delete($id);
@@ -218,6 +246,7 @@ final class TicketMetricFlowTest extends FlowTest {
       $tags->delete($tag->id());
       $tags->delete($secondTag->id());
       $categories->delete($category->id());
+      $customFields->delete($customField->id());
       if ($existingSla === null) { delete_option('sbay_ticket_sla_policy'); }
       else { update_option('sbay_ticket_sla_policy', $existingSla, false); }
       wp_set_current_user(0);

@@ -19,6 +19,9 @@ enum ActivityType: string {
   case CATEGORY_CHANGED    = 'category_changed';
   case TAG_ADDED           = 'tag_added';
   case TAG_REMOVED         = 'tag_removed';
+  case CUSTOM_FIELD_SET     = 'custom_field_set';
+  case CUSTOM_FIELD_UPDATED = 'custom_field_updated';
+  case CUSTOM_FIELD_CLEARED = 'custom_field_cleared';
 
   case PURCHASE_VERIFIED   = 'purchase_verified';
 
@@ -61,6 +64,9 @@ enum ActivityType: string {
       self::CATEGORY_CHANGED    => 'Category Changed',
       self::TAG_ADDED           => 'Tag Added',
       self::TAG_REMOVED         => 'Tag Removed',
+      self::CUSTOM_FIELD_SET     => 'Custom Field Set',
+      self::CUSTOM_FIELD_UPDATED => 'Custom Field Updated',
+      self::CUSTOM_FIELD_CLEARED => 'Custom Field Cleared',
 
       self::PURCHASE_VERIFIED   => 'Purchase Verified',
 

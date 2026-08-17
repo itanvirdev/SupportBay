@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Ticket Custom Fields Foundation
+Custom Field Bulk Update Workflow
 
 Current Objective
 
-Establish reusable custom-field definitions and normalized, type-safe per-ticket values.
+Apply validated custom-field values to selected staff tickets with safe partial-failure reporting.
 
 ---
 
@@ -836,7 +836,7 @@ Never
 # Next Milestone
 
 ```
-Custom Field Settings UI
+Ticket Automation Rules Foundation
 ```
 
 ---
@@ -892,7 +892,7 @@ Status
 ```
 Current Sprint
 
-Ticket Custom Fields Foundation
+Custom Field Settings UI
 
 Completed
 
@@ -953,10 +953,57 @@ Completed
 - Ticket values are type-aware, sanitized, and unique per ticket and field.
 - Definitions with historical values cannot be deleted or change type and must be deactivated instead.
 - Database schema version is 1.0.0.
+- Settings exposes custom-field administration only to users with `sbay_manage_custom_fields`.
+- Definition forms manage all supported types, department scope, required and customer-visible flags, lifecycle, and sort order.
+- Select choices use a one-choice-per-line editor and remain server-sanitized and deduplicated.
+- The UI explains type-locking, deactivation, and deletion protection for definitions with historical values.
+- React administrator flow coverage verifies permission bootstrap, navigation, CRUD calls, and definition controls.
+- The customer portal loads active, customer-visible custom fields for the selected department.
+- Customer ticket creation renders all supported field controls and submits values keyed by definition ID.
+- Required, type, option, visibility, lifecycle, and department rules are enforced server-side before ticket persistence.
+- Validated custom-field values are stored against the new ticket, with creation rollback on persistence failure.
+- Customer portal API and React flow coverage verify field discovery, required enforcement, rendering, submission, and storage.
+- Staff ticket context returns active applicable definitions, current values, and read-only historical inactive definitions.
+- Agents, managers, and administrators receive a dedicated ticket custom-field mutation capability.
+- Staff value changes reuse the custom-field service for required, type, option, lifecycle, and department validation.
+- The agent ticket sidebar renders controls for every supported field type, supports optional-value clearing, and reports server validation errors.
+- API and React flow coverage verify context discovery, validated persistence, rejection, and typed controls.
+- Ticket reports accept a selected custom field and optional exact normalized value.
+- Custom-field filters use unique-ticket existence checks and therefore do not duplicate report totals.
+- The selected definition receives its own value workload breakdown with ticket, response, need-reply, and final-state totals.
+- Active custom-field definitions and type-aware choices are available to the protected report workspace.
+- CSV exports include the same custom-field workload as the on-screen report.
+- Metric and React flow coverage verify exact-value filtering, aggregation, REST metadata, controls, and export content.
+- Customer-owned ticket details expose only stored values whose definitions remain customer-visible.
+- Staff-only definitions and values are removed before the portal response is serialized.
+- Historical inactive definitions remain readable when they still carry a stored customer-visible value.
+- Customer detail renders values read-only, formats checkbox values as Yes/No, and links validated URLs safely.
+- Portal API and React flow coverage verify visible value rendering and private-field non-disclosure.
+- Staff ticket queries accept a custom-field definition and optional exact stored value.
+- Queue filtering uses an existence subquery against the unique ticket-field relationship and preserves unique totals.
+- Selecting a definition without a value finds tickets having any value for that field.
+- Shared React controls are staff-only, department-aware, and type-aware for select and checkbox values.
+- Customer queue controls and row payloads remain unchanged; custom-field values are not exposed in list rows.
+- Custom-field, REST API, and React flow coverage verify presence, exact-value, non-match, and staff-only UI behavior.
+
+Completed
+
+- Custom-field set, update, and clear operations dispatch one typed domain event after successful persistence.
+- Repeating an identical normalized value is a no-op and creates no duplicate audit activity.
+- Ticket activities identify the field and action while deliberately excluding previous and current values.
+- Customer portal creation attributes field changes to the customer; staff edits default to the agent actor.
+- Flow coverage verifies each activity type, actor attribution, no-op behavior, and value non-disclosure.
+
+- The protected ticket bulk endpoint accepts structured custom-field mutations for up to 100 tickets.
+- Bulk mutations reuse the custom-field service and preserve type, required, lifecycle, and department validation.
+- Compatible tickets succeed independently while keyed failures explain incompatible selections.
+- Optional values can be cleared in bulk and actual changes retain normal privacy-safe activities.
+- The shared staff queue renders definition and type-aware bulk controls and reports outcome counts.
+- API and React flow coverage verify structured payloads, partial success, clearing, and UI wiring.
 
 Next Target
 
-Custom Field Settings UI
+Ticket Automation Rules Foundation
 ```
 
 ---

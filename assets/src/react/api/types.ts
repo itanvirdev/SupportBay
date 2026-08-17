@@ -93,6 +93,14 @@ export interface PortalTicketDetail {
   ticket: PortalTicket;
   messages: PortalMessage[];
   verification: PortalVerification | null;
+  custom_fields: PortalTicketCustomFieldValue[];
+}
+
+export interface PortalTicketCustomFieldValue {
+  id: number;
+  name: string;
+  type: PortalCustomFieldType;
+  value: string;
 }
 
 export interface PortalDepartment {
@@ -107,6 +115,21 @@ export interface PortalCategory {
   department_id: number | null;
 }
 
+export type PortalCustomFieldType =
+  | 'text' | 'textarea' | 'number' | 'select'
+  | 'checkbox' | 'date' | 'email' | 'url';
+
+export interface PortalCustomField {
+  id: number;
+  name: string;
+  slug: string;
+  type: PortalCustomFieldType;
+  options: string[];
+  is_required: boolean;
+  department_id: number | null;
+  sort_order: number;
+}
+
 export interface CreateTicketInput {
   subject: string;
   content: string;
@@ -114,6 +137,7 @@ export interface CreateTicketInput {
   category_id: number | null;
   provider: string;
   purchase_reference: string;
+  custom_fields: Record<number, string>;
 }
 
 export interface PortalPurchaseProvider {

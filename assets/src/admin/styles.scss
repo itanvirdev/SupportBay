@@ -380,7 +380,20 @@
 .sbay-category-settings__row { display:grid; grid-template-columns:1fr 110px 130px; gap:12px; }
 .sbay-category-settings__actions { margin-top:14px; display:flex; gap:10px; }
 .sbay-category-settings__actions button.is-danger { border-color:#b13b35; background:#fff; color:#b13b35; }
+.sbay-custom-field-settings li i { background:#4f7cac; }
+.sbay-custom-field-settings__row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.sbay-custom-field-settings__checks { margin:4px 0 14px; display:flex; flex-wrap:wrap; gap:18px; }
+.sbay-custom-field-settings__checks label { margin:0; display:flex; align-items:center; gap:7px; }
+.sbay-custom-field-settings__checks input { width:auto; min-height:0; }
+.sbay-custom-field-settings label small { color:#68766f; font-weight:400; }
 @media (max-width:800px) {
   .sbay-category-settings__grid { grid-template-columns:1fr; }
   .sbay-category-settings__row { grid-template-columns:1fr; }
+  .sbay-custom-field-settings__row { grid-template-columns:1fr; }
 }
+.sbay-ticket-custom-fields { display: grid; gap: 14px; }
+.sbay-ticket-custom-field { display: grid; gap: 7px; padding-bottom: 12px; border-bottom: 1px solid #e4ebe7; }
+.sbay-ticket-custom-field label { display: grid; gap: 6px; font-weight: 700; }
+.sbay-ticket-custom-field input:not([type="checkbox"]), .sbay-ticket-custom-field textarea, .sbay-ticket-custom-field select { width: 100%; box-sizing: border-box; }
+.sbay-ticket-custom-field > div { display: flex; gap: 7px; }
+.sbay-ticket-custom-field small { color: #68756e; }

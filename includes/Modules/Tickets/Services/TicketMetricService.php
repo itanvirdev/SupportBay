@@ -80,6 +80,13 @@ final class TicketMetricService {
           $row['tag'], $row['tickets'], $row['responses'], $row['need_reply'], $row['closed'],
         ], $report['tags']),
       ],
+      [
+        'name' => 'Custom field workload',
+        'headers' => ['Value', 'Tickets', 'Responses', 'Need reply', 'Resolved or closed'],
+        'rows' => array_map(static fn(array $row): array => [
+          $row['value'], $row['tickets'], $row['responses'], $row['need_reply'], $row['closed'],
+        ], $report['custom_fields']),
+      ],
     ]);
   }
 
@@ -100,6 +107,9 @@ final class TicketMetricService {
     }
     if ($query->priority !== null && TicketPriority::tryFrom($query->priority) === null) {
       throw new InvalidArgumentException('Unknown ticket priority.');
+    }
+    if ($query->customFieldValue !== null && $query->customFieldId === null) {
+      throw new InvalidArgumentException('A custom field is required when filtering by value.');
     }
 
     $policy = $this->sla->get();
@@ -131,6 +141,8 @@ final class TicketMetricService {
         'category_id' => $query->categoryId,
         'uncategorized' => $query->uncategorized,
         'tag_id' => $query->tagId,
+        'custom_field_id' => $query->customFieldId,
+        'custom_field_value' => $query->customFieldValue,
         'assigned_agent_id' => $query->assignedAgentId,
         'priority' => $query->priority,
       ],
@@ -149,6 +161,7 @@ final class TicketMetricService {
       'departments' => $metrics['departments'],
       'categories' => $metrics['categories'],
       'tags' => $metrics['tags'],
+      'custom_fields' => $metrics['custom_fields'],
       'agents' => $metrics['agents'],
     ];
   }

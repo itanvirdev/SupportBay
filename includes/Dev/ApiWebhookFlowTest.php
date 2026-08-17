@@ -13,6 +13,7 @@ use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Categories\Services\CategoryService;
+use SupportBay\Modules\CustomFields\Services\CustomFieldService;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Http\Controllers\TicketController;
@@ -38,7 +39,8 @@ final class ApiWebhookFlowTest extends FlowTest {
     /** @var ProviderService $providers */
     /** @var VerificationService $verifications */
     /** @var IntegrationManager $integrations */
-    [$controller, $tickets, $messages, $customers, $departments, $categories, $providers, $verifications, $integrations] = $services;
+    /** @var CustomFieldService $customFields */
+    [$controller, $tickets, $messages, $customers, $departments, $categories, $providers, $verifications, $integrations, $customFields] = $services;
 
     echo "🚀 Starting SupportBay API and Webhook Flow Test...\n\n";
 
@@ -177,6 +179,12 @@ final class ApiWebhookFlowTest extends FlowTest {
       'name'          => 'API Category ' . $suffix,
       'department_id' => $departmentId,
     ]);
+    $customField = $customFields->create([
+      'name' => 'API Environment ' . $suffix,
+      'type' => 'select',
+      'options' => ['Production', 'Staging'],
+      'department_id' => $departmentId,
+    ]);
     $ticketId = $tickets->create([
       'customer_id'   => $customerId,
       'department_id' => $departmentId,
@@ -222,8 +230,63 @@ final class ApiWebhookFlowTest extends FlowTest {
       && $context['information']['department'] !== null
       && $context['information']['category'] !== null
       && in_array($category->id(), array_column($context['options']['categories'], 'id'), true)
+      && in_array($customField->id(), array_column($context['custom_fields'], 'id'), true)
       && is_array($context['activities']),
-      'Agent ticket context composes safe customer, department, and activity data.'
+      'Agent ticket context composes safe customer, department, custom-field, and activity data.'
+    );
+
+    $customFieldChange = new WP_REST_Request(
+      'POST',
+      '/sbay/v1/admin/tickets/' . $ticketId . '/actions'
+    );
+    $customFieldChange->set_param('action', 'custom_field');
+    $customFieldChange->set_param('value', [
+      'field_id' => $customField->id(),
+      'value' => 'Production',
+    ]);
+    $customFieldChangeResponse = rest_do_request($customFieldChange);
+    $customFieldContext = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/admin/tickets/' . $ticketId . '/context')
+    )->get_data()['data'];
+    $storedCustomValue = array_values(array_filter(
+      $customFields->valuesForTicket($ticketId),
+      static fn($item): bool => $item->fieldId() === $customField->id(),
+    ))[0] ?? null;
+    $contextCustomField = array_values(array_filter(
+      $customFieldContext['custom_fields'],
+      static fn(array $item): bool => $item['id'] === $customField->id(),
+    ))[0] ?? null;
+    Assert::true(
+      $customFieldChangeResponse->get_status() === 200
+      && $storedCustomValue?->value() === 'Production'
+      && ($contextCustomField['value'] ?? null) === 'Production',
+      'Authorized staff can persist a validated ticket custom-field value.'
+    );
+
+    $customFieldQueue = new WP_REST_Request('GET', '/sbay/v1/tickets');
+    $customFieldQueue->set_query_params([
+      'custom_field_id' => $customField->id(),
+      'custom_field_value' => 'Production',
+    ]);
+    $customFieldQueueResponse = rest_do_request($customFieldQueue);
+    Assert::true(
+      $customFieldQueueResponse->get_status() === 200
+      && in_array(
+        $ticketId,
+        array_column($customFieldQueueResponse->get_data()['data'] ?? [], 'id'),
+        true,
+      ),
+      'Protected ticket queue applies exact custom-field filters.'
+    );
+
+    $customFieldChange->set_param('value', [
+      'field_id' => $customField->id(),
+      'value' => 'Unsupported',
+    ]);
+    Assert::equals(
+      422,
+      rest_do_request($customFieldChange)->get_status(),
+      'Staff custom-field changes preserve definition validation.'
     );
 
     $inUseCategoryDelete = rest_do_request(
@@ -437,6 +500,18 @@ final class ApiWebhookFlowTest extends FlowTest {
     $deniedBulk->set_param('action', 'assignment');
     $deniedBulk->set_param('value', 'me');
     Assert::equals(403, rest_do_request($deniedBulk)->get_status(), 'Agents cannot use manager-only bulk assignment.');
+    $agentCustomFieldBulk = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/bulk-actions');
+    $agentCustomFieldBulk->set_param('ticket_ids', [$ticketId]);
+    $agentCustomFieldBulk->set_param('action', 'custom_field');
+    $agentCustomFieldBulk->set_param('value', [
+      'field_id' => $customField->id(),
+      'value' => 'Production',
+    ]);
+    Assert::equals(
+      200,
+      rest_do_request($agentCustomFieldBulk)->get_status(),
+      'Agents can bulk-edit custom fields through their dedicated capability.',
+    );
     $deniedSplit = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/' . $ticketId . '/split');
     $deniedSplit->set_param('message_ids', [$message->id()]);
     $deniedSplit->set_param('subject', 'Denied split');
@@ -518,6 +593,37 @@ final class ApiWebhookFlowTest extends FlowTest {
       'Bulk classification updates compatible tickets and reports scoped failures.'
     );
 
+    $bulkCustomField = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/bulk-actions');
+    $bulkCustomField->set_param('ticket_ids', [$ticketId, $otherTicketId]);
+    $bulkCustomField->set_param('action', 'custom_field');
+    $bulkCustomField->set_param('value', [
+      'field_id' => $customField->id(),
+      'value' => 'Staging',
+    ]);
+    $bulkCustomFieldResponse = rest_do_request($bulkCustomField);
+    Assert::true(
+      $bulkCustomFieldResponse->get_status() === 200
+      && $bulkCustomFieldResponse->get_data()['meta']['updated'] === 1
+      && $bulkCustomFieldResponse->get_data()['meta']['failed'] === 1
+      && $customFields->valuesForTicket($ticketId)[0]->value() === 'Staging'
+      && $customFields->valuesForTicket($otherTicketId) === [],
+      'Bulk custom-field updates preserve field validation and report cross-department failures.',
+    );
+
+    $bulkCustomField->set_param('ticket_ids', [$ticketId]);
+    $bulkCustomField->set_param('value', [
+      'field_id' => $customField->id(),
+      'value' => '',
+    ]);
+    $bulkCustomFieldClear = rest_do_request($bulkCustomField);
+    Assert::true(
+      $bulkCustomFieldClear->get_status() === 200
+      && $bulkCustomFieldClear->get_data()['meta']['updated'] === 1
+      && $customFields->valuesForTicket($ticketId) === [],
+      'Bulk custom-field actions can clear optional values through the normal service workflow.',
+    );
+    $customFields->setValue($ticketId, $customField->id(), 'Production', 1);
+
     $bulkPriority = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/bulk-actions');
     $bulkPriority->set_param('ticket_ids', [$ticketId]);
     $bulkPriority->set_param('action', 'priority');
@@ -585,11 +691,13 @@ final class ApiWebhookFlowTest extends FlowTest {
     $messages->delete($message->id());
     $messages->delete($splitMessage->id());
     $messages->delete($targetMessage->id());
+    $customFields->removeValue($ticketId, $customField->id());
     $tickets->delete($ticketId);
     $tickets->delete($splitTicketId);
     $tickets->delete($targetTicketId);
     $tickets->delete($otherTicketId);
     $categories->delete($category->id());
+    $customFields->delete($customField->id());
     $departments->delete($departmentId);
     $departments->delete($otherDepartmentId);
     $customers->deleteWithUser($customerId);

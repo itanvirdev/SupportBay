@@ -3,6 +3,7 @@ import type {
   CreateTicketInput,
   PortalDepartment,
   PortalCategory,
+  PortalCustomField,
   PortalAttachment,
   PortalMessage,
   PortalOverview,
@@ -44,6 +45,10 @@ export const portalApi = {
   categories: (departmentId: number) =>
     apiGet<PortalCategory[]>(
       `portal/categories?department_id=${departmentId}`,
+    ),
+  customFields: (departmentId: number) =>
+    apiGet<PortalCustomField[]>(
+      `portal/custom-fields?department_id=${departmentId}`,
     ),
   verifications: () =>
     apiGet<PortalVerification[]>('portal/verifications'),

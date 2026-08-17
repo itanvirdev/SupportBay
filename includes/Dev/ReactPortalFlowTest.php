@@ -65,9 +65,11 @@ final class ReactPortalFlowTest extends FlowTest {
       is_string($newTicketPage)
       && str_contains($newTicketPage, 'portalApi.purchaseProviders()')
       && str_contains($newTicketPage, 'purchase_reference: purchaseReference.trim()')
+      && str_contains($newTicketPage, 'portalApi.customFields(departmentId)')
+      && str_contains($newTicketPage, 'custom_fields: customFieldValues')
       && str_contains($newTicketPage, 'Purchase Code/Key')
       && ! str_contains($newTicketPage, 'purchase_verification_id'),
-      'Ticket creation requires provider-backed Purchase Code/Key entitlement.'
+      'Ticket creation requires entitlement and renders department custom fields.'
     );
 
     $ticketDetailPage = file_get_contents(
@@ -76,8 +78,12 @@ final class ReactPortalFlowTest extends FlowTest {
     Assert::true(
       is_string($ticketDetailPage)
       && str_contains($ticketDetailPage, "['resolved', 'closed'].includes(detail.ticket.status)")
-      && str_contains($ticketDetailPage, 'portalApi.reopenTicket(ticketId)'),
-      'Customer ticket detail treats resolved tickets as final and reopenable.'
+      && str_contains($ticketDetailPage, 'portalApi.reopenTicket(ticketId)')
+      && str_contains($ticketDetailPage, 'detail.custom_fields.map')
+      && str_contains($ticketDetailPage, 'Additional information')
+      && str_contains($ticketDetailPage, "field.type === 'checkbox'")
+      && str_contains($ticketDetailPage, "field.type === 'url'"),
+      'Customer ticket detail is reopenable and renders safe read-only custom-field values.'
     );
 
     $profilePage = file_get_contents(

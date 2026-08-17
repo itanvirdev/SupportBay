@@ -6,17 +6,22 @@ namespace SupportBay\Modules\CustomFields\Services;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
+use SupportBay\Common\Enums\AuthorType;
+use SupportBay\Core\Events\EventDispatcher;
 use SupportBay\Modules\CustomFields\Entities\CustomField;
 use SupportBay\Modules\CustomFields\Entities\TicketCustomFieldValue;
 use SupportBay\Modules\CustomFields\Enums\CustomFieldStatus;
 use SupportBay\Modules\CustomFields\Enums\CustomFieldType;
+use SupportBay\Modules\CustomFields\Events\TicketCustomFieldValueChanged;
 use SupportBay\Modules\CustomFields\Repositories\CustomFieldRepository;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
+use SupportBay\Modules\Tickets\Entities\Ticket;
 
 final class CustomFieldService {
   public function __construct(
     private readonly CustomFieldRepository $repository,
     private readonly TicketRepository $tickets,
+    private readonly EventDispatcher $events,
   ) {}
 
   /** @param array<string, mixed> $data */
@@ -82,7 +87,45 @@ final class CustomFieldService {
     return $this->repository->delete($id);
   }
 
-  public function setValue(int $ticketId, int $fieldId, mixed $value, ?int $actorId = null): void {
+  /**
+   * Validate and normalize customer-submitted values before ticket creation.
+   *
+   * @param array<int|string, mixed> $values
+   * @return array<int, string>
+   */
+  public function validateCustomerValues(int $departmentId, array $values): array {
+    $fields = [];
+    foreach ($this->applicable($departmentId, true) as $field) {
+      $fields[$field->id()] = $field;
+    }
+
+    foreach (array_keys($values) as $fieldId) {
+      $validId = is_int($fieldId)
+        || (is_string($fieldId) && ctype_digit($fieldId));
+      if (! $validId || ! isset($fields[(int) $fieldId])) {
+        throw new InvalidArgumentException('Please select an available custom field.');
+      }
+    }
+
+    $normalized = [];
+    foreach ($fields as $fieldId => $field) {
+      $value = $values[$fieldId] ?? $values[(string) $fieldId] ?? null;
+      $result = $this->normalizeValue($field, $value);
+      if ($result !== null) {
+        $normalized[$fieldId] = $result;
+      }
+    }
+
+    return $normalized;
+  }
+
+  public function setValue(
+    int $ticketId,
+    int $fieldId,
+    mixed $value,
+    ?int $actorId = null,
+    ?AuthorType $actorType = null,
+  ): void {
     $ticket = $this->tickets->find($ticketId);
     if (! $ticket) { throw new InvalidArgumentException('Ticket was not found.'); }
     $field = $this->find($fieldId);
@@ -90,18 +133,121 @@ final class CustomFieldService {
       throw new InvalidArgumentException('Please select an available custom field.');
     }
     $normalized = $this->normalizeValue($field, $value);
+    $previous = $this->repository->findValue($ticketId, $fieldId);
+    if ($previous?->value() === $normalized) { return; }
+    $resolvedActorType = $actorType ?? ($actorId !== null
+      ? AuthorType::AGENT
+      : AuthorType::SYSTEM);
     if ($normalized === null) {
-      $this->repository->deleteValue($ticketId, $fieldId);
+      if ($previous === null) { return; }
+      if (! $this->repository->deleteValue($ticketId, $fieldId)) {
+        throw new InvalidArgumentException('Custom field value could not be cleared.');
+      }
+      $this->events->dispatch(new TicketCustomFieldValueChanged(
+        $ticket,
+        $field,
+        $previous,
+        null,
+        'cleared',
+        $actorId,
+        $resolvedActorType,
+      ));
       return;
     }
     if (! $this->repository->saveValue($ticketId, $fieldId, $normalized, $actorId)) {
       throw new InvalidArgumentException('Custom field value could not be saved.');
     }
+    $current = $this->repository->findValue($ticketId, $fieldId)
+      ?? throw new InvalidArgumentException('Custom field value could not be loaded.');
+    $this->events->dispatch(new TicketCustomFieldValueChanged(
+      $ticket,
+      $field,
+      $previous,
+      $current,
+      $previous === null ? 'set' : 'updated',
+      $actorId,
+      $resolvedActorType,
+    ));
   }
 
   /** @return TicketCustomFieldValue[] */
   public function valuesForTicket(int $ticketId): array {
     return $this->repository->valuesForTicket($ticketId);
+  }
+
+  /**
+   * Apply one field value to a bounded collection while preserving per-ticket validation.
+   *
+   * @param int[] $ticketIds
+   * @return array{updated: Ticket[], failed: array<int, string>}
+   */
+  public function bulkSetValues(
+    array $ticketIds,
+    int $fieldId,
+    mixed $value,
+    int $actorId,
+  ): array {
+    $updated = [];
+    $failed = [];
+
+    foreach (array_values(array_unique(array_map('absint', $ticketIds))) as $ticketId) {
+      if ($ticketId === 0) { continue; }
+
+      try {
+        $this->setValue($ticketId, $fieldId, $value, $actorId);
+        $updated[] = $this->tickets->find($ticketId)
+          ?? throw new InvalidArgumentException('Ticket was not found.');
+      } catch (InvalidArgumentException|\RuntimeException $exception) {
+        $failed[$ticketId] = $exception->getMessage();
+      }
+    }
+
+    return ['updated' => $updated, 'failed' => $failed];
+  }
+
+  /**
+   * Return editable definitions plus definitions needed to explain historical values.
+   *
+   * @return CustomField[]
+   */
+  public function staffFieldsForTicket(int $ticketId): array {
+    $ticket = $this->tickets->find($ticketId);
+    if (! $ticket) { throw new InvalidArgumentException('Ticket was not found.'); }
+
+    $fields = [];
+    foreach ($this->applicable($ticket->departmentId()) as $field) {
+      $fields[$field->id()] = $field;
+    }
+    foreach ($this->valuesForTicket($ticketId) as $value) {
+      $field = $this->find($value->fieldId());
+      if ($field) { $fields[$field->id()] = $field; }
+    }
+
+    uasort($fields, static fn(CustomField $left, CustomField $right): int =>
+      [$left->sortOrder(), $left->id()] <=> [$right->sortOrder(), $right->id()]
+    );
+    return array_values($fields);
+  }
+
+  /**
+   * Return stored values whose definitions are currently customer-visible.
+   *
+   * @return array<int, array{field: CustomField, value: TicketCustomFieldValue}>
+   */
+  public function customerValuesForTicket(int $ticketId): array {
+    $visible = [];
+    foreach ($this->valuesForTicket($ticketId) as $value) {
+      $field = $this->find($value->fieldId());
+      if ($field && $field->isCustomerVisible()) {
+        $visible[] = ['field' => $field, 'value' => $value];
+      }
+    }
+
+    usort($visible, static fn(array $left, array $right): int =>
+      [$left['field']->sortOrder(), $left['field']->id()]
+        <=> [$right['field']->sortOrder(), $right['field']->id()]
+    );
+    return $visible;
   }
 
   public function removeValue(int $ticketId, int $fieldId): void {

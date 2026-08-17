@@ -103,6 +103,7 @@ final class AdminPage {
         'canManageSavedReplies' => current_user_can(CapabilityManager::MANAGE_SAVED_REPLIES),
         'canManageCategories' => current_user_can(CapabilityManager::MANAGE_CATEGORIES),
         'canManageTags' => current_user_can(CapabilityManager::MANAGE_TAGS),
+        'canManageCustomFields' => current_user_can(CapabilityManager::MANAGE_CUSTOM_FIELDS),
         'section'   => $section,
       ]) . ';',
       'before',

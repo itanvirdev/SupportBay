@@ -13,6 +13,7 @@ use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Categories\Services\CategoryService;
+use SupportBay\Modules\CustomFields\Services\CustomFieldService;
 use SupportBay\Modules\Tags\Services\TagService;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Tickets\Services\TicketService;
@@ -33,6 +34,7 @@ final class AdminTicketController {
     private readonly CustomerService $customers,
     private readonly DepartmentService $departments,
     private readonly CategoryService $categories,
+    private readonly CustomFieldService $customFields,
     private readonly TagService $tags,
     private readonly VerificationService $verifications,
     private readonly ActivityService $activities,
@@ -140,6 +142,10 @@ final class AdminTicketController {
       ? $this->verifications->find($ticket->purchaseVerificationId())
       : null;
     $agent = $ticket->assignedAgentId() ? get_userdata($ticket->assignedAgentId()) : null;
+    $customValues = [];
+    foreach ($this->customFields->valuesForTicket($ticket->id()) as $value) {
+      $customValues[$value->fieldId()] = $value->value();
+    }
 
     return RestResponse::success([
       'customer' => $customer,
@@ -173,6 +179,18 @@ final class AdminTicketController {
         static fn($attachment): bool => $attachment->isActive(),
       )),
       'tags' => array_map(static fn($tag): array => $tag->toArray(), $this->tags->forTicket($ticket->id())),
+      'custom_fields' => array_map(
+        static fn($field): array => [
+          'id' => $field->id(),
+          'name' => $field->name(),
+          'type' => $field->type()->value,
+          'options' => $field->options(),
+          'is_required' => $field->isRequired(),
+          'is_active' => $field->isActive(),
+          'value' => $customValues[$field->id()] ?? null,
+        ],
+        $this->customFields->staffFieldsForTicket($ticket->id()),
+      ),
       'options' => [
         'departments' => array_map(static fn($item): array => ['id' => $item->id(), 'name' => $item->name()], $this->departments->active()),
         'categories' => array_map(
@@ -198,6 +216,13 @@ final class AdminTicketController {
         'department_id' => $item->departmentId(),
       ], $this->categories->active()),
       'tags' => array_map(static fn($tag): array => $tag->toArray(), $this->tags->active()),
+      'custom_fields' => array_map(static fn($field): array => [
+        'id' => $field->id(),
+        'name' => $field->name(),
+        'type' => $field->type()->value,
+        'options' => $field->options(),
+        'department_id' => $field->departmentId(),
+      ], $this->customFields->active()),
       'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['role__in' => ['sbay_agent', 'sbay_manager', 'administrator']])),
     ], 'Ticket queue options retrieved.');
   }
@@ -210,6 +235,7 @@ final class AdminTicketController {
       'assignment' => 'sbay_assign_ticket', 'department' => 'sbay_move_ticket_department',
       'category' => CapabilityManager::CHANGE_TICKET_CATEGORY,
       'tag_add', 'tag_remove' => CapabilityManager::CHANGE_TICKET_TAGS,
+      'custom_field' => CapabilityManager::CHANGE_TICKET_CUSTOM_FIELDS,
       'priority' => 'sbay_change_ticket_priority', 'state' => CapabilityManager::CHANGE_TICKET_STATUS,
       default => '',
     };
@@ -224,6 +250,7 @@ final class AdminTicketController {
         'category' => $this->tickets->changeCategory($id, absint($value) ?: null, get_current_user_id()),
         'tag_add' => $this->changeTag($id, absint($value), true),
         'tag_remove' => $this->changeTag($id, absint($value), false),
+        'custom_field' => $this->changeCustomField($id, (array) $value),
         'priority' => $this->tickets->changePriority($id, TicketPriority::from(sanitize_key((string) $value)), get_current_user_id()),
         'state' => $this->tickets->changeState($id, TicketState::from(sanitize_key((string) $value)), get_current_user_id()),
       };
@@ -249,6 +276,7 @@ final class AdminTicketController {
       TicketBulkAction::DEPARTMENT => 'sbay_move_ticket_department',
       TicketBulkAction::CATEGORY => CapabilityManager::CHANGE_TICKET_CATEGORY,
       TicketBulkAction::TAG_ADD, TicketBulkAction::TAG_REMOVE => CapabilityManager::CHANGE_TICKET_TAGS,
+      TicketBulkAction::CUSTOM_FIELD => CapabilityManager::CHANGE_TICKET_CUSTOM_FIELDS,
       TicketBulkAction::PRIORITY => 'sbay_change_ticket_priority',
       TicketBulkAction::STATE => CapabilityManager::CHANGE_TICKET_STATUS,
     };
@@ -257,10 +285,24 @@ final class AdminTicketController {
       return RestResponse::error('You are not allowed to perform this bulk action.', 'TICKET_BULK_ACTION_DENIED', [], 403);
     }
 
-    $normalizedValue = $action === TicketBulkAction::ASSIGNMENT && $value === 'me'
-      ? get_current_user_id()
-      : $value;
-    $result = $this->tickets->bulkChange($ids, $action, $normalizedValue, get_current_user_id());
+    if ($action === TicketBulkAction::CUSTOM_FIELD) {
+      $fieldValue = (array) $value;
+      $fieldId = absint($fieldValue['field_id'] ?? 0);
+      if ($fieldId === 0 || ! array_key_exists('value', $fieldValue)) {
+        return RestResponse::error('A custom field and value are required.', 'TICKET_BULK_ACTION_INVALID', [], 422);
+      }
+      $result = $this->customFields->bulkSetValues(
+        $ids,
+        $fieldId,
+        $fieldValue['value'],
+        get_current_user_id(),
+      );
+    } else {
+      $normalizedValue = $action === TicketBulkAction::ASSIGNMENT && $value === 'me'
+        ? get_current_user_id()
+        : $value;
+      $result = $this->tickets->bulkChange($ids, $action, $normalizedValue, get_current_user_id());
+    }
 
     return RestResponse::success([
       'updated' => array_map(static fn($ticket): array => $ticket->toArray(), $result['updated']),
@@ -275,6 +317,18 @@ final class AdminTicketController {
   private function changeTag(int $ticketId, int $tagId, bool $attach): \SupportBay\Modules\Tickets\Entities\Ticket {
     if ($attach) { $this->tags->attach($ticketId, $tagId, get_current_user_id()); }
     else { $this->tags->detach($ticketId, $tagId, get_current_user_id()); }
+    return $this->tickets->find($ticketId)
+      ?? throw new RuntimeException('Ticket was not found.');
+  }
+
+  /** @param array<string, mixed> $data */
+  private function changeCustomField(int $ticketId, array $data): \SupportBay\Modules\Tickets\Entities\Ticket {
+    $this->customFields->setValue(
+      $ticketId,
+      absint($data['field_id'] ?? 0),
+      $data['value'] ?? null,
+      get_current_user_id(),
+    );
     return $this->tickets->find($ticketId)
       ?? throw new RuntimeException('Ticket was not found.');
   }

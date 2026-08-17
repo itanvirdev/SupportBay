@@ -51,7 +51,8 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains(implode('', $bootstrap), 'canExportReports')
       && str_contains(implode('', $bootstrap), 'canManageSavedReplies')
       && str_contains(implode('', $bootstrap), 'canManageCategories')
-      && str_contains(implode('', $bootstrap), 'canManageTags'),
+      && str_contains(implode('', $bootstrap), 'canManageTags')
+      && str_contains(implode('', $bootstrap), 'canManageCustomFields'),
       'Each administrator page receives authenticated API configuration and its active section.'
     );
 
@@ -122,6 +123,9 @@ final class ReactAdminFlowTest extends FlowTest {
     $tagWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/TagWorkspace.tsx'
     );
+    $customFieldWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/CustomFieldWorkspace.tsx'
+    );
 
     Assert::true(
       is_string($reportsWorkspace)
@@ -135,9 +139,12 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($ticketReportWorkspace, 'By department')
       && str_contains($ticketReportWorkspace, 'By category')
       && str_contains($ticketReportWorkspace, 'By tag')
+      && str_contains($ticketReportWorkspace, 'By custom field value')
       && str_contains($ticketReportWorkspace, 'By agent')
       && str_contains($ticketReportWorkspace, 'category_id')
       && str_contains($ticketReportWorkspace, "params.set('tag_id'")
+      && str_contains($ticketReportWorkspace, "params.set('custom_field_id'")
+      && str_contains($ticketReportWorkspace, "params.set('custom_field_value'")
       && str_contains($ticketReportWorkspace, 'All tags')
       && str_contains($ticketReportWorkspace, 'Uncategorized')
       && str_contains($ticketReportWorkspace, 'First-response SLA')
@@ -180,6 +187,15 @@ final class ReactAdminFlowTest extends FlowTest {
       'Agent ticket detail supports resolution, final-state enforcement, and guarded saved-reply insertion.'
     );
 
+    Assert::true(
+      str_contains($ticketConversation, 'context.custom_fields.map')
+      && str_contains($ticketConversation, "mutate('custom_field'")
+      && str_contains($ticketConversation, 'field.type===\'select\'')
+      && str_contains($ticketConversation, 'Inactive historical field')
+      && str_contains($ticketConversation, 'Custom Fields'),
+      'Agent ticket detail renders typed custom fields and protected value mutations.'
+    );
+
     $ticketWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketWorkspace.tsx'
     );
@@ -204,12 +220,27 @@ final class ReactAdminFlowTest extends FlowTest {
     );
 
     Assert::true(
+      str_contains($ticketWorkspace, 'custom_field_id: query.customFieldId')
+      && str_contains($ticketWorkspace, 'custom_field_value: query.customFieldValue')
+      && str_contains($ticketWorkspace, 'All Custom Fields')
+      && str_contains($ticketWorkspace, 'Exact custom field value')
+      && str_contains($ticketWorkspace, "selectedCustomField?.type==='checkbox'")
+      && str_contains($ticketWorkspace, "mode==='staff'&&query.customFieldId")
+      && str_contains($ticketWorkspace, 'custom_field:${field.id}')
+      && str_contains($ticketWorkspace, 'Bulk custom field value')
+      && str_contains($ticketWorkspace, "field_id: Number(value)")
+      && str_contains($ticketWorkspace, 'Leave empty to clear'),
+      'Shared ticket workspace exposes staff-only, type-aware custom-field filters and bulk mutations.',
+    );
+
+    Assert::true(
       is_string($settingsWorkspace)
       && str_contains($settingsWorkspace, 'Email Notifications')
       && str_contains($settingsWorkspace, 'Delivery Logs')
       && str_contains($settingsWorkspace, 'Saved Replies')
       && str_contains($settingsWorkspace, 'Categories')
       && str_contains($settingsWorkspace, 'Tags')
+      && str_contains($settingsWorkspace, 'Custom Fields')
       && str_contains($settingsWorkspace, 'Ticket SLA')
       && str_contains($settingsWorkspace, 'Integrations')
       && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace />')
@@ -217,8 +248,22 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, '<SavedReplyWorkspace />')
       && str_contains($settingsWorkspace, '<CategoryWorkspace />')
       && str_contains($settingsWorkspace, '<TagWorkspace />')
+      && str_contains($settingsWorkspace, '<CustomFieldWorkspace />')
       && str_contains($settingsWorkspace, '<ProviderWorkspace />'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($customFieldWorkspace)
+      && str_contains($customFieldWorkspace, "adminGet<CustomField[]>('custom-fields')")
+      && str_contains($customFieldWorkspace, "adminPost<CustomField>('custom-fields'")
+      && str_contains($customFieldWorkspace, 'adminPut<CustomField>(`custom-fields/${selected.id}`')
+      && str_contains($customFieldWorkspace, 'adminDelete(`custom-fields/${selected.id}`')
+      && str_contains($customFieldWorkspace, 'Visible to customers')
+      && str_contains($customFieldWorkspace, 'One choice per line')
+      && str_contains($customFieldWorkspace, 'Create Custom Field')
+      && str_contains($customFieldWorkspace, 'cannot change type or be deleted'),
+      'Settings provides capability-gated custom-field definition and lifecycle management.'
     );
 
     Assert::true(

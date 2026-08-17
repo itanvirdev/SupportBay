@@ -37,6 +37,8 @@
 .sbay-ticket-avatar { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #e5ebe7; font-weight: 700; }
 .sbay-ticket-table footer { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; background: #f8faf9; }
 .sbay-ticket-table footer select, .sbay-ticket-table footer button { min-height: 38px; margin-right: 8px; border: 1px solid #d7dfda; border-radius: 7px; background: #fff; }
+.sbay-ticket-table footer input { min-height:38px; margin-right:8px; padding:0 9px; border:1px solid #d7dfda; border-radius:7px; background:#fff; }
+.sbay-ticket-bulk-notice { margin:0 0 14px; padding:10px 13px; border:1px solid #afd1be; border-radius:8px; background:#eff9f3; color:#285f42; }
 .sbay-ticket-empty { margin: 0; padding: 46px; text-align: center; color: #78847d; }
 .sbay-ticket-pagination { margin-top: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 .sbay-ticket-pagination button, .sbay-ticket-pagination span { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #d7dfda; border-radius: 8px; background: #fff; }

@@ -10,6 +10,7 @@ enum TicketBulkAction: string {
   case CATEGORY = 'category';
   case TAG_ADD = 'tag_add';
   case TAG_REMOVE = 'tag_remove';
+  case CUSTOM_FIELD = 'custom_field';
   case PRIORITY = 'priority';
   case STATE = 'state';
 }

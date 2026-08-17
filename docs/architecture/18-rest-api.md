@@ -644,3 +644,41 @@ The WordPress administrator bootstrap exposes only the `canManageTags` boolean, 
 `GET /sbay/v1/custom-fields` and `GET /sbay/v1/custom-fields/{id}` require ticket-view permission. Definition creation, updates, and deletion require `sbay_manage_custom_fields` through the matching `POST`, `PUT`, and `DELETE` routes.
 
 Definitions support text, textarea, number, select, checkbox, date, email, and URL types; optional department scope; required and customer-visible flags; status; choices; and sort order. Ticket values are normalized through the service layer and stored separately. Value-facing REST routes and React forms are deferred to workflow milestones.
+
+The administrator bootstrap exposes `canManageCustomFields` from the dedicated WordPress capability. Settings uses that flag to reveal definition management, including type and scope filters, select-choice editing, customer-visibility controls, lifecycle changes, and safe deletion feedback.
+
+# Customer Custom Field Ticket Creation
+
+`GET /sbay/v1/portal/custom-fields?department_id={id}` returns only active, customer-visible definitions applicable to the selected department. The response contains safe rendering metadata and does not expose lifecycle or internal visibility controls.
+
+`POST /sbay/v1/portal/tickets` accepts `custom_fields` as a field-ID-to-value map. `CustomFieldService` rejects unknown, inactive, private, or cross-department IDs and normalizes every supported type. Required fields are checked before entitlement resolution and ticket persistence. Validated values are attached to the new ticket, and a persistence failure rolls back the opening message, any saved custom values, and the ticket.
+
+# Staff Custom Field Ticket Workflow
+
+`GET /sbay/v1/admin/tickets/{id}/context` includes active definitions applicable to the ticket and stored historical values whose definitions are now inactive. Each item contains safe rendering metadata, its current value, and active/required state.
+
+Staff submit the `custom_field` action to `POST /sbay/v1/admin/tickets/{id}/actions` with a `field_id` and value. The route requires `sbay_change_ticket_custom_fields`; agents, managers, and administrators receive this capability. The controller delegates validation and persistence to `CustomFieldService`. Empty optional values clear storage, while required, inactive, invalid, and cross-department mutations return a safe validation error.
+
+# Custom Field Reporting Foundation
+
+`GET /sbay/v1/reports/tickets` and its CSV export accept `custom_field_id` and an optional `custom_field_value`. A field without a value selects tickets having any stored value for that definition; supplying a value performs an exact normalized match. A value without a field is rejected.
+
+The report response echoes the applied filters and returns `custom_fields`, a workload breakdown for the selected definition only. Each row includes tickets, staff responses, need-reply tickets, and resolved-or-closed tickets. `GET /sbay/v1/admin/tickets/options` supplies active definition names, types, choices, and department scope for type-aware report controls. CSV export includes the identical selected-field workload.
+
+# Customer Custom Field Detail Visibility
+
+`GET /sbay/v1/portal/tickets/{id}` includes `custom_fields` after the normal current-customer ownership check. Only stored values backed by a currently customer-visible definition are returned. Staff-only definitions are excluded entirely, including their labels.
+
+Each item contains only the definition ID, display name, type, and normalized stored value. Definition choices, required/lifecycle flags, department scope, updater identity, and persistence timestamps remain private. The portal renders these values read-only; customers continue to edit them only by creating a new ticket with the applicable creation form.
+
+# Custom Field Queue Filtering
+
+`GET /sbay/v1/tickets` accepts `custom_field_id` and optional `custom_field_value` for authorized staff. Selecting only a field returns tickets having any stored value for that definition. Supplying a value performs an exact match against its normalized stored representation.
+
+Filtering uses a correlated `EXISTS` subquery, preserving one result and one count per ticket. The administrator options endpoint supplies active field names, types, choices, and department scope for type-aware filters. These controls render only in staff mode; customer queue requests and list responses do not expose custom-field metadata or values.
+
+# Custom Field Bulk Update Workflow
+
+`POST /sbay/v1/admin/tickets/bulk-actions` accepts the `custom_field` action with a structured `value` containing `field_id` and `value`. Requests require `sbay_change_ticket_custom_fields` and remain bounded to 100 unique positive ticket IDs.
+
+The controller delegates each selected ticket to `CustomFieldService::setValue()`. Type, choice, required-state, active-state, and department-scope rules therefore remain identical to individual edits. Compatible tickets succeed while invalid tickets return keyed failure messages; successful changes retain their normal actor-attributed, value-safe audit events. Empty values clear optional fields.
