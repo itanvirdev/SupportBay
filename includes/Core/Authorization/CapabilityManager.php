@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Authorization;
 
 final class CapabilityManager {
-  private const ROLE_DEFAULTS_VERSION = '1.0.0';
+  private const ROLE_DEFAULTS_VERSION = '1.1.0';
   public const MANAGE_CUSTOMERS = 'sbay_manage_customers';
   public const VIEW_TICKETS = 'sbay_view_tickets';
   public const REPLY_TICKET = 'sbay_reply_ticket';
@@ -32,11 +32,6 @@ final class CapabilityManager {
 
   /** Register protected SupportBay roles and capabilities. */
   public static function register(): void {
-    $customer = [
-      'read', 'sbay_view_own_tickets', 'sbay_create_ticket',
-      'sbay_reply_ticket', 'sbay_upload_attachment',
-      'sbay_view_own_profile', 'sbay_edit_own_profile',
-    ];
     $agent = [
       'read', 'sbay_access_dashboard', 'sbay_access_agent_dashboard',
       self::VIEW_TICKETS, self::REPLY_TICKET, self::CREATE_INTERNAL_NOTE,
@@ -62,7 +57,6 @@ final class CapabilityManager {
       self::MANAGE_CUSTOM_FIELDS,
     ]);
     $administrator = array_values(array_unique(array_merge(
-      $customer,
       $manager,
       [
         self::MANAGE_PROVIDERS, self::MANAGE_SETTINGS,
@@ -73,12 +67,21 @@ final class CapabilityManager {
     )));
 
     if (get_option('sbay_role_defaults_version') !== self::ROLE_DEFAULTS_VERSION) {
-      self::ensureRole('sbay_customer', __('SupportBay Customer', 'supportbay'), $customer);
+      self::migrateCustomersToSubscriber();
       self::ensureRole('sbay_agent', __('Support Agent', 'supportbay'), $agent);
       self::ensureRole('sbay_manager', __('Support Manager', 'supportbay'), $manager);
       update_option('sbay_role_defaults_version', self::ROLE_DEFAULTS_VERSION, false);
     }
     self::grant('administrator', $administrator);
+  }
+
+  private static function migrateCustomersToSubscriber(): void {
+    if (get_role('sbay_customer')) {
+      foreach (get_users(['role'=>'sbay_customer','fields'=>'ids']) as $userId) {
+        (new \WP_User((int)$userId))->set_role('subscriber');
+      }
+      remove_role('sbay_customer');
+    }
   }
 
   /** @param string[] $capabilities */

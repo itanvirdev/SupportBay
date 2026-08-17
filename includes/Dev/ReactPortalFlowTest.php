@@ -48,8 +48,26 @@ final class ReactPortalFlowTest extends FlowTest {
     Assert::true(
       is_array($bootstrap) &&
       str_contains(implode('', $bootstrap), 'restNonce') &&
-      str_contains(implode('', $bootstrap), 'logoutUrl'),
+      str_contains(implode('', $bootstrap), 'logoutUrl') &&
+      str_contains(implode('', $bootstrap), 'registrationEnabled') &&
+      str_contains(implode('', $bootstrap), 'resetPasswordUrl'),
       'React bootstrap includes REST authentication configuration.'
+    );
+
+    $authPage = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/react/modules/auth/AuthPage.tsx'
+    );
+    Assert::true(
+      is_string($authPage)
+      && str_contains($authPage, "apiPost<{redirect:string}>('auth/login'")
+      && str_contains($authPage, "apiPost<{redirect:string}>('auth/register'")
+      && str_contains($authPage, 'Username or Email Address')
+      && str_contains($authPage, 'First Name')
+      && str_contains($authPage, 'Last Name')
+      && str_contains($authPage, 'Confirm Password')
+      && str_contains($authPage, "> Register</button>")
+      && str_contains($authPage, 'Reset Password'),
+      'The React portal includes native WordPress login and registration screens.',
     );
 
     Assert::true(

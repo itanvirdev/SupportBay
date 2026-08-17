@@ -64,7 +64,7 @@ And uses WordPress Administrator.
 
 Role Key:
 
-sbay_customer
+subscriber (native WordPress customer role)
 
 Purpose:
 

@@ -157,6 +157,13 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'customer-auth':
+        \SupportBay\Dev\CustomerAuthenticationFlowTest::run(
+          $container->get(\SupportBay\Modules\Auth\Http\CustomerAuthController::class),
+          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
+        );
+        break;
+
       case 'customer':
         \SupportBay\Dev\CustomerFlowTest::run(
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)

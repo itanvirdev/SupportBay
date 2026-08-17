@@ -10,6 +10,8 @@ import { ProfilePage } from './modules/profile/ProfilePage';
 import { TicketDetailPage } from './modules/tickets/TicketDetailPage';
 import { NewTicketPage } from './modules/tickets/NewTicketPage';
 import { TicketsPage } from './modules/tickets/TicketsPage';
+import { AuthPage } from './modules/auth/AuthPage';
+import { getConfig } from './core/config';
 import './styles/portal.scss';
 
 interface RouteMatch {
@@ -45,13 +47,14 @@ function matchRoute(pathname: string): RouteMatch {
 }
 
 function App() {
+  const config = getConfig();
   const [overview, setOverview] = useState<PortalOverview | null>(null);
   const [pathname, setPathname] = useState(window.location.pathname);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    portalApi.overview().then(setOverview).catch(() => setFailed(true));
-  }, []);
+    if (config.authenticated) portalApi.overview().then(setOverview).catch(() => setFailed(true));
+  }, [config.authenticated]);
 
   useEffect(() => {
     const onPopState = () => setPathname(window.location.pathname);
@@ -64,6 +67,22 @@ function App() {
     setPathname(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const authMode = /^\/support\/register\/?$/.test(pathname) ? 'register' : 'login';
+  const authRoute = /^\/support\/(?:login|register)\/?$/.test(pathname);
+
+  if (!config.authenticated) {
+    if (!authRoute) {
+      const redirect = encodeURIComponent(`${pathname}${window.location.search}`);
+      window.history.replaceState({}, '', `/support/login/?redirect=${redirect}`);
+    }
+    return <AuthPage mode={authMode} navigate={navigate}/>;
+  }
+
+  if (authRoute) {
+    window.history.replaceState({}, '', '/support/');
+    setTimeout(()=>setPathname('/support/'),0);
+  }
 
   if (failed) {
     return <PortalState title="We couldn't load your portal" message="Please try again in a moment." />;

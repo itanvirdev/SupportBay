@@ -157,7 +157,7 @@ WordPress User
 
 Role:
 
-sbay_customer
+subscriber
 
 Status:
 

@@ -4,6 +4,10 @@ export interface SupportBayConfig {
   portalUrl: string;
   logoutUrl: string;
   siteName: string;
+  homeUrl: string;
+  resetPasswordUrl: string;
+  registrationEnabled: boolean;
+  authenticated: boolean;
 }
 
 declare global {

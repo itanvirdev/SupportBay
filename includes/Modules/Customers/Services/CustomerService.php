@@ -48,6 +48,24 @@ final class CustomerService {
     return $this->customers->findByUserId($userId);
   }
 
+  public function ensureWordPressCustomer(
+    int $userId,
+    CustomerSource $source = CustomerSource::WORDPRESS,
+  ): Customer {
+    $customer = $this->findByUser($userId);
+
+    if (! $customer) {
+      $id = $this->create([
+        'user_id' => $userId,
+        'state' => CustomerState::REGISTERED->value,
+        'source' => $source->value,
+      ]);
+      $customer = $this->find($id);
+    }
+
+    return $customer ?? throw new RuntimeException('The customer account could not be created.');
+  }
+
   /** @return Customer[] */
   public function all(): array {
     return $this->customers->all();

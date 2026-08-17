@@ -51,7 +51,7 @@ final class PortalPage {
    * Load the customer bundle only on the portal route.
    */
   public function enqueueAssets(): void {
-    if (! $this->isPortal() || ! is_user_logged_in()) {
+    if (! $this->isPortal()) {
       return;
     }
 
@@ -87,6 +87,10 @@ final class PortalPage {
         'portalUrl' => esc_url_raw(home_url('/support/')),
         'logoutUrl' => esc_url_raw(wp_logout_url(home_url('/support/'))),
         'siteName'  => sanitize_text_field(get_bloginfo('name')),
+        'homeUrl' => esc_url_raw(home_url('/')),
+        'resetPasswordUrl' => esc_url_raw(wp_lostpassword_url(home_url('/support/login/'))),
+        'registrationEnabled' => (bool) get_option('users_can_register'),
+        'authenticated' => is_user_logged_in(),
       ]) . ';',
       'before',
     );
@@ -100,14 +104,8 @@ final class PortalPage {
       return;
     }
 
-    $loginError = null;
-
     if (! is_user_logged_in()) {
-      $loginError = $this->handleMagicLogin();
-
-      if (! is_user_logged_in()) {
-        $this->renderLogin($loginError);
-      }
+      $this->handleMagicLogin();
     }
 
     status_header(200);
@@ -175,36 +173,4 @@ final class PortalPage {
     return home_url($path);
   }
 
-  private function renderLogin(?string $error): never {
-    $loginUrl = wp_login_url(home_url('/support/'));
-
-    status_header(200);
-    nocache_headers();
-
-    ?><!doctype html>
-    <html <?php language_attributes(); ?>>
-      <head>
-        <meta charset="<?php bloginfo('charset'); ?>">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title><?php echo esc_html__('Sign in — SupportBay', 'supportbay'); ?></title>
-        <?php wp_head(); ?>
-      </head>
-      <body <?php body_class('supportbay-portal supportbay-portal-login'); ?>>
-        <?php wp_body_open(); ?>
-        <main class="sbay-login">
-          <h1><?php echo esc_html__('Customer support portal', 'supportbay'); ?></h1>
-          <p><?php echo esc_html__('Sign in to view your tickets, purchases, and profile.', 'supportbay'); ?></p>
-          <?php if ($error !== null) : ?>
-            <p role="alert"><?php echo esc_html($error); ?></p>
-          <?php endif; ?>
-          <a href="<?php echo esc_url($loginUrl); ?>">
-            <?php echo esc_html__('Sign in', 'supportbay'); ?>
-          </a>
-        </main>
-        <?php wp_footer(); ?>
-      </body>
-    </html><?php
-
-    exit;
-  }
 }

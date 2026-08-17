@@ -139,6 +139,8 @@ All API responses follow a strict structure:
 
 # Authentication Strategy
 
+The React customer portal exposes `/support/login/` and `/support/register/` while WordPress remains the session and password authority. `POST /auth/login`, `POST /auth/register`, `GET /auth/session`, and `POST /auth/logout` use REST nonces and same-origin cookies. Registration follows the native `users_can_register` setting, creates a WordPress Subscriber, and links it to a SupportBay customer record. The legacy `sbay_customer` role is migrated to Subscriber and removed.
+
 SupportBay uses **mixed authentication layers**:
 
 ## 1. WordPress Auth (Logged-in users)
