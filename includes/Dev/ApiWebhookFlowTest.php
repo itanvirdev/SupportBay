@@ -103,6 +103,10 @@ final class ApiWebhookFlowTest extends FlowTest {
       'Capability-protected ticket bulk action route is registered.'
     );
     Assert::true(
+      isset($routes['/sbay/v1/roles']),
+      'Administrator-only SupportBay role routes are registered.'
+    );
+    Assert::true(
       isset($routes['/sbay/v1/admin/tickets/(?P<id>\d+)/merge']),
       'Manager ticket merge route is registered.'
     );

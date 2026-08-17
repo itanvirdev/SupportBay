@@ -196,6 +196,14 @@ Administrators automatically receive all SupportBay capabilities.
 
 # Capability Groups
 
+SupportBay Settings exposes native SupportBay role definitions through an administrator-only role API. The WordPress Administrator role is always view-only. Support Agent, Support Manager, and custom `sbay_` support roles may select only capabilities from the server-owned categorized catalog; arbitrary WordPress capabilities are rejected.
+
+Role descriptions, lifecycle state, and selected capability definitions are stored in SupportBay option metadata while effective permissions remain native WordPress role capabilities. Inactive roles retain their definition and assigned users but lose SupportBay access and are removed from the native assignable-role list. Every SupportBay role can be deleted when it has no assigned users; Administrator remains permanently protected. New role slugs are generated server-side from the submitted name and cannot be edited.
+
+The role editor exposes a Support Agent or Manager switch. Disabling it hides and clears SupportBay capabilities; enabling it allows capability selection from the Support Agent and Support Manager presets. Role deletion is performed from the role-list action column, while lifecycle status uses an active/inactive switch.
+
+Team members continue to be created and assigned through the native WordPress Users interface. Agent selectors discover eligible users by `sbay_view_tickets` capability rather than fixed role slugs, so custom active support roles work throughout ticket assignment. Category-scoped role access is deferred.
+
 ## Tickets
 
 - sbay_create_ticket

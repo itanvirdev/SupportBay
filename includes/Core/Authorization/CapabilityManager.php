@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Authorization;
 
 final class CapabilityManager {
+  private const ROLE_DEFAULTS_VERSION = '1.0.0';
   public const MANAGE_CUSTOMERS = 'sbay_manage_customers';
   public const VIEW_TICKETS = 'sbay_view_tickets';
   public const REPLY_TICKET = 'sbay_reply_ticket';
@@ -27,6 +28,7 @@ final class CapabilityManager {
   public const CHANGE_TICKET_TAGS = 'sbay_change_ticket_tags';
   public const MANAGE_CUSTOM_FIELDS = 'sbay_manage_custom_fields';
   public const CHANGE_TICKET_CUSTOM_FIELDS = 'sbay_change_ticket_custom_fields';
+  public const MANAGE_ROLES = 'sbay_manage_roles';
 
   /** Register protected SupportBay roles and capabilities. */
   public static function register(): void {
@@ -64,15 +66,18 @@ final class CapabilityManager {
       $manager,
       [
         self::MANAGE_PROVIDERS, self::MANAGE_SETTINGS,
-        'sbay_manage_roles', 'sbay_manage_capabilities',
+        self::MANAGE_ROLES, 'sbay_manage_capabilities',
         self::EXPORT_REPORTS, 'sbay_download_attachment',
         'sbay_delete_attachment', 'sbay_close_ticket', 'sbay_reopen_ticket',
       ],
     )));
 
-    self::ensureRole('sbay_customer', __('SupportBay Customer', 'supportbay'), $customer);
-    self::ensureRole('sbay_agent', __('Support Agent', 'supportbay'), $agent);
-    self::ensureRole('sbay_manager', __('Support Manager', 'supportbay'), $manager);
+    if (get_option('sbay_role_defaults_version') !== self::ROLE_DEFAULTS_VERSION) {
+      self::ensureRole('sbay_customer', __('SupportBay Customer', 'supportbay'), $customer);
+      self::ensureRole('sbay_agent', __('Support Agent', 'supportbay'), $agent);
+      self::ensureRole('sbay_manager', __('Support Manager', 'supportbay'), $manager);
+      update_option('sbay_role_defaults_version', self::ROLE_DEFAULTS_VERSION, false);
+    }
     self::grant('administrator', $administrator);
   }
 

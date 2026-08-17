@@ -24,6 +24,7 @@ use SupportBay\Modules\SavedReplies\SavedReplyServiceProvider;
 use SupportBay\Modules\Categories\CategoryServiceProvider;
 use SupportBay\Modules\Tags\TagServiceProvider;
 use SupportBay\Modules\CustomFields\CustomFieldServiceProvider;
+use SupportBay\Modules\Roles\RoleServiceProvider;
 
 final class ServiceProviderRegistry {
   /**
@@ -66,6 +67,7 @@ final class ServiceProviderRegistry {
     self::addProvider(new CategoryServiceProvider());
     self::addProvider(new TagServiceProvider());
     self::addProvider(new CustomFieldServiceProvider());
+    self::addProvider(new RoleServiceProvider());
     self::addProvider(new WebhookServiceProvider());
     self::addProvider(new AdminServiceProvider());
     self::addProvider(new PortalServiceProvider());

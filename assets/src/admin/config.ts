@@ -11,6 +11,7 @@ export interface AdminConfig {
   canManageCategories: boolean;
   canManageTags: boolean;
   canManageCustomFields: boolean;
+  canManageRoles: boolean;
   section: 'tickets' | 'reports' | 'settings';
 }
 

@@ -104,6 +104,7 @@ final class AdminPage {
         'canManageCategories' => current_user_can(CapabilityManager::MANAGE_CATEGORIES),
         'canManageTags' => current_user_can(CapabilityManager::MANAGE_TAGS),
         'canManageCustomFields' => current_user_can(CapabilityManager::MANAGE_CUSTOM_FIELDS),
+        'canManageRoles' => current_user_can(CapabilityManager::MANAGE_ROLES),
         'section'   => $section,
       ]) . ';',
       'before',

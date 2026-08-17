@@ -202,7 +202,7 @@ final class AdminTicketController {
           $this->categories->applicable($ticket->departmentId()),
         ),
         'tags' => array_map(static fn($tag): array => $tag->toArray(), $this->tags->active()),
-        'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['role__in' => ['sbay_agent', 'sbay_manager', 'administrator']])),
+        'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['capability' => CapabilityManager::VIEW_TICKETS])),
       ],
     ], 'Ticket context retrieved.');
   }
@@ -223,7 +223,7 @@ final class AdminTicketController {
         'options' => $field->options(),
         'department_id' => $field->departmentId(),
       ], $this->customFields->active()),
-      'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['role__in' => ['sbay_agent', 'sbay_manager', 'administrator']])),
+      'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['capability' => CapabilityManager::VIEW_TICKETS])),
     ], 'Ticket queue options retrieved.');
   }
 

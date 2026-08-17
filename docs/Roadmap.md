@@ -625,6 +625,8 @@ Custom Field Bulk Update Workflow ✅
 
 First Reply Ownership and Agent Handoff ✅
 
+User Role Settings Foundation ✅
+
 ### Stage 6 — React
 
 Build:

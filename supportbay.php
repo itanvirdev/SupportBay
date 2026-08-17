@@ -150,6 +150,13 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'role':
+        \SupportBay\Dev\RoleFlowTest::run(
+          $container->get(\SupportBay\Modules\Roles\Services\SupportRoleService::class),
+          $container->get(\SupportBay\Modules\Roles\Http\Controllers\SupportRoleController::class),
+        );
+        break;
+
       case 'customer':
         \SupportBay\Dev\CustomerFlowTest::run(
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)

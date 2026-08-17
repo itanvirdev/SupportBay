@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-First Reply Ownership and Agent Handoff
+User Role Settings Foundation
 
 Current Objective
 
-Auto-claim unassigned tickets on the first public staff reply and allow safe ticket-detail handoff.
+Manage native SupportBay role definitions through a protected categorized capability workspace.
 
 ---
 
@@ -1008,6 +1008,17 @@ Completed
 - Bulk assignment remains restricted to managers and administrators.
 - Ticket details show the current owner and preserve normal activity and notification workflows.
 - API and React flow coverage verifies agent handoff, unassignment, current-owner rendering, and bulk restrictions.
+
+- Administrator is listed as a protected, view-only native role.
+- Support Agent, Support Manager, and custom SupportBay roles use native WordPress role capabilities.
+- The role API accepts only a categorized server-owned SupportBay capability catalog.
+- Descriptions, status, and selected capability definitions use option-backed metadata.
+- Inactive roles retain assigned users but lose SupportBay access and cannot be newly assigned.
+- Every SupportBay role can be deleted when unassigned; Administrator remains permanently protected.
+- New role slugs are generated automatically by the backend and remain immutable.
+- Eligible ticket agents are discovered by capability so custom support roles participate in handoff.
+- Team members remain managed through WordPress Users; category-scoped access is deferred.
+- Role and React flow coverage verifies authorization, protected Administrator behavior, capability filtering, lifecycle, and deletion safety.
 
 Next Target
 

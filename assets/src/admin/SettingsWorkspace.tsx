@@ -7,9 +7,10 @@ import { SavedReplyWorkspace } from './SavedReplyWorkspace';
 import { CategoryWorkspace } from './CategoryWorkspace';
 import { TagWorkspace } from './TagWorkspace';
 import { CustomFieldWorkspace } from './CustomFieldWorkspace';
+import { RoleWorkspace } from './RoleWorkspace';
 import { getAdminConfig } from './config';
 
-type SettingsSection = 'categories' | 'tags' | 'custom-fields' | 'sla' | 'saved-replies' | 'notifications' | 'logs' | 'integrations';
+type SettingsSection = 'roles' | 'categories' | 'tags' | 'custom-fields' | 'sla' | 'saved-replies' | 'notifications' | 'logs' | 'integrations';
 
 export function SettingsWorkspace() {
   const config = getAdminConfig();
@@ -17,7 +18,7 @@ export function SettingsWorkspace() {
 
   return <section className="sbay-settings-workspace">
     <nav aria-label="Settings sections">
-      <span>General</span><span>Security</span><span>User Roles</span>
+      <span>General</span><span>Security</span>{config.canManageRoles?<button type="button" className={section === 'roles' ? 'is-active' : ''} onClick={() => setSection('roles')}>User Roles</button>:null}
       {config.canManageCategories?<button type="button" className={section === 'categories' ? 'is-active' : ''} onClick={() => setSection('categories')}>Categories</button>:null}
       {config.canManageTags?<button type="button" className={section === 'tags' ? 'is-active' : ''} onClick={() => setSection('tags')}>Tags</button>:null}
       {config.canManageCustomFields?<button type="button" className={section === 'custom-fields' ? 'is-active' : ''} onClick={() => setSection('custom-fields')}>Custom Fields</button>:null}
@@ -27,6 +28,6 @@ export function SettingsWorkspace() {
       <button type="button" className={section === 'logs' ? 'is-active' : ''} onClick={() => setSection('logs')}>Delivery Logs</button>
       <button type="button" className={section === 'integrations' ? 'is-active' : ''} onClick={() => setSection('integrations')}>Integrations</button>
     </nav>
-    <div>{section === 'categories' ? <CategoryWorkspace /> : section === 'tags' ? <TagWorkspace /> : section === 'custom-fields' ? <CustomFieldWorkspace /> : section === 'sla' ? <TicketSlaWorkspace /> : section === 'saved-replies' ? <SavedReplyWorkspace /> : section === 'notifications' ? <NotificationTemplateWorkspace /> : section === 'logs' ? <NotificationLogWorkspace /> : <ProviderWorkspace />}</div>
+    <div>{section === 'roles' ? <RoleWorkspace /> : section === 'categories' ? <CategoryWorkspace /> : section === 'tags' ? <TagWorkspace /> : section === 'custom-fields' ? <CustomFieldWorkspace /> : section === 'sla' ? <TicketSlaWorkspace /> : section === 'saved-replies' ? <SavedReplyWorkspace /> : section === 'notifications' ? <NotificationTemplateWorkspace /> : section === 'logs' ? <NotificationLogWorkspace /> : <ProviderWorkspace />}</div>
   </section>;
 }

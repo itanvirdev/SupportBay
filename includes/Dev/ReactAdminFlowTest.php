@@ -52,7 +52,8 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains(implode('', $bootstrap), 'canManageSavedReplies')
       && str_contains(implode('', $bootstrap), 'canManageCategories')
       && str_contains(implode('', $bootstrap), 'canManageTags')
-      && str_contains(implode('', $bootstrap), 'canManageCustomFields'),
+      && str_contains(implode('', $bootstrap), 'canManageCustomFields')
+      && str_contains(implode('', $bootstrap), 'canManageRoles'),
       'Each administrator page receives authenticated API configuration and its active section.'
     );
 
@@ -125,6 +126,9 @@ final class ReactAdminFlowTest extends FlowTest {
     );
     $customFieldWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/CustomFieldWorkspace.tsx'
+    );
+    $roleWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/RoleWorkspace.tsx'
     );
 
     Assert::true(
@@ -248,6 +252,7 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, 'Categories')
       && str_contains($settingsWorkspace, 'Tags')
       && str_contains($settingsWorkspace, 'Custom Fields')
+      && str_contains($settingsWorkspace, 'User Roles')
       && str_contains($settingsWorkspace, 'Ticket SLA')
       && str_contains($settingsWorkspace, 'Integrations')
       && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace />')
@@ -256,8 +261,24 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, '<CategoryWorkspace />')
       && str_contains($settingsWorkspace, '<TagWorkspace />')
       && str_contains($settingsWorkspace, '<CustomFieldWorkspace />')
+      && str_contains($settingsWorkspace, '<RoleWorkspace />')
       && str_contains($settingsWorkspace, '<ProviderWorkspace />'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($roleWorkspace)
+      && str_contains($roleWorkspace, "adminGet<SupportRole[]>('roles')")
+      && str_contains($roleWorkspace, "adminPost<SupportRole>('roles'")
+      && str_contains($roleWorkspace, 'capability_groups')
+      && str_contains($roleWorkspace, 'All capabilities')
+      && str_contains($roleWorkspace, 'Assign team members through WordPress Users')
+      && str_contains($roleWorkspace, "role.editable?'Edit':'View'")
+      && ! str_contains($roleWorkspace, 'Generated from name')
+      && str_contains($roleWorkspace, 'Support Agent or Manager.')
+      && str_contains($roleWorkspace, 'editing.support_role?')
+      && str_contains($roleWorkspace, 'void remove(role)'),
+      'Settings provides protected, categorized SupportBay role management with a view-only Administrator role.',
     );
 
     Assert::true(

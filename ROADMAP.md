@@ -1298,6 +1298,8 @@ Custom Field Bulk Update Workflow ✅
 
 First Reply Ownership and Agent Handoff ✅
 
+User Role Settings Foundation ✅
+
 Queue ✅
 
 Asynchronous Initial Delivery ✅

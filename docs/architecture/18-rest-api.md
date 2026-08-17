@@ -688,3 +688,9 @@ The controller delegates each selected ticket to `CustomFieldService::setValue()
 The first public reply from an agent or manager assigns an unassigned ticket to that responder. Customer replies and internal notes never claim ownership, and an existing assignee is never replaced by this automation.
 
 Agents, managers, and administrators may assign, unassign, or transfer an individual ticket from its detail action endpoint. Assignment targets must be existing WordPress users with SupportBay ticket-view permission. Bulk assignment remains restricted to managers and administrators through `sbay_reassign_ticket`. Every actual ownership change continues through `TicketService::changeAssignment()`, preserving activity and assignment/reassignment notification behavior.
+
+# User Role Settings
+
+`GET /sbay/v1/roles` returns the protected Administrator summary, SupportBay support roles, user counts, lifecycle metadata, selected capabilities, and a categorized server-owned capability catalog. `POST /roles`, `PUT /roles/{slug}`, and `DELETE /roles/{slug}` require `sbay_manage_roles`.
+
+The API accepts only catalogued SupportBay capabilities. Administrator cannot be mutated or deleted, and any SupportBay role assigned to WordPress users is deletion-protected. New slugs are generated server-side from role names and remain immutable. Inactive roles retain metadata but lose dashboard permissions and are hidden from native WordPress role assignment. Team-member creation remains in WordPress Users.
