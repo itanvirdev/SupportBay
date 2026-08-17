@@ -68,6 +68,7 @@ final class ReactPortalFlowTest extends FlowTest {
       && str_contains($newTicketPage, 'portalApi.customFields(departmentId)')
       && str_contains($newTicketPage, 'custom_fields: customFieldValues')
       && str_contains($newTicketPage, 'Purchase Code/Key')
+      && str_contains($newTicketPage, 'departments.length > 1')
       && ! str_contains($newTicketPage, 'purchase_verification_id'),
       'Ticket creation requires entitlement and renders department custom fields.'
     );

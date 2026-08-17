@@ -9,6 +9,7 @@ use SupportBay\Modules\Departments\Database\DepartmentSchema;
 use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Departments\Enums\DepartmentStatus;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
+use SupportBay\Modules\Tickets\Database\TicketSchema;
 
 final class DepartmentRepository extends Repository {
 
@@ -117,6 +118,15 @@ final class DepartmentRepository extends Repository {
    */
   public function delete(int $id): bool {
     return $this->deleteById($id);
+  }
+
+  public function hasTickets(int $id): bool {
+    global $wpdb;
+
+    return (int) $wpdb->get_var($wpdb->prepare(
+      'SELECT COUNT(*) FROM ' . TicketSchema::tableName() . ' WHERE department_id = %d',
+      $id,
+    )) > 0;
   }
 
   /**

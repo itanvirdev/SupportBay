@@ -285,7 +285,10 @@ final class PortalService {
   public function createTicket(array $data): Ticket {
     $customer = $this->currentCustomer();
     $departmentId = (int) ($data['department_id'] ?? 0);
-    $department = $this->departments->find($departmentId);
+    $department = $departmentId > 0
+      ? $this->departments->find($departmentId)
+      : $this->departments->default();
+    $departmentId = $department->id();
 
     if (! $department || ! $department->isActive()) {
       throw new InvalidArgumentException(

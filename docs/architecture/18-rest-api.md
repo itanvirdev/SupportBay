@@ -375,6 +375,8 @@ POST /providers/{slug}
 
 # Department Endpoints
 
+The built-in `support` department is created automatically, remains active, and cannot be deleted. Portal ticket creation may omit `department_id`; the service then assigns Support. The customer form hides its department selector when Support is the only active choice.
+
 ```http id="r26"
 GET /departments
 POST /departments

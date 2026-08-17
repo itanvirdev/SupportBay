@@ -51,11 +51,9 @@ Technical Support
 
 ## Department Required
 
-Department selection is required during ticket creation.
+SupportBay always provisions an active, protected **Support** department. When it is the only active department, the ticket-creation selector is hidden and the server assigns Support automatically. When additional active departments exist, customers can choose from the selector; omitted selections still fall back to Support.
 
-If no department is selected:
-
-Default: General Support
+Additional departments can be deleted from the settings list only while no tickets reference them. Support is never offered as a deletion target.
 
 ---
 

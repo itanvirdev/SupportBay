@@ -41,7 +41,7 @@ final class Activator {
   private static function createDefaultOptions(): void {
     $defaults = [
       'ticket_reopen_days' => 30,
-      'default_department' => 'general-support',
+      'default_department' => 'support',
       'file_upload_enabled' => true,
       'rich_text_enabled' => false,
     ];

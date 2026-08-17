@@ -35,6 +35,10 @@ final class DepartmentController {
       'methods' => 'PUT', 'callback' => [$this, 'update'],
       'permission_callback' => [$this, 'canEdit'],
     ]);
+    register_rest_route('sbay/v1', '/departments/(?P<id>\d+)', [
+      'methods' => 'DELETE', 'callback' => [$this, 'delete'],
+      'permission_callback' => [$this, 'canEdit'],
+    ]);
   }
 
   public function permissions(): bool|WP_Error {
@@ -81,6 +85,18 @@ final class DepartmentController {
       : RestResponse::error('Department was not found.', 'DEPARTMENT_NOT_FOUND', [], 404);
   }
 
+  public function delete(WP_REST_Request $request): WP_REST_Response {
+    try {
+      $deleted = $this->departments->delete(absint($request->get_param('id')));
+    } catch (\InvalidArgumentException $exception) {
+      return RestResponse::error($exception->getMessage(), 'DEPARTMENT_DELETE_BLOCKED', [], 409);
+    }
+
+    return $deleted
+      ? RestResponse::success([], 'Department deleted.')
+      : RestResponse::error('Department was not found.', 'DEPARTMENT_NOT_FOUND', [], 404);
+  }
+
   private function requires(string $capability): bool|WP_Error {
     if (! is_user_logged_in()) {
       return new WP_Error('sbay_authentication_required', 'Authentication is required.', ['status' => 401]);
@@ -97,9 +113,6 @@ final class DepartmentController {
 
     if ($request->has_param('name')) {
       $data['name'] = sanitize_text_field((string) $request->get_param('name'));
-    }
-    if ($request->has_param('slug')) {
-      $data['slug'] = sanitize_title((string) $request->get_param('slug'));
     }
     if ($request->has_param('status')) {
       $status = DepartmentStatus::tryFrom(sanitize_key((string) $request->get_param('status')));

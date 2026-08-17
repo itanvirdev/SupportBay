@@ -46,5 +46,9 @@ final class DepartmentServiceProvider extends ServiceProvider {
       $container->get(DepartmentController::class),
       'registerRoutes',
     ]);
+
+    add_action('init', static function () use ($container): void {
+      $container->get(DepartmentService::class)->ensureDefault();
+    }, 2);
   }
 }

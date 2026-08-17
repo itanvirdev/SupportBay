@@ -12,6 +12,7 @@ use SupportBay\Modules\Departments\Repositories\DepartmentRepository;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 
 final class DepartmentService {
+  public const DEFAULT_SLUG = 'support';
 
   public function __construct(
     private DepartmentRepository $repository
@@ -37,6 +38,11 @@ final class DepartmentService {
 
     if (!$department) {
       return null;
+    }
+
+    if ($department->slug() === self::DEFAULT_SLUG) {
+      $data['name'] = 'Support';
+      $data['status'] = DepartmentStatus::ACTIVE->value;
     }
 
     $data = $this->normalizeForUpdate($data);
@@ -78,6 +84,29 @@ final class DepartmentService {
     return $this->repository->getActive();
   }
 
+  public function ensureDefault(): Department {
+    $department = $this->findBySlug(self::DEFAULT_SLUG);
+
+    if (! $department) {
+      $id = $this->create([
+        'name' => 'Support',
+        'status' => DepartmentStatus::ACTIVE->value,
+        'sort_order' => 0,
+      ]);
+      $department = $this->find($id);
+    } elseif (! $department->isActive()) {
+      $department = $this->update($department->id(), [
+        'status' => DepartmentStatus::ACTIVE->value,
+      ]);
+    }
+
+    return $department ?? throw new RuntimeException('The default Support department could not be created.');
+  }
+
+  public function default(): Department {
+    return $this->ensureDefault();
+  }
+
   /**
    * Delete department
    */
@@ -88,15 +117,13 @@ final class DepartmentService {
       return false;
     }
 
-    /**
-     * Reserved:
-     * Cannot delete default department.
-     */
+    if ($department->slug() === self::DEFAULT_SLUG) {
+      throw new InvalidArgumentException('The default Support department cannot be deleted.');
+    }
 
-    /**
-     * Reserved:
-     * Cannot delete department if tickets exist.
-     */
+    if ($this->repository->hasTickets($id)) {
+      throw new InvalidArgumentException('Departments assigned to tickets cannot be deleted.');
+    }
 
     return $this->repository->delete($id);
   }
@@ -114,7 +141,7 @@ final class DepartmentService {
    * Normalize defaults for create
    */
   private function normalizeForCreate(array $data): array {
-    $data['slug'] ??= $this->generateSlug($data['name']);
+    $data['slug'] = $this->generateSlug($data['name']);
     $data['status'] ??= DepartmentStatus::default()->value;
     $data['default_priority'] ??= TicketPriority::NORMAL->value;
     $data['sort_order'] ??= 0;
@@ -126,9 +153,7 @@ final class DepartmentService {
    * Normalize defaults for update
    */
   private function normalizeForUpdate(array $data): array {
-    if (isset($data['name']) && empty($data['slug'])) {
-      $data['slug'] = $this->generateSlug($data['name']);
-    }
+    unset($data['slug']);
 
     return $data;
   }

@@ -117,14 +117,14 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
             <span>Subject</span>
             <input value={subject} onChange={(event) => setSubject(event.target.value)} required maxLength={255} />
           </label>
-          <label>
+          {departments.length > 1 ? <label>
             <span>Department</span>
             <select value={departmentId} onChange={(event) => setDepartmentId(Number(event.target.value))} required>
               {departments.map((department) => (
                 <option value={department.id} key={department.id}>{department.name}</option>
               ))}
             </select>
-          </label>
+          </label> : null}
           {categoriesLoading ? <p className="sbay-empty">Loading categories…</p> : categories.length ? (
             <label>
               <span>Category</span>
