@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
 import type { PortalVerification } from '../../api/types';
 import { formatDate } from '../../core/date';
+import { Preloader } from '../../../shared/components/Preloader';
 
 export function PurchasesPage() {
   const [purchases, setPurchases] = useState<PortalVerification[] | null>(null);
@@ -22,7 +23,7 @@ export function PurchasesPage() {
       </header>
 
       {!purchases ? (
-        <p className="sbay-empty">Loading verified purchases…</p>
+        <Preloader label="Loading verified purchases…" />
       ) : purchases.length === 0 ? (
         <p className="sbay-empty">No verified purchases are connected yet.</p>
       ) : (

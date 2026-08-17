@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { adminGet, adminPost, adminPut } from './api';
+import { Preloader } from '../shared/components/Preloader';
 
 interface NotificationRetention {
   enabled: boolean;
@@ -169,7 +170,7 @@ export function NotificationLogWorkspace() {
     <div className="sbay-log-layout">
       <div className="sbay-log-list">
         <div className="is-header"><span>Delivery</span><span>Status</span><span>Attempts</span><span>Created</span></div>
-        {loading ? <p>Loading delivery logs…</p> : logs.length === 0 ? <p>No notification logs match these filters.</p> : logs.map((log) => <button type="button" className={selected?.id === log.id ? 'is-active' : ''} onClick={() => void inspect(log.id)} key={log.id}>
+        {loading ? <Preloader label="Loading delivery logs…" /> : logs.length === 0 ? <p>No notification logs match these filters.</p> : logs.map((log) => <button type="button" className={selected?.id === log.id ? 'is-active' : ''} onClick={() => void inspect(log.id)} key={log.id}>
           <span><strong>{log.subject}</strong><small>{log.recipient}</small><small>{log.event.replace(/_/g, ' ')} · {log.channel}</small></span><span><i className={`is-${log.status}`}>{log.status}</i>{log.error_message ? <small>{log.error_message}</small> : null}</span><span>{log.retry_count} / 3</span><time>{date(log.created_at)}</time>
         </button>)}
         <footer><span>Showing {logs.length} of {total}</span><nav aria-label="Notification log pagination"><button type="button" disabled={page <= 1 || loading} onClick={() => setPage(page - 1)}>‹</button><strong>{page} / {totalPages}</strong><button type="button" disabled={page >= totalPages || loading} onClick={() => setPage(page + 1)}>›</button></nav></footer>

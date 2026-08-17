@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { adminDownloadFile, adminGet } from './api';
 import { getAdminConfig } from './config';
+import { Preloader } from '../shared/components/Preloader';
 
 interface MetricRow {
   total: number;
@@ -96,7 +97,7 @@ export function NotificationReportWorkspace() {
       <button type="submit" disabled={loading}>Apply report</button>
     </form>
     {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
-    {loading && !report ? <p>Loading notification metrics…</p> : report ? <>
+    {loading && !report ? <Preloader label="Loading notification metrics…" /> : report ? <>
       <div className="sbay-report-summary">
         <article><span>Total deliveries</span><strong>{report.summary.total}</strong></article>
         <article className="is-success"><span>Successful</span><strong>{report.summary.successful}</strong><small>{report.summary.success_rate}% success rate</small></article>

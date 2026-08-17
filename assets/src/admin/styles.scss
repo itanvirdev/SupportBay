@@ -1,3 +1,5 @@
+@use '../shared/components/preloader';
+
 #wpcontent { padding-left: 0; }
 .sbay-admin-page { margin: 0; min-height: calc(100vh - 32px); background: #f3f6f4; color: #18231f; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
 .sbay-admin-php-header { min-height: 78px; padding: 0 clamp(24px, 4vw, 64px); display: flex; align-items: center; justify-content: space-between; gap: 32px; border-bottom: 1px solid #dfe7e2; background: #fff; }

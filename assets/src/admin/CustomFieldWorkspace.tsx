@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { adminDelete, adminGet, adminPost, adminPut } from './api';
+import { Preloader } from '../shared/components/Preloader';
 
 type FieldType = 'text'|'textarea'|'number'|'select'|'checkbox'|'date'|'email'|'url';
 interface CustomField {
@@ -67,7 +68,7 @@ export function CustomFieldWorkspace() {
       <label>Status<select value={status} onChange={event=>setStatus(event.target.value)}><option value="">All Statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
       <label>Type<select value={type} onChange={event=>setType(event.target.value)}><option value="">All Types</option>{types.map(item=><option value={item} key={item}>{item}</option>)}</select></label>
       <label>Department scope<select value={department} onChange={event=>setDepartment(event.target.value)}><option value="">All Scopes</option><option value="global">Global</option>{departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
-      {loading?<p>Loading…</p>:visible.length===0?<p>No custom fields found.</p>:<ul>{visible.map(item=><li key={item.id}><button type="button" className={selected.id===item.id?'is-active':''} onClick={()=>{setSelected(item);setError(null);setNotice(null);}}><i/><span><strong>{item.name}</strong><small>{item.type} · {item.department_id?departmentNames.get(item.department_id)??`Department #${item.department_id}`:'Global'} · {item.status}</small></span></button></li>)}</ul>}
+      {loading?<Preloader label="Loading custom fields…" compact />:visible.length===0?<p>No custom fields found.</p>:<ul>{visible.map(item=><li key={item.id}><button type="button" className={selected.id===item.id?'is-active':''} onClick={()=>{setSelected(item);setError(null);setNotice(null);}}><i/><span><strong>{item.name}</strong><small>{item.type} · {item.department_id?departmentNames.get(item.department_id)??`Department #${item.department_id}`:'Global'} · {item.status}</small></span></button></li>)}</ul>}
     </aside><form onSubmit={save}>
       <label>Name<input required maxLength={100} value={selected.name} onChange={event=>setSelected(current=>({...current,name:event.target.value}))}/></label>
       <label>Slug<input maxLength={120} value={selected.slug} onChange={event=>setSelected(current=>({...current,slug:event.target.value}))} placeholder="Generated from name when empty"/></label>

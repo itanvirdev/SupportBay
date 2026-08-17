@@ -12,6 +12,7 @@ import { CustomerDirectory } from './CustomerDirectory';
 import { SettingsWorkspace } from './SettingsWorkspace';
 import { VerificationDirectory } from './VerificationDirectory';
 import { ReportsWorkspace } from './ReportsWorkspace';
+import { Preloader } from '../shared/components/Preloader';
 
 async function loadTickets(query: TicketQueryParams): Promise<TicketPage> {
   const response = await adminGet<WorkspaceTicket[]>(`tickets?${ticketQueryString(query)}`);
@@ -173,7 +174,7 @@ function AdminApp() {
       {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
 
       {config.section === 'tickets' ? (
-        verificationDirectory ? <VerificationDirectory back={()=>{window.location.href=config.adminUrl;}}/> : customerDirectory ? <CustomerDirectory back={()=>{window.location.href=config.adminUrl;}} openCustomer={id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_customers=1`;}}/> : customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:returnCustomers?`${config.adminUrl}&customers=1`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : <p>Loading customer profile…</p>) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} split={splitTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : <p>Loading ticket conversation…</p>) : <TicketWorkspace
+        verificationDirectory ? <VerificationDirectory back={()=>{window.location.href=config.adminUrl;}}/> : customerDirectory ? <CustomerDirectory back={()=>{window.location.href=config.adminUrl;}} openCustomer={id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_customers=1`;}}/> : customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:returnCustomers?`${config.adminUrl}&customers=1`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : <Preloader label="Loading customer profile…" />) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} split={splitTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
           mode="staff"
           load={loadTickets}
           options={queueOptions}

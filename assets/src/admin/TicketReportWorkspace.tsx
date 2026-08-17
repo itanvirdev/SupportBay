@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { adminDownloadFile, adminGet } from './api';
 import { getAdminConfig } from './config';
+import { Preloader } from '../shared/components/Preloader';
 
 interface TicketMetricRow { tickets: number; responses: number; need_reply: number; closed: number; }
 interface TicketReport {
@@ -105,7 +106,7 @@ export function TicketReportWorkspace() {
       <button type="submit" disabled={loading}>Apply report</button>
     </form>
     {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
-    {loading && !report ? <p>Loading ticket performance…</p> : report ? <>
+    {loading && !report ? <Preloader label="Loading ticket performance…" /> : report ? <>
       <div className="sbay-report-summary sbay-ticket-report-summary">
         <article><span>Tickets</span><strong>{report.summary.tickets}</strong></article>
         <article><span>Responses</span><strong>{report.summary.responses}</strong></article>

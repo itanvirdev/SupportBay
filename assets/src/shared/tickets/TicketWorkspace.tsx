@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { Preloader } from '../components/Preloader';
 
 export interface WorkspaceTicket {
   id: number;
@@ -109,6 +110,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
   const [bulkAction, setBulkAction] = useState('');
   const [bulkCustomFieldValue, setBulkCustomFieldValue] = useState('');
   const [bulkPending, setBulkPending] = useState(false);
+  const [loading, setLoading] = useState(true);
   const filterCategories = useMemo(
     () => options?.categories.filter((category) =>
       !query.departmentId
@@ -131,10 +133,11 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
 
   const update = (changes: Partial<TicketQueryParams>) => setQuery((current) => ({ ...current, ...changes, page: changes.page ?? 1 }));
   const reload = useCallback(() => {
+    setLoading(true);
     setError(null);
     load(query).then(setResult).catch((reason: unknown) => {
       setError(reason instanceof Error ? reason.message : 'Tickets could not be loaded.');
-    });
+    }).finally(() => setLoading(false));
   }, [load, query]);
 
   useEffect(() => { reload(); }, [reload, refresh]);
@@ -221,7 +224,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
           {mode === 'staff' ? <input aria-label="Select all tickets" checked={allSelected} onChange={() => setSelected(allSelected ? [] : result?.items.map((ticket) => ticket.id) ?? [])} type="checkbox" /> : <span />}
           <span>Title</span><span>{mode==='staff'?'Reply':'Priority'}</span>{mode === 'staff' ? <span>Agent</span> : null}<span>Date</span>
         </div>
-        {!result ? <p className="sbay-ticket-empty">Loading tickets…</p> : result.items.length === 0 ? <p className="sbay-ticket-empty">No tickets match these filters.</p> : result.items.map((ticket) => (
+        {loading ? <Preloader label="Loading tickets…" /> : !result || result.items.length === 0 ? <p className="sbay-ticket-empty">No tickets match these filters.</p> : result.items.map((ticket) => (
           <div className="sbay-ticket-row" key={ticket.id}>
             {mode === 'staff' ? <input aria-label={`Select ${ticket.subject}`} checked={selected.includes(ticket.id)} onChange={() => setSelected((current) => current.includes(ticket.id) ? current.filter((id) => id !== ticket.id) : [...current, ticket.id])} type="checkbox" /> : <span className="sbay-ticket-avatar">{ticket.subject.charAt(0)}</span>}
             <button className="sbay-ticket-title" onClick={() => openTicket(ticket)}><strong>{ticket.subject} {ticket.customer_name?<small>by {ticket.customer_name}</small>:null}</strong><span><i>{ticket.status}</i> #{ticket.track_id} · {ticket.department_name||'No department'} · {ticket.category_name||'Uncategorized'} · {ticket.priority}{mode==='staff'&&ticket.tags?.map(tag=><em className="sbay-ticket-tag" style={{borderColor:tag.color??undefined}} key={tag.id}>{tag.name}</em>)}{mode==='staff'&&slaLabel(ticket)?<em className={`sbay-sla-badge is-${ticket.sla_state}`} title={ticket.sla_due_at?`Due ${new Date(ticket.sla_due_at.replace(' ','T')).toLocaleString()}`:undefined}>{slaLabel(ticket)}</em>:null}</span></button>

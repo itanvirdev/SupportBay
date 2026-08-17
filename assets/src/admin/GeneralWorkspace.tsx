@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminGet, adminPut } from './api';
+import { Preloader } from '../shared/components/Preloader';
 
 interface GeneralSettings {registration_override:boolean;disable_registration_form:boolean;disable_guest_ticket_creation:boolean;client_user_default_role:string;role_options:Array<{slug:string;name:string}>;support_portal_page_id:number;support_portal_url:string;shortcode_mode:boolean;page_options:Array<{id:number;title:string;url:string}>;wordpress_registration_enabled:boolean;registration_enabled:boolean}
 
@@ -20,5 +21,5 @@ export function GeneralWorkspace(){
     <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={settings.shortcode_mode} onChange={event=>void update({shortcode_mode:event.target.checked})}/><span>Enable <code>[supportbay]</code> shortcode on other pages.</span></label>
     {settings.shortcode_mode?<p className="sbay-shortcode-notice">Add <code>[supportbay]</code> to any other WordPress page. The selected Support Portal Page continues to work independently.</p>:null}
     <p>Effective registration: <strong>{settings.registration_enabled?'Enabled':'Disabled'}</strong></p>
-  </div></div>:<p>Loading…</p>}</section>;
+  </div></div>:<Preloader label="Loading general settings…" />}</section>;
 }

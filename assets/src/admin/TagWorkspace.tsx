@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { adminDelete, adminGet, adminPost, adminPut } from './api';
+import { Preloader } from '../shared/components/Preloader';
 
 interface Tag {
   id: number;
@@ -102,7 +103,7 @@ export function TagWorkspace() {
       <aside>
         <label>Search<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tags…" /></label>
         <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All Statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-        {loading ? <p>Loading…</p> : visible.length === 0 ? <p>No tags found.</p> : <ul>{visible.map((item) => <li key={item.id}><button type="button" className={selected.id === item.id ? 'is-active' : ''} onClick={() => { setSelected(item); setError(null); setNotice(null); }}><i style={{ backgroundColor: item.color ?? '#a7b2ac' }} /><span><strong>{item.name}</strong><small>{item.slug} · {item.status}</small></span></button></li>)}</ul>}
+        {loading ? <Preloader label="Loading tags…" compact /> : visible.length === 0 ? <p>No tags found.</p> : <ul>{visible.map((item) => <li key={item.id}><button type="button" className={selected.id === item.id ? 'is-active' : ''} onClick={() => { setSelected(item); setError(null); setNotice(null); }}><i style={{ backgroundColor: item.color ?? '#a7b2ac' }} /><span><strong>{item.name}</strong><small>{item.slug} · {item.status}</small></span></button></li>)}</ul>}
       </aside>
       <form onSubmit={save}>
         <label>Name<input required maxLength={100} value={selected.name} onChange={(event) => setSelected((current) => ({ ...current, name: event.target.value }))} /></label>

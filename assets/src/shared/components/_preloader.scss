@@ -1,0 +1,17 @@
+.sbay-preloader {
+  min-height: 180px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  color: #667085;
+  font-size: 14px;
+  text-align: center;
+}
+.sbay-preloader.is-compact { min-height: 72px; flex-direction: row; gap: 9px; }
+.sbay-preloader__spinner { width: 34px; height: 34px; border: 3px solid #dfe7e2; border-top-color: var(--sbay-green, #12b76a); border-radius: 50%; animation: sbay-preloader-spin .75s linear infinite; }
+.sbay-preloader.is-compact .sbay-preloader__spinner { width: 22px; height: 22px; border-width: 2px; }
+@keyframes sbay-preloader-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .sbay-preloader__spinner { animation-duration: 1.5s; } }

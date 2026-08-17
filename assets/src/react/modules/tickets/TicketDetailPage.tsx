@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
 import type { PortalAttachment, PortalTicketDetail } from '../../api/types';
 import { formatDate, formatDateTime } from '../../core/date';
+import { Preloader } from '../../../shared/components/Preloader';
 import { FilePicker } from '../../components/FilePicker';
 
 interface TicketDetailPageProps {
@@ -30,7 +31,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
   }
 
   if (!detail) {
-    return <p className="sbay-empty">Loading ticket conversation…</p>;
+    return <Preloader label="Loading ticket conversation…" />;
   }
 
   const canReply = ['open', 'pending', 'answered'].includes(detail.ticket.status);

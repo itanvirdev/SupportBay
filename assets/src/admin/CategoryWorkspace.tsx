@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { adminDelete, adminGet, adminPost, adminPut } from './api';
+import { Preloader } from '../shared/components/Preloader';
 
 interface Category {
   id: number;
@@ -129,7 +130,7 @@ export function CategoryWorkspace() {
         <label>Search<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search categories…" /></label>
         <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All Statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
         <label>Department scope<select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="">All Scopes</option><option value="global">Global</option>{departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
-        {loading ? <p>Loading…</p> : visible.length === 0 ? <p>No categories found.</p> : <ul>{visible.map((item) => <li key={item.id}><button type="button" className={selected.id === item.id ? 'is-active' : ''} onClick={() => { setSelected(item); setError(null); setNotice(null); }}><i style={{ backgroundColor: item.color ?? '#a7b2ac' }} /><span><strong>{item.name}</strong><small>{item.department_id ? departmentNames.get(item.department_id) ?? `Department #${item.department_id}` : 'Global'} · {item.status}</small></span></button></li>)}</ul>}
+        {loading ? <Preloader label="Loading categories…" compact /> : visible.length === 0 ? <p>No categories found.</p> : <ul>{visible.map((item) => <li key={item.id}><button type="button" className={selected.id === item.id ? 'is-active' : ''} onClick={() => { setSelected(item); setError(null); setNotice(null); }}><i style={{ backgroundColor: item.color ?? '#a7b2ac' }} /><span><strong>{item.name}</strong><small>{item.department_id ? departmentNames.get(item.department_id) ?? `Department #${item.department_id}` : 'Global'} · {item.status}</small></span></button></li>)}</ul>}
       </aside>
       <form onSubmit={save}>
         <label>Name<input required maxLength={190} value={selected.name} onChange={(event) => setSelected((current) => ({ ...current, name: event.target.value }))} /></label>

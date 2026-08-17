@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
 import type { PortalCategory, PortalCustomField, PortalDepartment, PortalPurchaseProvider } from '../../api/types';
 import { FilePicker } from '../../components/FilePicker';
+import { Preloader } from '../../../shared/components/Preloader';
 
 interface NewTicketPageProps {
   navigate: (path: string) => void;
@@ -111,7 +112,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
         </div>
       </header>
 
-      {loading ? <p className="sbay-empty">Loading ticket options…</p> : (
+      {loading ? <Preloader label="Loading ticket options…" /> : (
         <form className="sbay-ticket-form" onSubmit={submit}>
           <label>
             <span>Subject</span>
@@ -125,7 +126,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
               ))}
             </select>
           </label> : null}
-          {categoriesLoading ? <p className="sbay-empty">Loading categories…</p> : categories.length ? (
+          {categoriesLoading ? <Preloader label="Loading categories…" compact /> : categories.length ? (
             <label>
               <span>Category</span>
               <select value={categoryId} onChange={(event) => setCategoryId(Number(event.target.value))} required>

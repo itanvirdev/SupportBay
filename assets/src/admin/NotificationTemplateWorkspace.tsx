@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminGet, adminPost, adminPut } from './api';
+import { Preloader } from '../shared/components/Preloader';
 
 interface NotificationTemplate {
   key: string;
@@ -146,7 +147,7 @@ export function NotificationTemplateWorkspace() {
     </header>
     {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
     {notice ? <div className="sbay-admin-notice" role="status">{notice}</div> : null}
-    {loading ? <p className="sbay-provider-empty">Loading notification templates…</p> : null}
+    {loading ? <Preloader label="Loading notification settings…" /> : null}
     {!loading && preferences ? <section className="sbay-notification-preferences">
       <header><div><small>Delivery controls</small><h3>Email Preferences</h3><p>The master switch and event recipients must be enabled before an active template can be queued.</p></div><label className="sbay-switch"><input type="checkbox" checked={preferences.enabled} onChange={(event) => setPreferences({ ...preferences, enabled: event.target.checked })}/><span>{preferences.enabled ? 'Email enabled' : 'Email paused'}</span></label></header>
       <div className={!preferences.enabled ? 'is-disabled' : ''}>{Object.entries(preferences.events).map(([event, recipients]) => <article key={event}><strong>{event.replace(/_/g, ' ')}</strong><div>{Object.entries(recipients).map(([recipient, enabled]) => <label key={recipient}><input type="checkbox" checked={enabled} disabled={!preferences.enabled} onChange={(changeEvent) => toggleEvent(event, recipient, changeEvent.target.checked)}/><span>{recipient}</span></label>)}</div></article>)}</div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
 import type { PortalProfile, PortalProviderConnection, UpdateProfileInput } from '../../api/types';
+import { Preloader } from '../../../shared/components/Preloader';
 
 interface ProfilePageProps {
   onUpdated: (profile: PortalProfile) => void;
@@ -65,7 +66,7 @@ export function ProfilePage({ onUpdated }: ProfilePageProps) {
   };
 
   if (!profile && !error) {
-    return <p className="sbay-empty">Loading your profile…</p>;
+    return <Preloader label="Loading your profile…" />;
   }
 
   return (

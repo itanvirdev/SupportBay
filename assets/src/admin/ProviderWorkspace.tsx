@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminGet, adminPost, adminPut } from './api';
+import { Preloader } from '../shared/components/Preloader';
 
 export interface ProviderItem {
   id: number;
@@ -136,7 +137,7 @@ export function ProviderWorkspace() {
         </header>
         {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
         {notice ? <div className="sbay-admin-notice" role="status">{notice}</div> : null}
-        {loading ? <p className="sbay-provider-empty">Loading providers…</p> : null}
+        {loading ? <Preloader label="Loading integrations…" /> : null}
         {!loading && providers.length === 0 ? <p className="sbay-provider-empty">No providers are installed.</p> : null}
         <div className="sbay-provider-grid">
           {providers.map((provider) => {
@@ -164,7 +165,7 @@ export function ProviderWorkspace() {
         {editing ? <div className="sbay-provider-dialog" role="dialog" aria-modal="true" aria-labelledby="sbay-provider-dialog-title">
           <form onSubmit={saveConfiguration}>
             <header><div><small>Provider configuration</small><h2 id="sbay-provider-dialog-title">{editing.name}</h2></div><button type="button" aria-label="Close configuration" onClick={() => setEditing(null)}>×</button></header>
-            {!configuration ? <p>Loading configuration…</p> : configuration.fields.map((field) => <label key={field.key}>
+            {!configuration ? <Preloader label="Loading configuration…" compact /> : configuration.fields.map((field) => <label key={field.key}>
               <span>{field.label}{field.required ? ' *' : ''}</span>
               <input type={field.type === 'secret' ? 'password' : field.type} value={values[field.key] || ''} placeholder={field.type === 'secret' && field.configured ? 'Saved — leave blank to keep' : ''} required={field.required && !(field.type === 'secret' && field.configured)} onChange={(event) => setValues({ ...values, [field.key]: event.target.value })}/>
               {field.description ? <small>{field.description}</small> : null}
