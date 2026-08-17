@@ -6,7 +6,11 @@ namespace SupportBay\Modules\Tickets\Data;
 
 final class TicketQueueItem {
   /** @param array<string, mixed> $row */
-  public function __construct(private readonly array $row) {}
+  /** @param array<int, array<string, mixed>> $tags */
+  public function __construct(
+    private readonly array $row,
+    private readonly array $tags = [],
+  ) {}
 
   /** @return array<string, mixed> */
   public function toArray(): array {
@@ -27,6 +31,7 @@ final class TicketQueueItem {
         ? (int) $this->row['category_id']
         : null,
       'category_name' => $this->row['category_name'] ?: null,
+      'tags' => $this->tags,
       'reply_count' => (int) $this->row['reply_count'],
       'needs_reply' => (bool) $this->row['needs_reply'],
       'sla_state' => (string) ($this->row['sla_state'] ?? 'disabled'),

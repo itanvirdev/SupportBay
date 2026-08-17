@@ -18,11 +18,11 @@ main
 
 # Current Sprint
 
-Ticket Category Reporting
+Ticket Custom Fields Foundation
 
 Current Objective
 
-Add category filters, categorized/uncategorized workload breakdowns, and matching CSV sections to ticket performance reports.
+Establish reusable custom-field definitions and normalized, type-safe per-ticket values.
 
 ---
 
@@ -836,7 +836,7 @@ Never
 # Next Milestone
 
 ```
-Ticket Tags Foundation
+Custom Field Settings UI
 ```
 
 ---
@@ -892,7 +892,7 @@ Status
 ```
 Current Sprint
 
-Ticket Category Reporting
+Ticket Custom Fields Foundation
 
 Completed
 
@@ -926,10 +926,37 @@ Completed
 - Category workload includes tickets, responses, need-reply, and closed totals.
 - Historical inactive categories retain their names while null records group as Uncategorized.
 - Ticket CSV exports include the same filtered category workload shown on screen.
+- Tags own a dedicated schema, entity, repository, service, REST controller, provider, and flow test.
+- Ticket-tag relationships use a normalized junction table with unique assignment pairs.
+- Tags support active/inactive lifecycle, unique sanitized slugs, and optional colors.
+- Inactive tags cannot be newly assigned and in-use tags cannot be deleted.
+- Managers and administrators receive the dedicated tag-management capability.
+- Agents, managers, and administrators receive a separate ticket-tag mutation capability.
+- Database schema version is 0.9.0.
+- Staff ticket queues return assigned tag metadata and support exact tag filtering.
+- Staff ticket details support idempotent tag addition and removal.
+- Bulk actions add or remove tags from up to 100 selected tickets with per-ticket failure reporting.
+- Tag assignment and removal dispatch typed domain events and create dedicated timeline activities.
+- Shared React ticket components render staff-only tag labels, filters, detail controls, and bulk actions.
+- Settings exposes searchable tag lifecycle management only to users with `sbay_manage_tags`.
+- Administrators can create and edit tag names, slugs, colors, and active/inactive status.
+- The interface explains historical inactive-tag behavior and protects deletion of tags assigned to tickets.
+- React administrator flow coverage verifies capability bootstrap, navigation, CRUD calls, and deletion guidance.
+- Ticket performance reports support exact tag filtering without duplicating summary tickets.
+- Tag workload reports tickets, responses, need-reply, and resolved-or-closed totals.
+- Multi-tag tickets appear in every applicable tag workload row, while tickets without tags group as Untagged.
+- Ticket CSV exports include the same tag workload shown in the React report workspace.
+- React reporting exposes active-tag filters and a dedicated By tag breakdown.
+- Custom fields own definition and ticket-value schemas, entities, repository, service, REST controller, provider, and flow test.
+- Definitions support text, textarea, number, select, checkbox, date, email, and URL types.
+- Definitions support sanitized choices, required and customer-visible flags, optional department scope, lifecycle, and sort order.
+- Ticket values are type-aware, sanitized, and unique per ticket and field.
+- Definitions with historical values cannot be deleted or change type and must be deactivated instead.
+- Database schema version is 1.0.0.
 
 Next Target
 
-Ticket Tags Foundation
+Custom Field Settings UI
 ```
 
 ---

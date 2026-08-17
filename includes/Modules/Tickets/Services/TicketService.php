@@ -22,6 +22,7 @@ use SupportBay\Modules\Tickets\Events\TicketAssignmentChanged;
 use SupportBay\Modules\Tickets\Events\TicketResolved;
 use SupportBay\Modules\Tickets\Data\TicketQuery;
 use SupportBay\Modules\Categories\Services\CategoryService;
+use SupportBay\Modules\Tags\Services\TagService;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Core\Events\EventDispatcher;
 
@@ -30,6 +31,7 @@ final class TicketService {
     private readonly TicketRepository $repository,
     private readonly VerificationService $verifications,
     private readonly CategoryService $categories,
+    private readonly TagService $tags,
     private readonly EventDispatcher $events,
     private readonly TicketSlaPolicyService $sla,
   ) {
@@ -90,12 +92,27 @@ final class TicketService {
   /** @return array{items: \SupportBay\Modules\Tickets\Data\TicketQueueItem[], total: int} */
   public function searchQueue(TicketQuery $query): array {
     $policy = $this->sla->get();
-    return $this->repository->searchQueue(
+    $result = $this->repository->searchQueue(
       $query,
       $policy->enabled(),
       $policy->firstResponseMinutes(),
       current_time('mysql'),
     );
+    $tagMap = $this->tags->forTickets(array_map(
+      static fn($item): int => (int) $item->toArray()['id'],
+      $result['items'],
+    ));
+    $result['items'] = array_map(
+      static function ($item) use ($tagMap): \SupportBay\Modules\Tickets\Data\TicketQueueItem {
+        $data = $item->toArray();
+        return new \SupportBay\Modules\Tickets\Data\TicketQueueItem(
+          $data,
+          array_map(static fn($tag): array => $tag->toArray(), $tagMap[(int) $data['id']] ?? []),
+        );
+      },
+      $result['items'],
+    );
+    return $result;
   }
 
   /**
@@ -304,6 +321,8 @@ final class TicketService {
           TicketBulkAction::ASSIGNMENT => $this->changeAssignment($ticketId, absint($value) ?: null, $actorId),
           TicketBulkAction::DEPARTMENT => $this->changeDepartment($ticketId, absint($value), $actorId),
           TicketBulkAction::CATEGORY => $this->changeCategory($ticketId, absint($value) ?: null, $actorId),
+          TicketBulkAction::TAG_ADD => $this->changeTag($ticketId, absint($value), $actorId, true),
+          TicketBulkAction::TAG_REMOVE => $this->changeTag($ticketId, absint($value), $actorId, false),
           TicketBulkAction::PRIORITY => $this->changePriority($ticketId, TicketPriority::from(sanitize_key((string) $value)), $actorId),
           TicketBulkAction::STATE => $this->changeState($ticketId, TicketState::from(sanitize_key((string) $value)), $actorId),
         };
@@ -313,6 +332,13 @@ final class TicketService {
     }
 
     return ['updated' => $updated, 'failed' => $failed];
+  }
+
+  private function changeTag(int $ticketId, int $tagId, int $actorId, bool $attach): Ticket {
+    if ($tagId === 0) { throw new InvalidArgumentException('Please select a tag.'); }
+    if ($attach) { $this->tags->attach($ticketId, $tagId, $actorId); }
+    else { $this->tags->detach($ticketId, $tagId, $actorId); }
+    return $this->findOrFail($ticketId);
   }
 
   /** @param array<string, mixed> $updates */

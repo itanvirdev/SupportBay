@@ -17,6 +17,8 @@ enum ActivityType: string {
 
   case DEPARTMENT_CHANGED  = 'department_changed';
   case CATEGORY_CHANGED    = 'category_changed';
+  case TAG_ADDED           = 'tag_added';
+  case TAG_REMOVED         = 'tag_removed';
 
   case PURCHASE_VERIFIED   = 'purchase_verified';
 
@@ -57,6 +59,8 @@ enum ActivityType: string {
 
       self::DEPARTMENT_CHANGED  => 'Department Changed',
       self::CATEGORY_CHANGED    => 'Category Changed',
+      self::TAG_ADDED           => 'Tag Added',
+      self::TAG_REMOVED         => 'Tag Removed',
 
       self::PURCHASE_VERIFIED   => 'Purchase Verified',
 

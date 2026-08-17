@@ -50,7 +50,8 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains(implode('', $bootstrap), 'settings')
       && str_contains(implode('', $bootstrap), 'canExportReports')
       && str_contains(implode('', $bootstrap), 'canManageSavedReplies')
-      && str_contains(implode('', $bootstrap), 'canManageCategories'),
+      && str_contains(implode('', $bootstrap), 'canManageCategories')
+      && str_contains(implode('', $bootstrap), 'canManageTags'),
       'Each administrator page receives authenticated API configuration and its active section.'
     );
 
@@ -118,6 +119,9 @@ final class ReactAdminFlowTest extends FlowTest {
     $categoryWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/CategoryWorkspace.tsx'
     );
+    $tagWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/TagWorkspace.tsx'
+    );
 
     Assert::true(
       is_string($reportsWorkspace)
@@ -130,8 +134,11 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($ticketReportWorkspace, 'Daily support activity')
       && str_contains($ticketReportWorkspace, 'By department')
       && str_contains($ticketReportWorkspace, 'By category')
+      && str_contains($ticketReportWorkspace, 'By tag')
       && str_contains($ticketReportWorkspace, 'By agent')
       && str_contains($ticketReportWorkspace, 'category_id')
+      && str_contains($ticketReportWorkspace, "params.set('tag_id'")
+      && str_contains($ticketReportWorkspace, 'All tags')
       && str_contains($ticketReportWorkspace, 'Uncategorized')
       && str_contains($ticketReportWorkspace, 'First-response SLA')
       && str_contains($ticketReportWorkspace, 'response_bands')
@@ -186,19 +193,45 @@ final class ReactAdminFlowTest extends FlowTest {
     );
 
     Assert::true(
+      str_contains($ticketWorkspace, 'tag_id: query.tagId')
+      && str_contains($ticketWorkspace, 'All Tags')
+      && str_contains($ticketWorkspace, 'tag_add:')
+      && str_contains($ticketWorkspace, 'tag_remove:')
+      && is_string($ticketConversation)
+      && str_contains($ticketConversation, "mutate('tag_add'")
+      && str_contains($ticketConversation, "mutate('tag_remove'"),
+      'Staff ticket queue and conversation expose shared tag filtering and mutations.',
+    );
+
+    Assert::true(
       is_string($settingsWorkspace)
       && str_contains($settingsWorkspace, 'Email Notifications')
       && str_contains($settingsWorkspace, 'Delivery Logs')
       && str_contains($settingsWorkspace, 'Saved Replies')
       && str_contains($settingsWorkspace, 'Categories')
+      && str_contains($settingsWorkspace, 'Tags')
       && str_contains($settingsWorkspace, 'Ticket SLA')
       && str_contains($settingsWorkspace, 'Integrations')
       && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace />')
       && str_contains($settingsWorkspace, '<NotificationLogWorkspace />')
       && str_contains($settingsWorkspace, '<SavedReplyWorkspace />')
       && str_contains($settingsWorkspace, '<CategoryWorkspace />')
+      && str_contains($settingsWorkspace, '<TagWorkspace />')
       && str_contains($settingsWorkspace, '<ProviderWorkspace />'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($tagWorkspace)
+      && str_contains($tagWorkspace, "adminGet<Tag[]>('tags')")
+      && str_contains($tagWorkspace, "adminPost<Tag>('tags'")
+      && str_contains($tagWorkspace, 'adminPut<Tag>(`tags/${selected.id}`')
+      && str_contains($tagWorkspace, 'adminDelete(`tags/${selected.id}`')
+      && str_contains($tagWorkspace, 'Create Tag')
+      && str_contains($tagWorkspace, 'Save Changes')
+      && str_contains($tagWorkspace, 'Tags used by tickets cannot be deleted')
+      && str_contains($tagWorkspace, 'Inactive tags remain visible on historical tickets'),
+      'Settings provides capability-gated tag lifecycle management and safe deletion guidance.'
     );
 
     Assert::true(

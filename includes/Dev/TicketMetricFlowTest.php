@@ -22,6 +22,7 @@ use WP_REST_Request;
 use SupportBay\Common\Utilities\CsvExporter;
 use SupportBay\Modules\Tickets\Services\TicketSlaPolicyService;
 use SupportBay\Modules\Categories\Services\CategoryService;
+use SupportBay\Modules\Tags\Services\TagService;
 
 final class TicketMetricFlowTest extends FlowTest {
   protected static function title(): string { return 'Ticket Metric Flow Test'; }
@@ -34,7 +35,8 @@ final class TicketMetricFlowTest extends FlowTest {
     /** @var CsvExporter $csvExporter */
     /** @var TicketSlaPolicyService $sla */
     /** @var CategoryService $categories */
-    [$metrics, $controller, $tickets, $messages, $csvExporter, $sla, $categories] = $services;
+    /** @var TagService $tags */
+    [$metrics, $controller, $tickets, $messages, $csvExporter, $sla, $categories, $tags] = $services;
     $today = current_time('Y-m-d');
     $now = $today . ' 00:00:00';
     $ticketIds = [];
@@ -47,6 +49,8 @@ final class TicketMetricFlowTest extends FlowTest {
       ),
       'department_id' => 1,
     ]);
+    $tag = $tags->create(['name' => 'Metric Tag ' . strtolower(wp_generate_password(8, false, false))]);
+    $secondTag = $tags->create(['name' => 'Escalated ' . strtolower(wp_generate_password(8, false, false))]);
 
     try {
       $sla->update(['enabled' => true, 'first_response_minutes' => [
@@ -93,6 +97,9 @@ final class TicketMetricFlowTest extends FlowTest {
         ]);
         $messageIds[] = $message;
       }
+      $tags->attach($ticketIds[0], $tag->id());
+      $tags->attach($ticketIds[1], $tag->id());
+      $tags->attach($ticketIds[0], $secondTag->id());
 
       $report = $metrics->report(new TicketMetricQuery(
         dateFrom: $today,
@@ -121,7 +128,9 @@ final class TicketMetricFlowTest extends FlowTest {
         && $report['daily'][0]['tickets'] === 3
         && $report['departments'][0]['tickets'] === 3
         && count($report['categories']) === 2
-        && array_sum(array_column($report['categories'], 'tickets')) === 3,
+        && array_sum(array_column($report['categories'], 'tickets')) === 3
+        && count($report['tags']) === 3
+        && array_sum(array_column($report['tags'], 'tickets')) === 4,
         'Ticket report applies filters consistently and groups categorized and uncategorized workload.',
       );
       $categoryReport = $metrics->report(new TicketMetricQuery(
@@ -143,6 +152,18 @@ final class TicketMetricFlowTest extends FlowTest {
         && $uncategorizedReport['categories'][0]['category'] === 'Uncategorized',
         'Ticket reports support exact category and uncategorized filters.',
       );
+      $tagReport = $metrics->report(new TicketMetricQuery(
+        dateFrom: $today,
+        dateTo: $today,
+        tagId: $tag->id(),
+        assignedAgentId: $agentId,
+      ));
+      Assert::true(
+        $tagReport['summary']['tickets'] === 2
+        && count($tagReport['tags']) === 2
+        && array_sum(array_column($tagReport['tags'], 'tickets')) === 3,
+        'Ticket reports filter unique tickets by tag while preserving multi-tag workload membership.',
+      );
       $csv = $metrics->export(new TicketMetricQuery(
         dateFrom: $today,
         dateTo: $today,
@@ -153,7 +174,8 @@ final class TicketMetricFlowTest extends FlowTest {
         && str_contains($csv, 'Ticket performance summary')
         && str_contains($csv, 'Daily activity')
         && str_contains($csv, 'Agent workload')
-        && str_contains($csv, 'Category workload'),
+        && str_contains($csv, 'Category workload')
+        && str_contains($csv, 'Tag workload'),
         'Ticket report exports the filtered summary and breakdowns as UTF-8 CSV.',
       );
 
@@ -170,8 +192,14 @@ final class TicketMetricFlowTest extends FlowTest {
       Assert::true($controller->permissions() === true, 'Authorized administrators can view ticket reports.');
       Assert::true($controller->exportPermissions() === true, 'Administrators can export ticket reports.');
       $request = new WP_REST_Request('GET', '/sbay/v1/reports/tickets');
-      $request->set_query_params(['date_from' => $today, 'date_to' => $today, 'department_id' => 1, 'assigned_agent_id' => $agentId]);
-      Assert::equals(200, rest_do_request($request)->get_status(), 'Protected ticket report endpoint responds successfully.');
+      $request->set_query_params(['date_from' => $today, 'date_to' => $today, 'department_id' => 1, 'tag_id' => $tag->id(), 'assigned_agent_id' => $agentId]);
+      $response = rest_do_request($request);
+      Assert::true(
+        $response->get_status() === 200
+        && $response->get_data()['data']['filters']['tag_id'] === $tag->id()
+        && $response->get_data()['data']['summary']['tickets'] === 2,
+        'Protected ticket report endpoint applies the requested tag filter.'
+      );
       $exportRequest = new WP_REST_Request('GET', '/sbay/v1/reports/tickets/export');
       $exportRequest->set_query_params(['date_from' => $today, 'date_to' => $today, 'assigned_agent_id' => $agentId]);
       $exportData = rest_do_request($exportRequest)->get_data();
@@ -182,7 +210,13 @@ final class TicketMetricFlowTest extends FlowTest {
       );
     } finally {
       foreach ($messageIds as $id) { $messages->delete($id); }
-      foreach ($ticketIds as $id) { $tickets->delete($id); }
+      foreach ($ticketIds as $id) {
+        $tags->detach($id, $tag->id());
+        $tags->detach($id, $secondTag->id());
+        $tickets->delete($id);
+      }
+      $tags->delete($tag->id());
+      $tags->delete($secondTag->id());
       $categories->delete($category->id());
       if ($existingSla === null) { delete_option('sbay_ticket_sla_policy'); }
       else { update_option('sbay_ticket_sla_policy', $existingSla, false); }

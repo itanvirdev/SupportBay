@@ -9,9 +9,10 @@ interface TicketReport {
   daily: Array<TicketMetricRow & { date: string }>;
   departments: Array<TicketMetricRow & { department: string }>;
   categories: Array<TicketMetricRow & { category: string }>;
+  tags: Array<TicketMetricRow & { tag: string }>;
   agents: Array<TicketMetricRow & { agent: string }>;
 }
-interface ReportOptions { departments: Array<{id:number;name:string}>; categories: Array<{id:number;name:string;department_id:number|null}>; agents: Array<{id:number;name:string}>; }
+interface ReportOptions { departments: Array<{id:number;name:string}>; categories: Array<{id:number;name:string;department_id:number|null}>; tags:Array<{id:number;name:string}>; agents: Array<{id:number;name:string}>; }
 
 const isoDate = (date: Date) => {
   const offset = date.getTimezoneOffset();
@@ -25,10 +26,10 @@ export function TicketReportWorkspace() {
   const canExport = getAdminConfig().canExportReports;
   const today = isoDate(new Date());
   const start = new Date(); start.setDate(start.getDate() - 29);
-  const defaults = { dateFrom: isoDate(start), dateTo: today, departmentId: '', categoryId: '', agentId: '', priority: '' };
+  const defaults = { dateFrom: isoDate(start), dateTo: today, departmentId: '', categoryId: '', tagId: '', agentId: '', priority: '' };
   const [filters, setFilters] = useState(defaults);
   const [applied, setApplied] = useState(defaults);
-  const [options, setOptions] = useState<ReportOptions>({ departments: [], categories: [], agents: [] });
+  const [options, setOptions] = useState<ReportOptions>({ departments: [], categories: [], tags: [], agents: [] });
   const [report, setReport] = useState<TicketReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export function TicketReportWorkspace() {
     const params = new URLSearchParams({ date_from: applied.dateFrom, date_to: applied.dateTo });
     if (applied.departmentId) params.set('department_id', applied.departmentId);
     if (applied.categoryId) params.set('category_id', applied.categoryId);
+    if (applied.tagId) params.set('tag_id', applied.tagId);
     if (applied.agentId) params.set('assigned_agent_id', applied.agentId);
     if (applied.priority) params.set('priority', applied.priority);
     return params;
@@ -84,6 +86,7 @@ export function TicketReportWorkspace() {
       <label><span>To</span><input type="date" value={filters.dateTo} min={filters.dateFrom} max={today} onChange={(event) => setFilters({...filters,dateTo:event.target.value})}/></label>
       <label><span>Department</span><select value={filters.departmentId} onChange={(event) => setFilters({...filters,departmentId:event.target.value,categoryId:''})}><option value="">All departments</option>{options.departments.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
       <label><span>Category</span><select value={filters.categoryId} onChange={(event) => setFilters({...filters,categoryId:event.target.value})}><option value="">All categories</option><option value="uncategorized">Uncategorized</option>{categories.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+      <label><span>Tag</span><select value={filters.tagId} onChange={(event) => setFilters({...filters,tagId:event.target.value})}><option value="">All tags</option>{options.tags.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
       <label><span>Agent</span><select value={filters.agentId} onChange={(event) => setFilters({...filters,agentId:event.target.value})}><option value="">All agents</option>{options.agents.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
       <label><span>Priority</span><select value={filters.priority} onChange={(event) => setFilters({...filters,priority:event.target.value})}><option value="">All priorities</option><option value="normal">Normal</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
       <button type="submit" disabled={loading}>Apply report</button>
@@ -102,6 +105,7 @@ export function TicketReportWorkspace() {
       <div className="sbay-report-breakdowns">
         <section><h3>By department</h3><div className="is-header"><span>Department</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.departments.length?report.departments.map((row)=><div key={row.department}><strong>{row.department}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No department data in this range.</p>}</section>
         <section><h3>By category</h3><div className="is-header"><span>Category</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.categories.length?report.categories.map((row)=><div key={row.category}><strong>{row.category}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No category data in this range.</p>}</section>
+        <section><h3>By tag</h3><div className="is-header"><span>Tag</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.tags.length?report.tags.map((row)=><div key={row.tag}><strong>{row.tag}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No tag data in this range.</p>}</section>
         <section><h3>By agent</h3><div className="is-header"><span>Agent</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.agents.length?report.agents.map((row)=><div key={row.agent}><strong>{row.agent}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No agent data in this range.</p>}</section>
       </div>
     </> : null}

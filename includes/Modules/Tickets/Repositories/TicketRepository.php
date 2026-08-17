@@ -19,6 +19,8 @@ use SupportBay\Modules\Messages\Database\MessageSchema;
 use SupportBay\Modules\Customers\Database\CustomerSchema;
 use SupportBay\Modules\Departments\Database\DepartmentSchema;
 use SupportBay\Modules\Categories\Database\CategorySchema;
+use SupportBay\Modules\Tags\Database\TicketTagSchema;
+use SupportBay\Modules\Tags\Database\TagSchema;
 
 final class TicketRepository extends Repository {
 
@@ -214,6 +216,10 @@ final class TicketRepository extends Repository {
     if ($query->departmentId !== null) { $clauses[] = 't.department_id = %d'; $values[] = $query->departmentId; }
     if ($query->uncategorized) { $clauses[] = 't.category_id IS NULL'; }
     elseif ($query->categoryId !== null) { $clauses[] = 't.category_id = %d'; $values[] = $query->categoryId; }
+    if ($query->tagId !== null) {
+      $clauses[] = 'EXISTS (SELECT 1 FROM ' . TicketTagSchema::tableName() . ' tag_filter WHERE tag_filter.ticket_id = t.id AND tag_filter.tag_id = %d)';
+      $values[] = $query->tagId;
+    }
     if ($query->unassigned) { $clauses[] = 't.assigned_agent_id IS NULL'; }
     elseif ($query->assignedAgentId !== null) { $clauses[] = 't.assigned_agent_id = %d'; $values[] = $query->assignedAgentId; }
     if ($query->search) {
@@ -266,6 +272,10 @@ final class TicketRepository extends Repository {
     } elseif ($query->categoryId !== null) {
       $clauses[] = 't.category_id = %d';
       $values[] = $query->categoryId;
+    }
+    if ($query->tagId !== null) {
+      $clauses[] = 'EXISTS (SELECT 1 FROM ' . TicketTagSchema::tableName() . ' metric_tag_filter WHERE metric_tag_filter.ticket_id = t.id AND metric_tag_filter.tag_id = %d)';
+      $values[] = $query->tagId;
     }
     if ($query->assignedAgentId !== null) {
       $clauses[] = 't.assigned_agent_id = %d';
@@ -361,6 +371,15 @@ final class TicketRepository extends Repository {
         $needReply,
         'tickets DESC, group_key ASC',
         'category',
+      ),
+      'tags' => $this->ticketMetricGroups(
+        "COALESCE(metric_tag.name, 'Untagged') AS group_key",
+        $where,
+        $values,
+        $joins . ' LEFT JOIN ' . TicketTagSchema::tableName() . ' metric_tag_link ON metric_tag_link.ticket_id = t.id LEFT JOIN ' . TagSchema::tableName() . ' metric_tag ON metric_tag.id = metric_tag_link.tag_id',
+        $needReply,
+        'tickets DESC, group_key ASC',
+        'tag',
       ),
       'agents' => $this->ticketMetricGroups(
         "COALESCE(au.display_name, 'Unassigned') AS group_key",

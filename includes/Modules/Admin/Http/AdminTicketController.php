@@ -13,6 +13,7 @@ use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Categories\Services\CategoryService;
+use SupportBay\Modules\Tags\Services\TagService;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Services\TicketMergeService;
@@ -32,6 +33,7 @@ final class AdminTicketController {
     private readonly CustomerService $customers,
     private readonly DepartmentService $departments,
     private readonly CategoryService $categories,
+    private readonly TagService $tags,
     private readonly VerificationService $verifications,
     private readonly ActivityService $activities,
     private readonly MessageService $messages,
@@ -170,6 +172,7 @@ final class AdminTicketController {
         $this->attachments->findByTicket($ticket->id()),
         static fn($attachment): bool => $attachment->isActive(),
       )),
+      'tags' => array_map(static fn($tag): array => $tag->toArray(), $this->tags->forTicket($ticket->id())),
       'options' => [
         'departments' => array_map(static fn($item): array => ['id' => $item->id(), 'name' => $item->name()], $this->departments->active()),
         'categories' => array_map(
@@ -180,6 +183,7 @@ final class AdminTicketController {
           ],
           $this->categories->applicable($ticket->departmentId()),
         ),
+        'tags' => array_map(static fn($tag): array => $tag->toArray(), $this->tags->active()),
         'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['role__in' => ['sbay_agent', 'sbay_manager', 'administrator']])),
       ],
     ], 'Ticket context retrieved.');
@@ -193,6 +197,7 @@ final class AdminTicketController {
         'name' => $item->name(),
         'department_id' => $item->departmentId(),
       ], $this->categories->active()),
+      'tags' => array_map(static fn($tag): array => $tag->toArray(), $this->tags->active()),
       'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['role__in' => ['sbay_agent', 'sbay_manager', 'administrator']])),
     ], 'Ticket queue options retrieved.');
   }
@@ -204,6 +209,7 @@ final class AdminTicketController {
     $capability = match ($action) {
       'assignment' => 'sbay_assign_ticket', 'department' => 'sbay_move_ticket_department',
       'category' => CapabilityManager::CHANGE_TICKET_CATEGORY,
+      'tag_add', 'tag_remove' => CapabilityManager::CHANGE_TICKET_TAGS,
       'priority' => 'sbay_change_ticket_priority', 'state' => CapabilityManager::CHANGE_TICKET_STATUS,
       default => '',
     };
@@ -216,6 +222,8 @@ final class AdminTicketController {
         'assignment' => $this->tickets->changeAssignment($id, absint($value) ?: null, get_current_user_id()),
         'department' => $this->tickets->changeDepartment($id, absint($value), get_current_user_id()),
         'category' => $this->tickets->changeCategory($id, absint($value) ?: null, get_current_user_id()),
+        'tag_add' => $this->changeTag($id, absint($value), true),
+        'tag_remove' => $this->changeTag($id, absint($value), false),
         'priority' => $this->tickets->changePriority($id, TicketPriority::from(sanitize_key((string) $value)), get_current_user_id()),
         'state' => $this->tickets->changeState($id, TicketState::from(sanitize_key((string) $value)), get_current_user_id()),
       };
@@ -240,6 +248,7 @@ final class AdminTicketController {
       TicketBulkAction::ASSIGNMENT => 'sbay_assign_ticket',
       TicketBulkAction::DEPARTMENT => 'sbay_move_ticket_department',
       TicketBulkAction::CATEGORY => CapabilityManager::CHANGE_TICKET_CATEGORY,
+      TicketBulkAction::TAG_ADD, TicketBulkAction::TAG_REMOVE => CapabilityManager::CHANGE_TICKET_TAGS,
       TicketBulkAction::PRIORITY => 'sbay_change_ticket_priority',
       TicketBulkAction::STATE => CapabilityManager::CHANGE_TICKET_STATUS,
     };
@@ -261,6 +270,13 @@ final class AdminTicketController {
       'updated' => count($result['updated']),
       'failed' => count($result['failed']),
     ]);
+  }
+
+  private function changeTag(int $ticketId, int $tagId, bool $attach): \SupportBay\Modules\Tickets\Entities\Ticket {
+    if ($attach) { $this->tags->attach($ticketId, $tagId, get_current_user_id()); }
+    else { $this->tags->detach($ticketId, $tagId, get_current_user_id()); }
+    return $this->tickets->find($ticketId)
+      ?? throw new RuntimeException('Ticket was not found.');
   }
 
   public function mergeTicket(WP_REST_Request $request): WP_REST_Response {

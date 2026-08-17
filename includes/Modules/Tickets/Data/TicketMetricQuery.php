@@ -11,6 +11,7 @@ final readonly class TicketMetricQuery {
     public ?int $departmentId = null,
     public ?int $categoryId = null,
     public bool $uncategorized = false,
+    public ?int $tagId = null,
     public ?int $assignedAgentId = null,
     public ?string $priority = null,
   ) {

@@ -59,6 +59,11 @@ wp_sbay_tickets
 | wp_sbay_magic_tokens           | Passwordless login tokens                       |
 | wp_sbay_notification_logs      | Notification delivery logs                      |
 | wp_sbay_ticket_sla_breaches    | Durable ticket SLA breach facts                 |
+| wp_sbay_categories             | Reusable ticket categories                      |
+| wp_sbay_tags                   | Reusable ticket tags                            |
+| wp_sbay_ticket_tags            | Many-to-many ticket and tag assignments         |
+| wp_sbay_custom_fields          | Reusable ticket custom-field definitions        |
+| wp_sbay_ticket_custom_field_values | Normalized per-ticket custom-field values   |
 | wp_sbay_settings               | Internal plugin settings (optional cache layer) |
 
 ---
@@ -141,6 +146,15 @@ Purchase Verification
  │
  ▼
 Provider
+
+Ticket
+ │
+ └──────────────┐
+                ▼
+          Ticket Tags
+                │
+                ▼
+               Tags
 ```
 
 ---

@@ -141,6 +141,7 @@ final class TicketController {
         ? (absint($category) ?: null)
         : null,
       uncategorized: $category === 'uncategorized',
+      tagId: absint($request->get_param('tag_id')) ?: null,
       needsReply: rest_sanitize_boolean($request->get_param('need_reply')),
       slaState: TicketSlaState::tryFrom(sanitize_key((string) $request->get_param('sla_state')))?->value,
       orderBy: sanitize_key((string) $request->get_param('orderby')),
@@ -294,6 +295,7 @@ final class TicketController {
       'agent_id' => ['sanitize_callback' => 'absint'],
       'department_id' => ['sanitize_callback' => 'absint'],
       'category_id' => ['sanitize_callback' => 'sanitize_text_field'],
+      'tag_id' => ['sanitize_callback' => 'absint'],
       'need_reply' => ['default' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
       'orderby' => ['default' => 'updated_at', 'sanitize_callback' => 'sanitize_key'],
       'order' => ['default' => 'desc', 'sanitize_callback' => 'sanitize_key'],

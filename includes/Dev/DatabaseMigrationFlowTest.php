@@ -33,6 +33,11 @@ final class DatabaseMigrationFlowTest extends FlowTest {
     );
 
     foreach (MigrationRegistry::tables() as $schema) {
+      Assert::true(
+        preg_match('/PRIMARY KEY[^\r\n]*(?:UNIQUE KEY|,\s*KEY)/i', $schema::schema()) !== 1,
+        sprintf('%s declares each database key on its own line.', $schema),
+      );
+
       $table = $schema::tableName();
       $installed = $wpdb->get_var($wpdb->prepare(
         'SHOW TABLES LIKE %s',

@@ -17,6 +17,10 @@ use SupportBay\Modules\Verifications\Database\PurchaseVerificationSchema;
 use SupportBay\Modules\Notifications\Database\NotificationLogSchema;
 use SupportBay\Modules\SavedReplies\Database\SavedReplySchema;
 use SupportBay\Modules\Categories\Database\CategorySchema;
+use SupportBay\Modules\Tags\Database\TagSchema;
+use SupportBay\Modules\Tags\Database\TicketTagSchema;
+use SupportBay\Modules\CustomFields\Database\CustomFieldSchema;
+use SupportBay\Modules\CustomFields\Database\TicketCustomFieldValueSchema;
 
 final class MigrationRegistry {
   /**
@@ -39,6 +43,10 @@ final class MigrationRegistry {
       NotificationLogSchema::class,
       SavedReplySchema::class,
       CategorySchema::class,
+      TagSchema::class,
+      TicketTagSchema::class,
+      CustomFieldSchema::class,
+      TicketCustomFieldValueSchema::class,
     ];
   }
 }

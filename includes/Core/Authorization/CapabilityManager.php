@@ -23,6 +23,9 @@ final class CapabilityManager {
   public const MANAGE_SAVED_REPLIES = 'sbay_manage_saved_replies';
   public const MANAGE_CATEGORIES = 'sbay_manage_categories';
   public const CHANGE_TICKET_CATEGORY = 'sbay_change_ticket_category';
+  public const MANAGE_TAGS = 'sbay_manage_tags';
+  public const CHANGE_TICKET_TAGS = 'sbay_change_ticket_tags';
+  public const MANAGE_CUSTOM_FIELDS = 'sbay_manage_custom_fields';
 
   /** Register protected SupportBay roles and capabilities. */
   public static function register(): void {
@@ -37,6 +40,7 @@ final class CapabilityManager {
       'sbay_upload_attachment', self::CHANGE_TICKET_STATUS,
       'sbay_change_ticket_priority', 'sbay_move_ticket_department',
       self::CHANGE_TICKET_CATEGORY,
+      self::CHANGE_TICKET_TAGS,
       'sbay_take_ticket_ownership', self::VIEW_VERIFICATIONS,
       self::USE_SAVED_REPLIES,
     ];
@@ -50,6 +54,8 @@ final class CapabilityManager {
       'sbay_manage_agents', self::MANAGE_CUSTOMERS,
       self::MANAGE_SAVED_REPLIES,
       self::MANAGE_CATEGORIES,
+      self::MANAGE_TAGS,
+      self::MANAGE_CUSTOM_FIELDS,
     ]);
     $administrator = array_values(array_unique(array_merge(
       $customer,

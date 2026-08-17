@@ -73,6 +73,13 @@ final class TicketMetricService {
           $row['category'], $row['tickets'], $row['responses'], $row['need_reply'], $row['closed'],
         ], $report['categories']),
       ],
+      [
+        'name' => 'Tag workload',
+        'headers' => ['Tag', 'Tickets', 'Responses', 'Need reply', 'Resolved or closed'],
+        'rows' => array_map(static fn(array $row): array => [
+          $row['tag'], $row['tickets'], $row['responses'], $row['need_reply'], $row['closed'],
+        ], $report['tags']),
+      ],
     ]);
   }
 
@@ -123,6 +130,7 @@ final class TicketMetricService {
         'department_id' => $query->departmentId,
         'category_id' => $query->categoryId,
         'uncategorized' => $query->uncategorized,
+        'tag_id' => $query->tagId,
         'assigned_agent_id' => $query->assignedAgentId,
         'priority' => $query->priority,
       ],
@@ -140,6 +148,7 @@ final class TicketMetricService {
       'daily' => $filled,
       'departments' => $metrics['departments'],
       'categories' => $metrics['categories'],
+      'tags' => $metrics['tags'],
       'agents' => $metrics['agents'],
     ];
   }

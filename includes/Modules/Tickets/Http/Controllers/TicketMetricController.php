@@ -104,6 +104,7 @@ final class TicketMetricController {
         ? (absint($category) ?: null)
         : null,
       uncategorized: $category === 'uncategorized',
+      tagId: absint($request->get_param('tag_id')) ?: null,
       assignedAgentId: absint($request->get_param('assigned_agent_id')) ?: null,
       priority: sanitize_key((string) $request->get_param('priority')) ?: null,
     );

@@ -132,6 +132,23 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'tag':
+        \SupportBay\Dev\TagFlowTest::run(
+          $container->get(\SupportBay\Modules\Tags\Services\TagService::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Tags\Http\Controllers\TagController::class),
+          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
+        );
+        break;
+
+      case 'custom-field':
+        \SupportBay\Dev\CustomFieldFlowTest::run(
+          $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\CustomFields\Http\Controllers\CustomFieldController::class),
+        );
+        break;
+
       case 'customer':
         \SupportBay\Dev\CustomerFlowTest::run(
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)
@@ -323,6 +340,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Common\Utilities\CsvExporter::class),
           $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
           $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
+          $container->get(\SupportBay\Modules\Tags\Services\TagService::class),
         );
         break;
 

@@ -57,6 +57,12 @@ The administrator ticket-options response includes active categories with their 
 
 Category lifecycle routes require `sbay_manage_categories` for creation, mutation, and deletion. Deleting a category referenced by any ticket returns `409 CATEGORY_IN_USE`; administrators must deactivate it instead, preserving historical classification labels.
 
+## Ticket Tags Foundation
+
+Staff with ticket-view permission may list and inspect global tags through `GET /tags` and `GET /tags/{id}`. Managers with `sbay_manage_tags` may create, update, deactivate, and delete unused records through the matching versioned routes. In-use deletion returns `409 TAG_IN_USE`.
+
+Ticket relationships are normalized through a unique many-to-many junction. Assignment routes, ticket context, queue filtering, bulk actions, activities, and Settings management are deferred to Ticket Tag Workflow Integration.
+
 ---
 
 # Core Principles
@@ -579,12 +585,12 @@ Managers and administrators with `sbay_view_reports` can request ticket
 performance metrics through `GET /sbay/v1/reports/tickets`.
 
 Supported filters are `date_from`, `date_to`, `department_id`, `category_id`,
-`assigned_agent_id`, and `priority`. `category_id=uncategorized` selects tickets
+`tag_id`, `assigned_agent_id`, and `priority`. `category_id=uncategorized` selects tickets
 without classification. The endpoint returns aggregate ticket,
 staff-response, need-reply, resolved, closed, and average first-response values,
 plus daily, department, category, and agent breakdowns. Category groups retain
 historical names for inactive records and label null relationships as
-`Uncategorized`. Date ranges are limited to 367
+`Uncategorized`. Tag workload preserves historical tag names, labels tickets without tags as `Untagged`, and counts a multi-tag ticket in every applicable tag row while summary totals remain unique. Date ranges are limited to 367
 days, and trashed tickets are excluded.
 
 # Report Exports
@@ -624,3 +630,17 @@ batches of 20. A dedicated ticket-owned table atomically records each
 ticket-and-metric pair before the `TicketSlaBreached` domain event is
 dispatched. The initial listener creates a system-authored ticket timeline
 activity. Notification and escalation side effects remain separate listeners.
+
+# Ticket Tag Workflow
+
+Staff ticket lists accept `tag_id` and include safe assigned-tag metadata in each queue row. Active tag choices are returned by `GET /sbay/v1/admin/tickets/options` and ticket context responses include both current and available tags.
+
+`POST /sbay/v1/admin/tickets/{id}/actions` supports `tag_add` and `tag_remove`. The same actions are accepted by `POST /sbay/v1/admin/tickets/bulk-actions` for up to 100 tickets. Ticket mutations require `sbay_change_ticket_tags`, while tag-record administration uses `sbay_manage_tags`; reads continue to use the normal ticket-view capability.
+
+The WordPress administrator bootstrap exposes only the `canManageTags` boolean, never role assumptions. Settings uses it to reveal the React Tags workspace, which consumes the protected tag CRUD routes for search, lifecycle editing, color management, and safe deletion feedback.
+
+# Ticket Custom Fields Foundation
+
+`GET /sbay/v1/custom-fields` and `GET /sbay/v1/custom-fields/{id}` require ticket-view permission. Definition creation, updates, and deletion require `sbay_manage_custom_fields` through the matching `POST`, `PUT`, and `DELETE` routes.
+
+Definitions support text, textarea, number, select, checkbox, date, email, and URL types; optional department scope; required and customer-visible flags; status; choices; and sort order. Ticket values are normalized through the service layer and stored separately. Value-facing REST routes and React forms are deferred to workflow milestones.
