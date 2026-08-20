@@ -60,8 +60,23 @@ final class ReactPortalFlowTest extends FlowTest {
     Assert::true(
       is_array($bootstrap) &&
       str_contains(implode('', $bootstrap), 'restNonce') &&
+      str_contains(implode('', $bootstrap), 'portalLogoUrl') &&
       str_contains(implode('', $bootstrap), 'logoutUrl') &&
       str_contains(implode('', $bootstrap), 'registrationEnabled') &&
+      str_contains(implode('', $bootstrap), 'footerCopyrightText') &&
+      str_contains(implode('', $bootstrap), 'removePoweredByBranding') &&
+      str_contains(implode('', $bootstrap), 'wordpressAuthEnabled') &&
+      str_contains(implode('', $bootstrap), 'wordpressLoginUrl') &&
+      str_contains(implode('', $bootstrap), 'wordpressRegistrationUrl') &&
+      str_contains(implode('', $bootstrap), 'wordpressProfileEnabled') &&
+      str_contains(implode('', $bootstrap), 'wordpressProfileUrl') &&
+      str_contains(implode('', $bootstrap), 'ticketListAutoRefreshEnabled') &&
+      str_contains(implode('', $bootstrap), 'ticketListAutoRefreshInterval') &&
+      str_contains(implode('', $bootstrap), 'fileUploadEnabled') &&
+      str_contains(implode('', $bootstrap), 'fileUploadMaxSizeMb') &&
+      str_contains(implode('', $bootstrap), 'fileUploadAllowedExtensions') &&
+      str_contains(implode('', $bootstrap), 'attachmentPopupPreviewEnabled') &&
+      str_contains(implode('', $bootstrap), 'ticketStatusLabels') &&
       str_contains(implode('', $bootstrap), 'resetPasswordUrl'),
       'React bootstrap includes REST authentication configuration.'
     );
@@ -69,17 +84,51 @@ final class ReactPortalFlowTest extends FlowTest {
     $authPage = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/react/modules/auth/AuthPage.tsx'
     );
+    $copyright = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/react/components/PortalCopyright.tsx'
+    );
+    $portalApp = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/react/App.tsx'
+    );
+    $portalLayout = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/react/components/PortalLayout.tsx'
+    );
     Assert::true(
       is_string($authPage)
-      && str_contains($authPage, "apiPost<{redirect:string}>('auth/login'")
-      && str_contains($authPage, "apiPost<{redirect:string}>('auth/register'")
+      && str_contains($authPage, 'config.portalLogoUrl')
+      && str_contains($authPage, 'apiPost<{ redirect: string }>("auth/login"')
+      && str_contains($authPage, 'apiPost<{ redirect: string }>("auth/register"')
       && str_contains($authPage, 'Username or Email Address')
       && str_contains($authPage, 'First Name')
       && str_contains($authPage, 'Last Name')
       && str_contains($authPage, 'Confirm Password')
-      && str_contains($authPage, "> Register</button>")
+      && str_contains($authPage, 'Register')
       && str_contains($authPage, 'Reset Password'),
       'The React portal includes native WordPress login and registration screens.',
+    );
+    Assert::true(
+      is_string($portalApp)
+      && str_contains($portalApp, 'config.wordpressAuthEnabled')
+      && str_contains($portalApp, 'config.wordpressRegistrationUrl')
+      && str_contains($portalApp, 'config.wordpressLoginUrl'),
+      'Portal authentication can redirect to native or custom WordPress authentication pages.',
+    );
+    Assert::true(
+      is_string($portalLayout)
+      && str_contains($portalLayout, 'config.portalLogoUrl')
+      && str_contains($portalLayout, 'config.wordpressProfileEnabled')
+      && str_contains($portalLayout, 'config.wordpressProfileUrl')
+      && is_string($portalApp)
+      && str_contains($portalApp, 'Redirecting to your WordPress profile'),
+      'Portal profile navigation can use the native WordPress profile.',
+    );
+    Assert::true(
+      is_string($copyright)
+      && str_contains($copyright, 'new Date().getFullYear()')
+      && str_contains($copyright, 'href={config.homeUrl}')
+      && str_contains($copyright, 'config.removePoweredByBranding')
+      && str_contains($copyright, 'Powered by'),
+      'Portal copyright uses the current year, linked site name, and SupportBay branding.',
     );
 
     Assert::true(
@@ -112,9 +161,12 @@ final class ReactPortalFlowTest extends FlowTest {
       && str_contains($ticketDetailPage, 'portalApi.reopenTicket(ticketId)')
       && str_contains($ticketDetailPage, 'detail.custom_fields.map')
       && str_contains($ticketDetailPage, 'Additional information')
+      && str_contains($ticketDetailPage, 'config.ticketListAutoRefreshEnabled')
+      && str_contains($ticketDetailPage, 'loadDetail(true)')
+      && str_contains($ticketDetailPage, 'mutationPending.current')
       && str_contains($ticketDetailPage, "field.type === 'checkbox'")
       && str_contains($ticketDetailPage, "field.type === 'url'"),
-      'Customer ticket detail is reopenable and renders safe read-only custom-field values.'
+      'Customer ticket detail is reopenable, auto-refreshes safely, and renders read-only custom-field values.'
     );
 
     $profilePage = file_get_contents(

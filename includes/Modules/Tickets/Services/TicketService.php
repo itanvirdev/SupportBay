@@ -24,6 +24,7 @@ use SupportBay\Modules\Tickets\Data\TicketQuery;
 use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\Tags\Services\TagService;
 use SupportBay\Modules\Verifications\Services\VerificationService;
+use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 use SupportBay\Core\Events\EventDispatcher;
 
 final class TicketService {
@@ -34,6 +35,8 @@ final class TicketService {
     private readonly TagService $tags,
     private readonly EventDispatcher $events,
     private readonly TicketSlaPolicyService $sla,
+    private readonly TicketTrackIdService $trackIds,
+    private readonly GeneralSettingsService $settings,
   ) {
   }
 
@@ -43,7 +46,7 @@ final class TicketService {
   public function create(array $data): int {
     $this->validateVerification($data);
 
-    $data['track_id'] = $data['track_id'] ?? $this->generateTrackId();
+    $data['track_id'] = $data['track_id'] ?? $this->trackIds->next();
 
     $data['status']          = $data['status'] ?? TicketStatus::default()->value;
     $data['state']           = $data['state'] ?? TicketState::default()->value;
@@ -97,6 +100,7 @@ final class TicketService {
       $policy->enabled(),
       $policy->firstResponseMinutes(),
       current_time('mysql'),
+      $this->settings->smartNeedReplySortingEnabled(),
     );
     $tagMap = $this->tags->forTickets(array_map(
       static fn($item): int => (int) $item->toArray()['id'],
@@ -411,10 +415,4 @@ final class TicketService {
     return $ticket;
   }
 
-  /**
-   * Generate trackId
-   */
-  private function generateTrackId(): string {
-    return strtoupper(bin2hex(random_bytes(4)));
-  }
 }

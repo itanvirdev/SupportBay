@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace SupportBay\Modules\Admin;
 
 use SupportBay\Core\Authorization\CapabilityManager;
+use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 
 final class AdminPage {
   private const TICKETS_SLUG = 'supportbay';
   private const REPORTS_SLUG = 'supportbay-reports';
   private const SETTINGS_SLUG = 'supportbay-settings';
+
+  public function __construct(private readonly GeneralSettingsService $settings) {}
 
   /** @var array<string, string> */
   private const SECTIONS_BY_HOOK = [
@@ -68,6 +71,7 @@ final class AdminPage {
     }
 
     wp_enqueue_editor();
+    wp_enqueue_media();
 
     $scriptPath = SBAY_PLUGIN_PATH . 'assets/dist/supportbay-admin.js';
     $stylePath = SBAY_PLUGIN_PATH . 'assets/dist/supportbay-admin.css';
@@ -82,6 +86,7 @@ final class AdminPage {
       [],
       (string) filemtime($stylePath),
     );
+    wp_add_inline_style('supportbay-admin',$this->settings->supportBayCss());
     wp_enqueue_script(
       'supportbay-admin',
       SBAY_PLUGIN_URL . 'assets/dist/supportbay-admin.js',
@@ -106,6 +111,10 @@ final class AdminPage {
         'canManageCustomFields' => current_user_can(CapabilityManager::MANAGE_CUSTOM_FIELDS),
         'canManageRoles' => current_user_can(CapabilityManager::MANAGE_ROLES),
         'canManageDepartments' => current_user_can(CapabilityManager::MANAGE_DEPARTMENTS),
+        'ticketListAutoRefreshEnabled' => $this->settings->ticketListAutoRefreshEnabled(),
+        'ticketListAutoRefreshInterval' => $this->settings->ticketListAutoRefreshInterval(),
+        'needReplyFilterEnabled' => $this->settings->smartNeedReplySortingEnabled(),
+        'ticketStatusLabels' => $this->settings->ticketStatusLabels(),
         'section'   => $section,
       ]) . ';',
       'before',
@@ -128,7 +137,7 @@ final class AdminPage {
     echo '<div class="wrap sbay-admin-page">';
     echo '<header class="sbay-admin-php-header">';
     echo '<a class="sbay-admin-php-brand" href="' . esc_url(admin_url('admin.php?page=' . self::TICKETS_SLUG)) . '">';
-    echo '<span aria-hidden="true">S</span><strong>SupportBay</strong></a>';
+    echo '<img src="' . esc_url($this->settings->dashboardLogoUrl()) . '" alt="' . esc_attr__('SupportBay', 'supportbay') . '"></a>';
     echo '<nav aria-label="' . esc_attr__('SupportBay administration', 'supportbay') . '">';
 
     foreach ($links as $linkSection => [$label, $slug]) {

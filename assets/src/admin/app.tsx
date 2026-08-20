@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useState } from 'react';
+import { StrictMode, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { adminDownload, adminGet, adminPost, adminUpload } from './api';
 import { getAdminConfig } from './config';
@@ -63,6 +63,8 @@ function AdminApp() {
   const [detail, setDetail] = useState<{ ticket: ConversationTicket; messages: ConversationMessage[]; context: TicketContext } | null>(null);
   const [customerProfile, setCustomerProfile] = useState<CustomerProfileData | null>(null);
   const [queueOptions, setQueueOptions] = useState<TicketContext['options']>();
+  const detailRequestId=useRef(0);
+  const detailMutationPending=useRef(false);
 
   useEffect(() => {
     if (config.section !== 'tickets' || ticketId || customerId || customerDirectory || verificationDirectory) return;
@@ -71,15 +73,28 @@ function AdminApp() {
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Ticket filters could not be loaded.'));
   }, [config.section, ticketId, customerId, customerDirectory, verificationDirectory]);
 
-  useEffect(() => {
-    if (!ticketId) return;
-    Promise.all([
+  const loadTicketDetail=useCallback(async(background=false)=>{
+    if(!ticketId)return;
+    const currentRequest=++detailRequestId.current;
+    try{
+      const [ticket,messages,context]=await Promise.all([
       adminGet<ConversationTicket>(`tickets/${ticketId}`),
       adminGet<ConversationMessage[]>(`tickets/${ticketId}/messages`),
       adminGet<TicketContext>(`admin/tickets/${ticketId}/context`),
-    ]).then(([ticket, messages, context]) => setDetail({ ticket: ticket.data, messages: messages.data, context: context.data }))
-      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Ticket could not be loaded.'));
-  }, [ticketId]);
+      ]);
+      if(currentRequest===detailRequestId.current)setDetail({ticket:ticket.data,messages:messages.data,context:context.data});
+    }catch(reason){if(!background&&currentRequest===detailRequestId.current)setError(reason instanceof Error?reason.message:'Ticket could not be loaded.');}
+  },[ticketId]);
+
+  useEffect(()=>{void loadTicketDetail(false);},[loadTicketDetail]);
+  useEffect(()=>{
+    if(!ticketId||!config.ticketListAutoRefreshEnabled)return;
+    const interval=window.setInterval(()=>{
+      if(document.hidden||detailMutationPending.current)return;
+      void loadTicketDetail(true);
+    },Math.max(5,config.ticketListAutoRefreshInterval)*1000);
+    return()=>window.clearInterval(interval);
+  },[config.ticketListAutoRefreshEnabled,config.ticketListAutoRefreshInterval,loadTicketDetail,ticketId]);
 
   const loadCustomerProfile = async (id: number) => {
     const response = await adminGet<CustomerProfileData>(`admin/customers/${id}/profile`);
@@ -94,21 +109,24 @@ function AdminApp() {
 
   const addMessage = async (content: string, type: 'reply' | 'internal_note', files: File[], close: boolean) => {
     if (!ticketId || !detail) return;
-    const response = await adminPost<ConversationMessage>(`tickets/${ticketId}/messages`, { content, type });
-    const uploaded = await Promise.all(files.map((file) => adminUpload<TicketAttachment>(
-      `admin/tickets/${ticketId}/messages/${response.data.id}/attachments`, file,
-    )));
-    const nextDetail = {
-      ...detail,
-      messages: [...detail.messages, response.data],
-      context: {...detail.context, attachments: [...detail.context.attachments, ...uploaded.map(item=>item.data)]},
-    };
-    if (close) {
-      const closed = await adminPost<ConversationTicket>(`tickets/${ticketId}/close`, {});
-      setDetail({...nextDetail, ticket: closed.data});
-    } else {
-      setDetail(nextDetail);
-    }
+    detailMutationPending.current=true;detailRequestId.current++;
+    try{
+      const response = await adminPost<ConversationMessage>(`tickets/${ticketId}/messages`, { content, type });
+      const uploaded = await Promise.all(files.map((file) => adminUpload<TicketAttachment>(
+        `admin/tickets/${ticketId}/messages/${response.data.id}/attachments`, file,
+      )));
+      const nextDetail = {
+        ...detail,
+        messages: [...detail.messages, response.data],
+        context: {...detail.context, attachments: [...detail.context.attachments, ...uploaded.map(item=>item.data)]},
+      };
+      if (close) {
+        const closed = await adminPost<ConversationTicket>(`tickets/${ticketId}/close`, {});
+        setDetail({...nextDetail, ticket: closed.data});
+      } else {
+        setDetail(nextDetail);
+      }
+    }finally{detailMutationPending.current=false;}
   };
 
   const downloadAttachment = async (file: TicketAttachment) => {
@@ -120,15 +138,21 @@ function AdminApp() {
 
   const mutateTicket = async (action: string, value: unknown) => {
     if (!ticketId || !detail) return;
-    const ticket = await adminPost<ConversationTicket>(`admin/tickets/${ticketId}/actions`, { action, value });
-    const context = await adminGet<TicketContext>(`admin/tickets/${ticketId}/context`);
-    setDetail({...detail, ticket: ticket.data, context: context.data});
+    detailMutationPending.current=true;detailRequestId.current++;
+    try{
+      const ticket = await adminPost<ConversationTicket>(`admin/tickets/${ticketId}/actions`, { action, value });
+      const context = await adminGet<TicketContext>(`admin/tickets/${ticketId}/context`);
+      setDetail({...detail, ticket: ticket.data, context: context.data});
+    }finally{detailMutationPending.current=false;}
   };
 
   const transition = async (action: 'resolve' | 'close' | 'reopen') => {
     if (!ticketId || !detail) return;
-    const response = await adminPost<ConversationTicket>(`tickets/${ticketId}/${action}`, {});
-    setDetail({ ...detail, ticket: response.data });
+    detailMutationPending.current=true;detailRequestId.current++;
+    try{
+      const response = await adminPost<ConversationTicket>(`tickets/${ticketId}/${action}`, {});
+      setDetail({ ...detail, ticket: response.data });
+    }finally{detailMutationPending.current=false;}
   };
 
   const bulkTickets = async (ticketIds: number[], action: string, value: unknown) => {
@@ -174,7 +198,7 @@ function AdminApp() {
       {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
 
       {config.section === 'tickets' ? (
-        verificationDirectory ? <VerificationDirectory back={()=>{window.location.href=config.adminUrl;}}/> : customerDirectory ? <CustomerDirectory back={()=>{window.location.href=config.adminUrl;}} openCustomer={id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_customers=1`;}}/> : customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:returnCustomers?`${config.adminUrl}&customers=1`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : <Preloader label="Loading customer profile…" />) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} split={splitTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
+        verificationDirectory ? <VerificationDirectory back={()=>{window.location.href=config.adminUrl;}}/> : customerDirectory ? <CustomerDirectory back={()=>{window.location.href=config.adminUrl;}} openCustomer={id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_customers=1`;}}/> : customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:returnCustomers?`${config.adminUrl}&customers=1`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : <Preloader label="Loading customer profile…" />) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} split={splitTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
           mode="staff"
           load={loadTickets}
           options={queueOptions}
@@ -182,6 +206,9 @@ function AdminApp() {
           openCustomers={config.canManageCustomers?()=>{window.location.href=`${config.adminUrl}&customers=1`;}:undefined}
           openVerifications={config.canViewVerifications?()=>{window.location.href=`${config.adminUrl}&verifications=1`;}:undefined}
           openTicket={(ticket) => { window.location.href = `${config.adminUrl}&ticket=${ticket.id}`; }}
+          autoRefresh={{enabled:config.ticketListAutoRefreshEnabled,interval:config.ticketListAutoRefreshInterval}}
+          needReplyFilterEnabled={config.needReplyFilterEnabled}
+          statusLabels={config.ticketStatusLabels}
         />
       ) : null}
 

@@ -75,6 +75,14 @@ function App() {
   const authRoute = /^\/support\/(?:login|register)\/?$/.test(canonicalPath);
 
   if (!config.authenticated) {
+    if (config.wordpressAuthEnabled) {
+      const wordpressAuthUrl = authMode === 'register'
+        ? config.wordpressRegistrationUrl
+        : config.wordpressLoginUrl;
+      window.location.replace(wordpressAuthUrl);
+      return <PortalState loading message={`Redirecting to WordPress ${authMode}…`} />;
+    }
+
     if (!authRoute) {
       const redirect = encodeURIComponent(`${pathname}${window.location.search}`);
       window.history.replaceState({}, '', `${portalPath}/login/?redirect=${redirect}`);
@@ -85,6 +93,11 @@ function App() {
   if (authRoute) {
     window.history.replaceState({}, '', `${portalPath}/`);
     setTimeout(()=>setPathname(`${portalPath}/`),0);
+  }
+
+  if (config.wordpressProfileEnabled && /^\/support\/profile\/?$/.test(canonicalPath)) {
+    window.location.replace(config.wordpressProfileUrl);
+    return <PortalState loading message="Redirecting to your WordPress profile…" />;
   }
 
   if (failed) {

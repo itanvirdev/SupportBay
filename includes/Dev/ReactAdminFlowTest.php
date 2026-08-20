@@ -54,7 +54,10 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains(implode('', $bootstrap), 'canManageTags')
       && str_contains(implode('', $bootstrap), 'canManageCustomFields')
       && str_contains(implode('', $bootstrap), 'canManageRoles')
-      && str_contains(implode('', $bootstrap), 'canManageDepartments'),
+      && str_contains(implode('', $bootstrap), 'canManageDepartments')
+      && str_contains(implode('', $bootstrap), 'ticketListAutoRefreshEnabled')
+      && str_contains(implode('', $bootstrap), 'ticketListAutoRefreshInterval')
+      && str_contains(implode('', $bootstrap), 'needReplyFilterEnabled'),
       'Each administrator page receives authenticated API configuration and its active section.'
     );
 
@@ -89,11 +92,17 @@ final class ReactAdminFlowTest extends FlowTest {
     $settingsWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/SettingsWorkspace.tsx'
     );
+    $adminApp = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/app.tsx'
+    );
     $departmentWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/DepartmentWorkspace.tsx'
     );
     $generalWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/GeneralWorkspace.tsx'
+    );
+    $securityWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/SecurityWorkspace.tsx'
     );
     $templateWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/NotificationTemplateWorkspace.tsx'
@@ -206,6 +215,14 @@ final class ReactAdminFlowTest extends FlowTest {
     );
 
     Assert::true(
+      is_string($adminApp)
+      && str_contains($adminApp, 'loadTicketDetail(true)')
+      && str_contains($adminApp, 'detailMutationPending.current')
+      && str_contains($adminApp, 'config.ticketListAutoRefreshInterval'),
+      'Agent ticket details silently refresh messages and metadata without replacing composer state.',
+    );
+
+    Assert::true(
       str_contains($ticketConversation, 'context.custom_fields.map')
       && str_contains($ticketConversation, "mutate('custom_field'")
       && str_contains($ticketConversation, 'field.type===\'select\'')
@@ -272,8 +289,22 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, '<RoleWorkspace/>')
       && str_contains($settingsWorkspace, '<DepartmentWorkspace/>')
       && str_contains($settingsWorkspace, '<GeneralWorkspace')
+      && str_contains($settingsWorkspace, '<SecurityWorkspace')
       && str_contains($settingsWorkspace, '<ProviderWorkspace/>'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($securityWorkspace)
+      && str_contains($securityWorkspace, 'reCAPTCHA (v3)')
+      && str_contains($securityWorkspace, 'recaptcha_v3_secret_configured')
+      && str_contains($securityWorkspace, 'Show in Login Form')
+      && str_contains($securityWorkspace, 'Show in Ticket Form (If not logged in)')
+      && str_contains($securityWorkspace, 'Show in Registration Form')
+      && str_contains($securityWorkspace, 'Hide reCAPTCHA Badge.')
+      && str_contains($securityWorkspace, 'Save Changes')
+      && str_contains($securityWorkspace, 'Discard'),
+      'Security settings exposes a secret-safe reCAPTCHA v3 configuration tab.',
     );
 
     Assert::true(
@@ -288,8 +319,60 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($generalWorkspace, 'Support Portal Page')
       && str_contains($generalWorkspace, 'shortcode on other pages')
       && str_contains($generalWorkspace, '[supportbay]')
+      && str_contains($generalWorkspace, 'Footer Copyright Text')
+      && str_contains($generalWorkspace, 'remove_powered_by_branding')
+      && str_contains($generalWorkspace, 'Enable WordPress login &amp; registration.')
+      && str_contains($generalWorkspace, 'wordpress_login_url')
+      && str_contains($generalWorkspace, 'wordpress_registration_url')
+      && str_contains($generalWorkspace, 'Enable WordPress profile link.')
+      && str_contains($generalWorkspace, 'Enable Sequential Ticket Track ID.')
+      && str_contains($generalWorkspace, 'sequential_track_id_prefix')
+      && str_contains($generalWorkspace, 'sequential_track_id_length')
+      && str_contains($generalWorkspace, 'Enable ticket list auto-refresh.')
+      && str_contains($generalWorkspace, 'Minimum value is 5 seconds.')
+      && str_contains($generalWorkspace, 'ticket_list_auto_refresh_interval')
+      && str_contains($generalWorkspace, 'Enable smart sorting for need reply filter.')
+      && str_contains($generalWorkspace, 'smart_need_reply_sorting_enabled')
+      && str_contains($generalWorkspace, 'Dashboard Logo')
+      && str_contains($generalWorkspace, 'Portal Logo')
+      && str_contains($generalWorkspace, 'dashboard_logo_attachment_id')
+      && str_contains($generalWorkspace, 'portal_logo_attachment_id')
+      && str_contains($generalWorkspace, "wp?.media")
+      && str_contains($generalWorkspace, 'Click to enable file upload.')
+      && str_contains($generalWorkspace, 'Max File Size')
+      && str_contains($generalWorkspace, 'Allowed File Types')
+      && str_contains($generalWorkspace, 'Medical Images')
+      && str_contains($generalWorkspace, 'attachment_popup_preview_enabled')
+      && str_contains($generalWorkspace, 'Rename Ticket Status Labels')
+      && str_contains($generalWorkspace, 'Color Palette')
+      && str_contains($generalWorkspace, 'style_palettes')
+      && str_contains($generalWorkspace, 'Custom CSS')
+      && str_contains($generalWorkspace, 'custom_css')
+      && str_contains($generalWorkspace, 'ticket_status_labels')
+      && str_contains($generalWorkspace, 'Save Changes')
+      && str_contains($generalWorkspace, 'Discard')
+      && ! str_contains($generalWorkspace, 'Save authentication links')
       && str_contains($generalWorkspace, 'Turn OFF to strictly follow'),
       'General settings exposes the documented SupportBay registration override.',
+    );
+
+    Assert::true(
+      str_contains($ticketWorkspace, 'window.setInterval')
+      && str_contains($ticketWorkspace, 'document.hidden')
+      && str_contains($ticketWorkspace, 'selected.length>0')
+      && str_contains($ticketWorkspace, 'reload(true)'),
+      'Shared ticket lists auto-refresh silently without interrupting hidden tabs or active selections.',
+    );
+
+    Assert::true(
+      str_contains($ticketWorkspace, 'toggleNeedReply')
+      && str_contains($ticketWorkspace, "current.orderby === 'need_reply'")
+      && str_contains($ticketWorkspace, 'sbay-ticket-need-reply-toggle')
+      && str_contains($ticketWorkspace, 'role="switch"')
+      && str_contains($ticketWorkspace, 'needReplyFilterEnabled')
+      && str_contains($ticketWorkspace, 'ticket.needs_reply?')
+      && ! str_contains($ticketWorkspace, '>Need Reply First</option>'),
+      'Need Reply smart sorting cannot remain selected after its filter is disabled.',
     );
 
     Assert::true(

@@ -26,6 +26,7 @@ final class TicketSplitService {
     private readonly AttachmentRepository $attachments,
     private readonly TransactionManager $transactions,
     private readonly EventDispatcher $events,
+    private readonly TicketTrackIdService $trackIds,
   ) {
   }
 
@@ -56,7 +57,7 @@ final class TicketSplitService {
     $newTicketId = $this->transactions->run(function () use ($source, $selectedIds, $subject, $actorId): int {
       $sourceData = $source->toArray();
       $newTicketId = $this->tickets->create([
-        'track_id' => strtoupper(bin2hex(random_bytes(4))),
+        'track_id' => $this->trackIds->next(),
         'customer_id' => $sourceData['customer_id'],
         'created_by_id' => $actorId,
         'created_by_type' => AuthorType::AGENT->value,

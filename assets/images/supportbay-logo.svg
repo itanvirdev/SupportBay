@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72" role="img" aria-labelledby="title">
+  <title id="title">SupportBay</title>
+  <rect width="64" height="64" x="4" y="4" rx="18" fill="#216e52"/>
+  <path fill="#dff369" d="M24 19h24a9 9 0 0 1 0 18H32a5 5 0 0 0 0 10h24v8H32a13 13 0 0 1 0-26h16a1 1 0 0 0 0-2H24z"/>
+  <text x="84" y="48" fill="#172923" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700">SupportBay</text>
+</svg>

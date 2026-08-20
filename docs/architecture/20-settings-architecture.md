@@ -1,5 +1,9 @@
 # SupportBay – Settings Architecture
 
+## Security: reCAPTCHA v3
+
+The React Security workspace includes a reCAPTCHA v3 tab with enable state, site key, encrypted secret key, login/guest-ticket/registration display controls, badge visibility, and Save Changes/Discard. REST responses never return the secret; they expose only whether it is configured. Blank secret submissions preserve the encrypted stored value, and reCAPTCHA cannot be enabled without both keys.
+
 ---
 
 # Purpose
@@ -446,5 +450,12 @@ No global pollution.
 ✓ Extensible via filters/hooks
 
 ✓ Central SettingsService layer
+
+✓ General Style settings provide predefined palettes and sanitized custom CSS
+
+The selected palette is exposed through SupportBay CSS custom properties on both
+the WordPress administration workspace and customer portal. Custom CSS is loaded
+only with SupportBay assets, is limited to 20,000 characters, and strips HTML,
+imports, script protocols, and CSS expressions before storage and output.
 
 ---

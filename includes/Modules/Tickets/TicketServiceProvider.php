@@ -30,6 +30,7 @@ use SupportBay\Modules\Activities\Listeners\LogTicketSlaBreachedActivity;
 use SupportBay\Modules\Tickets\Repositories\TicketSlaBreachRepository;
 use SupportBay\Modules\Tickets\Services\TicketSlaBreachService;
 use SupportBay\Modules\Tickets\Services\TicketSlaBreachWorker;
+use SupportBay\Modules\Tickets\Services\TicketTrackIdService;
 
 final class TicketServiceProvider extends ServiceProvider {
 
@@ -69,6 +70,7 @@ final class TicketServiceProvider extends ServiceProvider {
     $container->singleton(TicketSlaPolicyService::class);
     $container->singleton(TicketSlaBreachService::class);
     $container->singleton(TicketSlaBreachWorker::class);
+    $container->singleton(TicketTrackIdService::class);
 
     $container->singleton(TicketController::class);
     $container->singleton(TicketMetricController::class);

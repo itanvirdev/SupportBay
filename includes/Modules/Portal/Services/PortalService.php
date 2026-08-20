@@ -501,7 +501,7 @@ final class PortalService {
       'ticket_id'        => $ticket->id(),
       'uploaded_by_id'   => $customer->userId(),
       'uploaded_by_type' => AuthorType::CUSTOMER->value,
-    ]);
+    ],true);
   }
 
   /**

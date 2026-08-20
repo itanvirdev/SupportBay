@@ -104,6 +104,7 @@ final class PortalPage {
       [],
       (string) filemtime($stylePath),
     );
+    wp_add_inline_style('supportbay-customer',$this->settings->supportBayCss());
 
     wp_enqueue_script(
       'supportbay-customer',
@@ -122,7 +123,22 @@ final class PortalPage {
         'portalUrl' => esc_url_raw($portalUrl),
         'logoutUrl' => esc_url_raw(wp_logout_url($portalUrl)),
         'siteName'  => sanitize_text_field(get_bloginfo('name')),
+        'portalLogoUrl' => esc_url_raw($this->settings->portalLogoUrl()),
         'homeUrl' => esc_url_raw(home_url('/')),
+        'footerCopyrightText' => $this->settings->footerCopyrightText(),
+        'removePoweredByBranding' => $this->settings->removePoweredByBranding(),
+        'wordpressAuthEnabled' => $this->settings->wordpressAuthEnabled(),
+        'wordpressLoginUrl' => esc_url_raw($this->settings->wordpressLoginUrl($portalUrl)),
+        'wordpressRegistrationUrl' => esc_url_raw($this->settings->wordpressRegistrationUrl()),
+        'wordpressProfileEnabled' => $this->settings->wordpressProfileEnabled(),
+        'wordpressProfileUrl' => esc_url_raw(admin_url('profile.php')),
+        'ticketListAutoRefreshEnabled' => $this->settings->ticketListAutoRefreshEnabled(),
+        'ticketListAutoRefreshInterval' => $this->settings->ticketListAutoRefreshInterval(),
+        'fileUploadEnabled' => $this->settings->fileUploadEnabled(),
+        'fileUploadMaxSizeMb' => $this->settings->fileUploadMaxSizeMb(),
+        'fileUploadAllowedExtensions' => $this->settings->allowedFileExtensions(),
+        'attachmentPopupPreviewEnabled' => $this->settings->attachmentPopupPreviewEnabled(),
+        'ticketStatusLabels' => $this->settings->ticketStatusLabels(),
         'resetPasswordUrl' => esc_url_raw(wp_lostpassword_url(trailingslashit($portalUrl) . 'login/')),
         'registrationEnabled' => $this->settings->registrationEnabled(),
         'authenticated' => is_user_logged_in(),

@@ -34,7 +34,7 @@ final class TicketSchema {
 
     return "CREATE TABLE " . self::tableName() . " (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-      track_id CHAR(9) NOT NULL,
+      track_id VARCHAR(64) NOT NULL,
       customer_id BIGINT UNSIGNED NOT NULL,
       created_by_id BIGINT UNSIGNED NULL,
       created_by_type VARCHAR(20) NOT NULL DEFAULT '{$authorType}',

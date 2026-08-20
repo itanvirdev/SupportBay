@@ -13,6 +13,10 @@ export interface AdminConfig {
   canManageCustomFields: boolean;
   canManageRoles: boolean;
   canManageDepartments: boolean;
+  ticketListAutoRefreshEnabled: boolean;
+  ticketListAutoRefreshInterval: number;
+  needReplyFilterEnabled: boolean;
+  ticketStatusLabels: Record<string,string>;
   section: 'tickets' | 'reports' | 'settings';
 }
 

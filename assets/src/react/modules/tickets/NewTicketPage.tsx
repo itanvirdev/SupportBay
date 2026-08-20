@@ -3,12 +3,14 @@ import { portalApi } from '../../api/portal';
 import type { PortalCategory, PortalCustomField, PortalDepartment, PortalPurchaseProvider } from '../../api/types';
 import { FilePicker } from '../../components/FilePicker';
 import { Preloader } from '../../../shared/components/Preloader';
+import { getConfig } from '../../core/config';
 
 interface NewTicketPageProps {
   navigate: (path: string) => void;
 }
 
 export function NewTicketPage({ navigate }: NewTicketPageProps) {
+  const config=getConfig();
   const [departments, setDepartments] = useState<PortalDepartment[]>([]);
   const [providers, setProviders] = useState<PortalPurchaseProvider[]>([]);
   const [categories, setCategories] = useState<PortalCategory[]>([]);
@@ -172,7 +174,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
               </label>
             );
           })}
-          <FilePicker files={files} onChange={setFiles} disabled={submitting} />
+          {config.fileUploadEnabled?<FilePicker files={files} onChange={setFiles} disabled={submitting} maxSizeMb={config.fileUploadMaxSizeMb} allowedExtensions={config.fileUploadAllowedExtensions}/>:null}
           <label>
             <span>Purchase provider</span>
             <select value={provider} onChange={(event) => setProvider(event.target.value)} required>

@@ -190,6 +190,7 @@ final class TicketRepository extends Repository {
     bool $slaEnabled = false,
     array $slaTargets = [],
     ?string $now = null,
+    bool $smartNeedReplySorting = true,
   ): array {
     $ticketTable = $this->table();
     $messageTable = MessageSchema::tableName();
@@ -252,10 +253,14 @@ final class TicketRepository extends Repository {
     $order = strtoupper($query->direction) === 'ASC' ? 'ASC' : 'DESC';
     $orderBy = match ($query->orderBy) {
       'created_at' => 't.created_at', 'priority' => "CASE t.priority WHEN 'urgent' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END",
-      'need_reply' => $needExpression,
+      'need_reply' => $query->needsReply ? $needExpression : 'COALESCE(t.last_reply_at,t.updated_at,t.created_at)',
       'sla_due' => "CASE WHEN ({$slaState}) = 'breached' THEN 0 WHEN ({$slaState}) = 'due_soon' THEN 1 WHEN ({$slaState}) = 'on_track' THEN 2 ELSE 3 END, TIMESTAMPADD(MINUTE, {$slaTarget}, t.created_at)",
       default => 'COALESCE(t.last_reply_at,t.updated_at,t.created_at)',
     };
+    if ($query->needsReply && $smartNeedReplySorting) {
+      $orderBy = 'COALESCE(lm.created_at,t.last_reply_at,t.updated_at,t.created_at)';
+      $order = 'ASC';
+    }
     $sql = "SELECT t.*, COALESCE(replies.reply_count,0) reply_count, {$needExpression} needs_reply, au.display_name agent_name, cu.display_name customer_name, c.avatar_url customer_avatar_url, d.name department_name, tc.name category_name,
       {$slaState} sla_state, {$slaTarget} sla_target_minutes,
       TIMESTAMPADD(MINUTE, {$slaTarget}, t.created_at) sla_due_at,

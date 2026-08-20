@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { portalApi } from '../../api/portal';
 import type { PortalAttachment, PortalTicketDetail } from '../../api/types';
 import { formatDate, formatDateTime } from '../../core/date';
 import { Preloader } from '../../../shared/components/Preloader';
 import { FilePicker } from '../../components/FilePicker';
+import { getConfig } from '../../core/config';
 
 interface TicketDetailPageProps {
   ticketId: number;
@@ -11,6 +12,7 @@ interface TicketDetailPageProps {
 }
 
 export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) {
+  const config=getConfig();
   const [detail, setDetail] = useState<PortalTicketDetail | null>(null);
   const [missing, setMissing] = useState(false);
   const [reply, setReply] = useState('');
@@ -21,10 +23,29 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [preview,setPreview]=useState<{url:string;name:string;mime:string}|null>(null);
+  const requestId=useRef(0);
+  const mutationPending=useRef(false);
 
-  useEffect(() => {
-    portalApi.ticket(ticketId).then(setDetail).catch(() => setMissing(true));
-  }, [ticketId]);
+  const loadDetail=useCallback(async(background=false)=>{
+    const currentRequest=++requestId.current;
+    try{
+      const response=await portalApi.ticket(ticketId);
+      if(currentRequest===requestId.current){setDetail(response);setMissing(false);}
+    }catch{
+      if(!background&&currentRequest===requestId.current)setMissing(true);
+    }
+  },[ticketId]);
+
+  useEffect(()=>{void loadDetail(false);},[loadDetail]);
+  useEffect(()=>{
+    if(!config.ticketListAutoRefreshEnabled)return;
+    const interval=window.setInterval(()=>{
+      if(document.hidden||mutationPending.current||submitting||transitioning)return;
+      void loadDetail(true);
+    },Math.max(5,config.ticketListAutoRefreshInterval)*1000);
+    return()=>window.clearInterval(interval);
+  },[config.ticketListAutoRefreshEnabled,config.ticketListAutoRefreshInterval,loadDetail,submitting,transitioning]);
 
   if (missing) {
     return <p className="sbay-empty">This ticket could not be found.</p>;
@@ -40,6 +61,8 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
     event.preventDefault();
     setSubmitting(true);
     setError(null);
+    requestId.current++;
+    mutationPending.current=true;
 
     try {
       const message = await portalApi.reply(ticketId, reply);
@@ -55,6 +78,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Reply could not be added.');
     } finally {
+      mutationPending.current=false;
       setSubmitting(false);
     }
   };
@@ -73,6 +97,8 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
 
     setTransitioning(true);
     setTransitionError(null);
+    requestId.current++;
+    mutationPending.current=true;
 
     try {
       const ticket = reopening
@@ -86,6 +112,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
           : 'Ticket status could not be changed.',
       );
     } finally {
+      mutationPending.current=false;
       setTransitioning(false);
     }
   };
@@ -97,6 +124,10 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
     try {
       const blob = await portalApi.downloadAttachment(attachment.id);
       const url = URL.createObjectURL(blob);
+      if(config.attachmentPopupPreviewEnabled&&attachment.is_previewable&&(attachment.mime_type.startsWith('image/')||attachment.mime_type==='application/pdf')){
+        setPreview({url,name:attachment.original_name,mime:attachment.mime_type});
+        return;
+      }
       const link = document.createElement('a');
       link.href = url;
       link.download = attachment.original_name;
@@ -126,7 +157,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
         </div>
         <div className="sbay-ticket-actions">
           <span className={`sbay-badge sbay-badge--${detail.ticket.status}`}>
-            {detail.ticket.status}
+            {config.ticketStatusLabels[detail.ticket.status]??detail.ticket.status}
           </span>
           <button
             className={['resolved', 'closed'].includes(detail.ticket.status) ? 'sbay-primary-button' : 'sbay-secondary-button'}
@@ -170,7 +201,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
                         disabled={downloadingId === attachment.id}
                         onClick={() => downloadAttachment(attachment)}
                       >
-                        {downloadingId === attachment.id ? 'Downloading…' : 'Download'}
+                        {downloadingId === attachment.id ? 'Loading…' : config.attachmentPopupPreviewEnabled&&attachment.is_previewable?'View':'Download'}
                       </button>
                     </li>
                   ))}
@@ -179,6 +210,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
             </article>
           ))}
           {downloadError ? <p className="sbay-form-error" role="alert">{downloadError}</p> : null}
+          {preview?<div className="sbay-attachment-preview" role="dialog" aria-modal="true" aria-label={preview.name}><header><strong>{preview.name}</strong><button type="button" aria-label="Close preview" onClick={()=>{URL.revokeObjectURL(preview.url);setPreview(null);}}>×</button></header>{preview.mime==='application/pdf'?<iframe src={preview.url} title={preview.name}/>:<img src={preview.url} alt={preview.name}/>}</div>:null}
           {canReply ? (
             <form className="sbay-reply-form" onSubmit={submitReply}>
               <label htmlFor="sbay-ticket-reply">Add a reply</label>
@@ -189,7 +221,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
                 rows={5}
                 required
               />
-              <FilePicker files={files} onChange={setFiles} disabled={submitting} />
+              {config.fileUploadEnabled?<FilePicker files={files} onChange={setFiles} disabled={submitting} maxSizeMb={config.fileUploadMaxSizeMb} allowedExtensions={config.fileUploadAllowedExtensions}/>:null}
               {error ? <p className="sbay-form-error" role="alert">{error}</p> : null}
               <button className="sbay-primary-button" type="submit" disabled={submitting}>
                 {submitting ? 'Sending…' : 'Send reply'}
@@ -203,7 +235,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
         <aside className="sbay-ticket-aside">
           <h2>Ticket details</h2>
           <dl>
-            <div><dt>Status</dt><dd>{detail.ticket.status}</dd></div>
+            <div><dt>Status</dt><dd>{config.ticketStatusLabels[detail.ticket.status]??detail.ticket.status}</dd></div>
             <div><dt>Priority</dt><dd>{detail.ticket.priority}</dd></div>
             <div><dt>Source</dt><dd>{detail.ticket.source}</dd></div>
           </dl>

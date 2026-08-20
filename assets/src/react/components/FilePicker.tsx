@@ -2,15 +2,18 @@ interface FilePickerProps {
   files: File[];
   onChange: (files: File[]) => void;
   disabled?: boolean;
+  maxSizeMb?:number;
+  allowedExtensions?:string[];
 }
 
-const accept = '.jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip';
+const defaultExtensions=['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','txt','csv','zip'];
 
-export function FilePicker({ files, onChange, disabled }: FilePickerProps) {
+export function FilePicker({ files, onChange, disabled, maxSizeMb=20, allowedExtensions=defaultExtensions }: FilePickerProps) {
+  const accept=allowedExtensions.map(extension=>`.${extension}`).join(',');
   return (
     <div className="sbay-file-picker">
       <label>
-        <span>Attachments <small>Optional · up to 5 files, 10 MB each</small></span>
+        <span>Attachments <small>Optional · up to 5 files, {maxSizeMb} MB each</small></span>
         <input
           type="file"
           accept={accept}

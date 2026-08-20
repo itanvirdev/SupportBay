@@ -45,14 +45,15 @@ export function PortalLayout({
             navigate('/support/');
           }}
         >
-          <span className="sbay-brand__mark">S</span>
-          <span>SupportBay</span>
+          <img src={config.portalLogoUrl} alt={config.siteName}/>
         </a>
         <nav aria-label="Customer portal">
           {link('overview', '/support/', 'Overview')}
           {link('tickets', '/support/tickets/', 'Tickets')}
           {link('purchases', '/support/purchases/', 'Purchases')}
-          {link('profile', '/support/profile/', 'Profile')}
+          {config.wordpressProfileEnabled
+            ? <a href={config.wordpressProfileUrl}>Profile</a>
+            : link('profile', '/support/profile/', 'Profile')}
         </nav>
         <div className="sbay-sidebar__help">
           <span>Need a hand?</span>

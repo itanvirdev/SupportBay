@@ -14,10 +14,9 @@ use SupportBay\Modules\Attachments\Enums\StorageDisk;
 use SupportBay\Modules\Attachments\Events\AttachmentUploaded;
 use SupportBay\Modules\Attachments\Repositories\AttachmentRepository;
 use SupportBay\Core\Events\EventDispatcher;
+use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 
 final class AttachmentService {
-  private const MAX_FILE_SIZE = 10485760;
-
   /** @var array<string, string> */
   private const ALLOWED_TYPES = [
     'jpg|jpeg|jpe' => 'image/jpeg',
@@ -32,11 +31,15 @@ final class AttachmentService {
     'txt'          => 'text/plain',
     'csv'          => 'text/csv',
     'zip'          => 'application/zip',
+    'mp4'=>'video/mp4','webm'=>'video/webm','mov'=>'video/quicktime','avi'=>'video/x-msvideo','ogv'=>'video/ogg',
+    'mp3'=>'audio/mpeg','wav'=>'audio/wav','aac'=>'audio/aac','ogg'=>'audio/ogg','flac'=>'audio/flac','m4a'=>'audio/mp4','wma'=>'audio/x-ms-wma',
+    'json'=>'application/json','stl'=>'model/stl','dcm'=>'application/dicom',
   ];
 
   public function __construct(
     private readonly AttachmentRepository $attachments,
     private readonly EventDispatcher $events,
+    private readonly GeneralSettingsService $settings,
   ) {
   }
 
@@ -66,14 +69,15 @@ final class AttachmentService {
   public function storeUploadedFile(
     array $file,
     array $data,
+    bool $enforceCustomerPolicy = false,
   ): Attachment {
-    $this->validateUploadedFile($file);
+    $this->validateUploadedFile($file,$enforceCustomerPolicy);
 
     $originalName = sanitize_file_name((string) $file['name']);
     $checkedType = wp_check_filetype_and_ext(
       (string) $file['tmp_name'],
       $originalName,
-      self::ALLOWED_TYPES,
+      $this->allowedTypes($enforceCustomerPolicy),
     );
 
     if (empty($checkedType['ext']) || empty($checkedType['type'])) {
@@ -272,7 +276,7 @@ final class AttachmentService {
    *
    * @param array<string, mixed> $file
    */
-  private function validateUploadedFile(array $file): void {
+  private function validateUploadedFile(array $file, bool $enforceCustomerPolicy): void {
     if (
       ! isset($file['name'], $file['tmp_name'], $file['size'], $file['error']) ||
       (int) $file['error'] !== UPLOAD_ERR_OK ||
@@ -281,11 +285,25 @@ final class AttachmentService {
       throw new InvalidArgumentException('A valid uploaded file is required.');
     }
 
-    if ((int) $file['size'] <= 0 || (int) $file['size'] > self::MAX_FILE_SIZE) {
+    if ($enforceCustomerPolicy&&!$this->settings->fileUploadEnabled()) {
+      throw new InvalidArgumentException('Customer file uploads are disabled.');
+    }
+    $maxBytes=($enforceCustomerPolicy?$this->settings->fileUploadMaxSizeMb():20)*1048576;
+    if ((int) $file['size'] <= 0 || (int) $file['size'] > $maxBytes) {
       throw new InvalidArgumentException(
-        'Each attachment must be smaller than 10 MB.'
+        'Each attachment must be no larger than '.($maxBytes/1048576).' MB.'
       );
     }
+  }
+
+  /** @return array<string, string> */
+  private function allowedTypes(bool $enforceCustomerPolicy): array {
+    if (!$enforceCustomerPolicy) { return self::ALLOWED_TYPES; }
+    $allowed=array_flip($this->settings->allowedFileExtensions());
+    return array_filter(self::ALLOWED_TYPES,static function(string $mime,string $extensions)use($allowed):bool{
+      foreach(explode('|',$extensions) as $extension){if(isset($allowed[$extension]))return true;}
+      return false;
+    },ARRAY_FILTER_USE_BOTH);
   }
 
   /**

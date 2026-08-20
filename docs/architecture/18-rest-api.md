@@ -145,6 +145,8 @@ The React customer portal exposes `/support/login/` and `/support/register/` whi
 
 Main settings also include an absolute registration-form disable flag, a guest-ticket creation policy flag, and the client default role. Administrators choose the default from roles currently registered in WordPress; the backend validates that the role still exists and falls back to Subscriber if it is removed. Subscriber is the recommended customer default. The registration disable flag takes precedence over both the SupportBay override and WordPress registration.
 
+Custom ticket track IDs are optional. When enabled, the Tickets module retains its random uppercase hexadecimal identifier and formats it with the administrator-defined prefix and a 6–32 character random length. Ticket creation and ticket splitting share the same collision-checked generator. Random 8-character IDs remain the default, existing IDs are preserved, and `track_id` uses `VARCHAR(64)` to accommodate configured formats.
+
 Activation creates or reuses a published WordPress page named Support, inserts `[supportbay]`, and saves that page as the initial Support Portal Page; there is no synthetic hard-coded portal URL. Administrators may select another published page. The selected page always renders the isolated SupportBay portal document. Shortcode mode is an independent option that enables `[supportbay]` on other WordPress pages through their active theme. Each entry point derives its portal URL, authentication redirects, client navigation, and virtual child-route rewrites from its own page permalink.
 
 The selected portal page is marked through WordPress's native `display_post_states` filter as `SupportBay`. WordPress combines it with existing states using its standard comma-separated presentation, for example `Front Page, SupportBay`.
@@ -702,6 +704,30 @@ The controller delegates each selected ticket to `CustomFieldService::setValue()
 The first public reply from an agent or manager assigns an unassigned ticket to that responder. Customer replies and internal notes never claim ownership, and an existing assignee is never replaced by this automation.
 
 Agents, managers, and administrators may assign, unassign, or transfer an individual ticket from its detail action endpoint. Assignment targets must be existing WordPress users with SupportBay ticket-view permission. Bulk assignment remains restricted to managers and administrators through `sbay_reassign_ticket`. Every actual ownership change continues through `TicketService::changeAssignment()`, preserving activity and assignment/reassignment notification behavior.
+
+# Ticket Queue Refresh and Need Reply Sorting
+
+Ticket-list and ticket-detail auto-refresh is enabled by default at a 60-second interval. Administrators can disable it or select an interval from 5 to 3,600 seconds in General settings. Background refresh pauses for hidden tabs and active mutations so it does not interrupt selections, submissions, or unsaved editor content.
+
+Need Reply smart sorting is enabled by default. The setting exposes the Need Reply switch in the staff queue; when active, the service asks the repository to prioritize the ticket whose latest unanswered customer or guest reply has waited longest. Disabling the setting removes the switch from the staff workspace and preserves the queue's explicitly selected ordering.
+
+# Dashboard and Portal Logos
+
+General settings provides a dedicated Logo tab with independent Dashboard and Portal logo attachment IDs. Selection and upload use WordPress's native media library; the settings service accepts only valid image attachments. Removing a selection restores the bundled `assets/images/supportbay-logo.svg` fallback without deleting the WordPress media item.
+
+The Dashboard logo renders in the PHP-owned SupportBay administration header. The Portal logo is exposed through the safe portal bootstrap and renders in both the authenticated customer navigation and customer authentication screens. Logo changes use the tab-level Save Changes and Discard workflow.
+
+# Customer File Policy
+
+The General File tab controls whether customers may attach files, the per-file limit from 1–100 MB, allowed extension groups, and photo/PDF popup previews. Photos are the only default selected group. The portal bootstrap uses this policy to render the picker, its `accept` list, and size guidance.
+
+The server remains authoritative. Customer uploads pass the enabled flag, configured byte limit, and normalized extension allowlist through `AttachmentService`; agent uploads retain the broader internal attachment policy. Supported groups cover photos, videos, audio, office documents, text, CSV, PDF, ZIP, JSON, STL models, and DICOM files. When preview is enabled, customer-visible images and PDFs open in a protected blob-backed portal viewer after the existing ownership-authorized download request.
+
+# Ticket Status Display Labels
+
+The General Status tab allows administrators to rename the display labels for Open, Pending, Answered, Resolved, and Closed. Empty or missing labels fall back to their defaults. Canonical enum and database values remain unchanged, preserving API filters, transitions, events, metrics, and integrations.
+
+The sanitized label map is exposed through both authenticated UI bootstraps and is used by staff queues, the Closed filter, staff ticket details, customer ticket details, and the portal dashboard. Settings use the same tab-level Save Changes and Discard workflow.
 
 # User Role Settings
 

@@ -56,5 +56,8 @@ final class DatabaseMigrationFlowTest extends FlowTest {
       $wpdb->last_error,
       'Repeated database installation completes without SQL errors.'
     );
+
+    $trackColumn=$wpdb->get_row('SHOW COLUMNS FROM '.\SupportBay\Modules\Tickets\Database\TicketSchema::tableName()." LIKE 'track_id'",ARRAY_A);
+    Assert::true(is_array($trackColumn)&&strtolower((string)($trackColumn['Type']??''))==='varchar(64)','Ticket track IDs support configurable sequential prefixes and lengths.');
   }
 }

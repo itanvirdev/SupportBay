@@ -6,6 +6,7 @@ import type {
   PortalVerification,
 } from '../../api/types';
 import { formatDate } from '../../core/date';
+import { getConfig } from '../../core/config';
 
 interface DashboardPageProps {
   overview: PortalOverview;
@@ -13,6 +14,7 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ overview, navigate }: DashboardPageProps) {
+  const config=getConfig();
   const [tickets, setTickets] = useState<PortalTicket[]>([]);
   const [verifications, setVerifications] = useState<PortalVerification[]>([]);
 
@@ -82,7 +84,7 @@ export function DashboardPage({ overview, navigate }: DashboardPageProps) {
                   onClick={() => navigate(`/support/tickets/${ticket.id}/`)}
                 >
                   <span className={`sbay-status sbay-status--${ticket.status}`}>
-                    {ticket.status}
+                    {config.ticketStatusLabels[ticket.status]??ticket.status}
                   </span>
                   <span>
                     <strong>{ticket.subject}</strong>
