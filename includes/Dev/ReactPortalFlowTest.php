@@ -77,7 +77,8 @@ final class ReactPortalFlowTest extends FlowTest {
       str_contains(implode('', $bootstrap), 'fileUploadAllowedExtensions') &&
       str_contains(implode('', $bootstrap), 'attachmentPopupPreviewEnabled') &&
       str_contains(implode('', $bootstrap), 'ticketStatusLabels') &&
-      str_contains(implode('', $bootstrap), 'resetPasswordUrl'),
+      str_contains(implode('', $bootstrap), 'resetPasswordUrl') &&
+      str_contains(implode('', $bootstrap), 'guestTicketCreationEnabled'),
       'React bootstrap includes REST authentication configuration.'
     );
 
@@ -105,6 +106,19 @@ final class ReactPortalFlowTest extends FlowTest {
       && str_contains($authPage, 'Register')
       && str_contains($authPage, 'Reset Password'),
       'The React portal includes native WordPress login and registration screens.',
+    );
+    Assert::true(
+      is_string($authPage)
+      && str_contains($authPage, 'Create Ticket as a Guest')
+      && str_contains($authPage, 'portal/guest-tickets')
+      && str_contains($authPage, 'Subject')
+      && str_contains($authPage, 'Description')
+      && str_contains($authPage, 'RichTextEditor')
+      && str_contains($authPage, 'FilePicker')
+      && str_contains($authPage, 'Returning user? Login')
+      && is_string($portalApp)
+      && str_contains($portalApp, 'guestTicketCreationEnabled'),
+      'The public portal includes the setting-aware guest presales ticket flow.',
     );
     Assert::true(
       is_string($portalApp)

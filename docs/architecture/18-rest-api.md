@@ -141,6 +141,18 @@ All API responses follow a strict structure:
 
 The React customer portal exposes `/support/login/` and `/support/register/` while WordPress remains the session and password authority. `POST /auth/login`, `POST /auth/register`, `GET /auth/session`, and `POST /auth/logout` use REST nonces and same-origin cookies. Registration follows the native `users_can_register` setting, creates a WordPress Subscriber, and links it to a SupportBay customer record. The legacy `sbay_customer` role is migrated to Subscriber and removed.
 
+The public `/support/guest-ticket/` screen posts presales enquiries to
+`POST /portal/guest-tickets`. The nonce-protected endpoint is controlled by the
+guest-ticket setting and accepts first name, last name, email, subject, and
+description, and one optional attachment. The attachment follows the General →
+File size and extension policy. The flow assigns the default Support department and deliberately
+does not accept a provider, category, purchase reference, verification, custom
+fields, or attachments. Existing WordPress users are reused by email and their
+submitted name is refreshed for non-staff accounts; otherwise a new Subscriber account and customer
+record are created. Ticket-created notifications use the standard WordPress
+mail-backed notification pipeline, and new accounts receive WordPress's native
+password setup email.
+
 `GET` and `PUT /settings/general` manage the protected SupportBay registration override. When enabled, customer registration is permitted even if WordPress `users_can_register` is disabled. When off, the effective state strictly follows WordPress. Both the portal bootstrap and registration endpoint resolve the same service-owned effective value.
 
 Main settings also include an absolute registration-form disable flag, a guest-ticket creation policy flag, and the client default role. Administrators choose the default from roles currently registered in WordPress; the backend validates that the role still exists and falls back to Subscriber if it is removed. Subscriber is the recommended customer default. The registration disable flag takes precedence over both the SupportBay override and WordPress registration.

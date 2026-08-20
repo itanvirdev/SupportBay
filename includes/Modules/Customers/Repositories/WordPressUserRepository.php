@@ -51,6 +51,55 @@ final class WordPressUserRepository {
   }
 
   /**
+   * Create a guest WordPress identity or refresh its submitted name.
+   *
+   * @return array{user_id: int, created: bool}
+   */
+  public function ensureGuest(
+    string $email,
+    string $firstName,
+    string $lastName,
+    string $role,
+  ): array {
+    $existingId = $this->findByEmail($email);
+    $displayName = trim($firstName . ' ' . $lastName);
+
+    if ($existingId !== null) {
+      // Public submissions must never mutate staff or administrator profiles.
+      if (! user_can($existingId, 'edit_posts')) {
+        $result = wp_update_user([
+          'ID' => $existingId,
+          'first_name' => $firstName,
+          'last_name' => $lastName,
+          'display_name' => $displayName,
+        ]);
+
+        if ($result instanceof WP_Error) {
+          throw new RuntimeException($result->get_error_message());
+        }
+      }
+
+      return ['user_id' => $existingId, 'created' => false];
+    }
+
+    $userId = wp_insert_user([
+      'user_login' => $this->uniqueLogin((string) strstr($email, '@', true)),
+      'user_email' => $email,
+      'user_pass' => wp_generate_password(32, true, true),
+      'first_name' => $firstName,
+      'last_name' => $lastName,
+      'display_name' => $displayName,
+      'role' => $role,
+    ]);
+
+    if ($userId instanceof WP_Error) {
+      throw new RuntimeException($userId->get_error_message());
+    }
+
+    return ['user_id' => (int) $userId, 'created' => true];
+  }
+
+  /**
    * Create a WordPress customer account.
    */
   public function create(OAuthIdentityData $identity): int {

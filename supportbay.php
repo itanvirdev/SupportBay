@@ -165,6 +165,16 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'guest-ticket':
+        \SupportBay\Dev\GuestTicketFlowTest::run(
+          $container->get(\SupportBay\Modules\Portal\Services\PortalService::class),
+          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
+          $container->get(\SupportBay\Modules\Settings\Services\GeneralSettingsService::class),
+        );
+        break;
+
       case 'general-settings':
         \SupportBay\Dev\GeneralSettingsFlowTest::run(
           $container->get(\SupportBay\Modules\Settings\Services\GeneralSettingsService::class),
@@ -448,6 +458,14 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
 
         \SupportBay\Dev\CustomerFlowTest::run(
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)
+        );
+
+        \SupportBay\Dev\GuestTicketFlowTest::run(
+          $container->get(\SupportBay\Modules\Portal\Services\PortalService::class),
+          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
+          $container->get(\SupportBay\Modules\Settings\Services\GeneralSettingsService::class),
         );
 
         \SupportBay\Dev\AuthFlowTest::run(

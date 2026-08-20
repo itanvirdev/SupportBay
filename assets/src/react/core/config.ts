@@ -22,6 +22,7 @@ export interface SupportBayConfig {
   ticketStatusLabels: Record<string,string>;
   resetPasswordUrl: string;
   registrationEnabled: boolean;
+  guestTicketCreationEnabled: boolean;
   authenticated: boolean;
 }
 

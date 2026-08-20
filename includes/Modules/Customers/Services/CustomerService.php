@@ -66,6 +66,34 @@ final class CustomerService {
     return $customer ?? throw new RuntimeException('The customer account could not be created.');
   }
 
+  /**
+   * Resolve the customer identity submitted with a guest ticket.
+   *
+   * @return array{customer: Customer, account_created: bool}
+   */
+  public function ensureGuestCustomer(
+    string $email,
+    string $firstName,
+    string $lastName,
+    string $role,
+  ): array {
+    $identity = $this->users->ensureGuest(
+      $email,
+      $firstName,
+      $lastName,
+      $role,
+    );
+    $customer = $this->ensureWordPressCustomer(
+      $identity['user_id'],
+      CustomerSource::GUEST,
+    );
+
+    return [
+      'customer' => $customer,
+      'account_created' => $identity['created'],
+    ];
+  }
+
   /** @return Customer[] */
   public function all(): array {
     return $this->customers->all();

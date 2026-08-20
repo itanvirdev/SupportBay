@@ -22,6 +22,7 @@ use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use SupportBay\Modules\Verifications\Entities\Verification;
+use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -32,6 +33,7 @@ final class PortalController {
 
   public function __construct(
     private readonly PortalService $portal,
+    private readonly GeneralSettingsService $settings,
   ) {
   }
 
@@ -67,6 +69,12 @@ final class PortalController {
       'methods'             => 'GET',
       'callback'            => [$this, 'tickets'],
       'permission_callback' => [$this, 'permissions'],
+    ]);
+
+    register_rest_route(self::NAMESPACE, '/portal/guest-tickets', [
+      'methods' => 'POST',
+      'callback' => [$this, 'createGuestTicket'],
+      'permission_callback' => [$this, 'guestPermissions'],
     ]);
 
     register_rest_route(self::NAMESPACE, '/portal/tickets', [
@@ -238,6 +246,29 @@ final class PortalController {
   }
 
   /**
+   * Allow nonce-protected guest ticket requests when enabled.
+   */
+  public function guestPermissions(WP_REST_Request $request): bool|WP_Error {
+    if (! $this->settings->guestTicketCreationEnabled()) {
+      return new WP_Error(
+        'sbay_guest_tickets_disabled',
+        'Guest ticket creation is currently disabled.',
+        ['status' => 403],
+      );
+    }
+
+    $nonce = sanitize_text_field((string) $request->get_header('X-WP-Nonce'));
+
+    return wp_verify_nonce($nonce, 'wp_rest')
+      ? true
+      : new WP_Error(
+        'sbay_invalid_nonce',
+        'The guest ticket request has expired.',
+        ['status' => 403],
+      );
+  }
+
+  /**
    * Return portal bootstrap data.
    */
   public function overview(
@@ -387,6 +418,46 @@ final class PortalController {
       [],
       201,
     );
+  }
+
+  /**
+   * Create a public presales ticket and resolve its customer by email.
+   */
+  public function createGuestTicket(
+    WP_REST_Request $request,
+  ): WP_REST_Response {
+    try {
+      $result = $this->portal->createGuestTicket([
+        'first_name' => sanitize_text_field(
+          wp_unslash((string) $request->get_param('first_name'))
+        ),
+        'last_name' => sanitize_text_field(
+          wp_unslash((string) $request->get_param('last_name'))
+        ),
+        'email' => sanitize_email(
+          wp_unslash((string) $request->get_param('email'))
+        ),
+        'subject' => sanitize_text_field(
+          wp_unslash((string) $request->get_param('subject'))
+        ),
+        'content' => RichTextSanitizer::sanitize(
+          wp_unslash((string) $request->get_param('content'))
+        ),
+        'file' => $request->get_file_params()['file'] ?? null,
+      ]);
+    } catch (InvalidArgumentException|RuntimeException $exception) {
+      return RestResponse::error(
+        $exception->getMessage(),
+        'GUEST_TICKET_CREATION_FAILED',
+        [],
+        422,
+      );
+    }
+
+    return RestResponse::success([
+      'ticket' => $this->ticketData($result['ticket']),
+      'account_created' => $result['account_created'],
+    ], 'Guest ticket created.', [], 201);
   }
 
   /**

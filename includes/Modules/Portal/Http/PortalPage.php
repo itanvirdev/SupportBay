@@ -10,7 +10,7 @@ use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 final class PortalPage {
   private const QUERY_VAR = 'sbay_customer_portal';
   private const SHORTCODE_PAGE_QUERY_VAR = 'sbay_shortcode_portal_page';
-  private const REWRITE_VERSION = '3';
+  private const REWRITE_VERSION = '4';
 
   public function __construct(
     private readonly MagicLoginService $magicLogin,
@@ -141,6 +141,7 @@ final class PortalPage {
         'ticketStatusLabels' => $this->settings->ticketStatusLabels(),
         'resetPasswordUrl' => esc_url_raw(wp_lostpassword_url(trailingslashit($portalUrl) . 'login/')),
         'registrationEnabled' => $this->settings->registrationEnabled(),
+        'guestTicketCreationEnabled' => $this->settings->guestTicketCreationEnabled(),
         'authenticated' => is_user_logged_in(),
       ]) . ';',
       'before',
@@ -281,7 +282,7 @@ final class PortalPage {
 
     $path = trim((string) wp_parse_url($url, PHP_URL_PATH), '/');
     $pattern = $path === ''
-      ? '^(?:login|register|tickets(?:/.*)?|purchases|profile)/?$'
+      ? '^(?:login|register|guest-ticket|tickets(?:/.*)?|purchases|profile)/?$'
       : '^' . preg_quote($path, '#') . '(?:/.*)?$';
     $target = 'index.php?' . self::QUERY_VAR . '=1';
 

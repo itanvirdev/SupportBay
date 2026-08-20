@@ -28,6 +28,13 @@ export async function apiPost<T>(
   });
 }
 
+export async function apiPostForm<T>(
+  path: string,
+  body: FormData,
+): Promise<T> {
+  return apiRequest<T>(path, { method: 'POST', body });
+}
+
 export async function apiUpload<T>(path: string, file: File): Promise<T> {
   const body = new FormData();
   body.append('file', file);

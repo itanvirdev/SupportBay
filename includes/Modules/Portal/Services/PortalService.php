@@ -34,6 +34,7 @@ use SupportBay\Modules\Auth\Http\OAuthRoutes;
 use SupportBay\Core\Integrations\Contracts\OAuthProvider;
 use SupportBay\Modules\Providers\Services\ProviderConfiguration;
 use SupportBay\Modules\Providers\Services\ProviderService;
+use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 
 final class PortalService {
   public function __construct(
@@ -50,6 +51,7 @@ final class PortalService {
     private readonly ProviderService $providers,
     private readonly ProviderConfiguration $providerConfiguration,
     private readonly OAuthRoutes $oauthRoutes,
+    private readonly GeneralSettingsService $settings,
   ) {
   }
 
@@ -401,6 +403,101 @@ final class PortalService {
     }
 
     return $ticket;
+  }
+
+  /**
+   * Create a presales ticket without purchase entitlement requirements.
+   *
+   * @param array<string, mixed> $data
+   * @return array{ticket: Ticket, account_created: bool}
+   */
+  public function createGuestTicket(array $data): array {
+    if (! $this->settings->guestTicketCreationEnabled()) {
+      throw new RuntimeException('Guest ticket creation is currently disabled.');
+    }
+
+    $firstName = trim((string) ($data['first_name'] ?? ''));
+    $lastName = trim((string) ($data['last_name'] ?? ''));
+    $email = sanitize_email((string) ($data['email'] ?? ''));
+    $subject = trim((string) ($data['subject'] ?? ''));
+    $content = trim((string) ($data['content'] ?? ''));
+
+    if ($firstName === '' || $lastName === '' || ! is_email($email)) {
+      throw new InvalidArgumentException('First name, last name, and a valid email address are required.');
+    }
+
+    if ($subject === '') {
+      throw new InvalidArgumentException('Ticket subject is required.');
+    }
+
+    if (trim(wp_strip_all_tags($content)) === '') {
+      throw new InvalidArgumentException('Ticket description is required.');
+    }
+
+    $department = $this->departments->default();
+
+    if (! $department || ! $department->isActive()) {
+      throw new RuntimeException('The default Support department is unavailable.');
+    }
+
+    $identity = $this->customers->ensureGuestCustomer(
+      $email,
+      $firstName,
+      $lastName,
+      'subscriber',
+    );
+    $customer = $identity['customer'];
+    $ticketId = $this->tickets->create([
+      'customer_id' => $customer->id(),
+      'created_by_id' => $customer->userId(),
+      'created_by_type' => AuthorType::GUEST->value,
+      'department_id' => $department->id(),
+      'category_id' => null,
+      'subject' => $subject,
+      'priority' => $department->defaultPriority()->value,
+      'source' => SourceType::WEB->value,
+    ]);
+
+    try {
+      $message = $this->messages->create([
+        'ticket_id' => $ticketId,
+        'author_id' => $customer->userId(),
+        'author_type' => AuthorType::GUEST->value,
+        'type' => MessageType::REPLY->value,
+        'content' => $content,
+      ]);
+
+      $file = $data['file'] ?? null;
+      if (is_array($file) && ($file['name'] ?? '') !== '') {
+        $this->attachments->storeUploadedFile($file, [
+          'message_id' => $message->id(),
+          'ticket_id' => $ticketId,
+          'uploaded_by_id' => $customer->userId(),
+          'uploaded_by_type' => AuthorType::GUEST->value,
+        ], true);
+      }
+    } catch (InvalidArgumentException|RuntimeException $exception) {
+      if (isset($message)) {
+        $this->messages->delete($message->id());
+      }
+      $this->tickets->delete($ticketId);
+      throw $exception;
+    }
+
+    $ticket = $this->tickets->find($ticketId);
+
+    if (! $ticket) {
+      throw new RuntimeException('Failed to create guest ticket.');
+    }
+
+    if ($identity['account_created']) {
+      wp_send_new_user_notifications($customer->userId(), 'user');
+    }
+
+    return [
+      'ticket' => $ticket,
+      'account_created' => $identity['account_created'],
+    ];
   }
 
   /** @return CustomField[] */

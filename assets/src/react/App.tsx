@@ -71,11 +71,16 @@ function App() {
   };
 
   const canonicalPath=pathname.startsWith(portalPath)?`/support${pathname.slice(portalPath.length)}`:pathname;
-  const authMode = config.registrationEnabled && /^\/support\/register\/?$/.test(canonicalPath) ? 'register' : 'login';
-  const authRoute = /^\/support\/(?:login|register)\/?$/.test(canonicalPath);
+  const guestRoute = config.guestTicketCreationEnabled && /^\/support\/guest-ticket\/?$/.test(canonicalPath);
+  const authMode = guestRoute
+    ? 'guest'
+    : config.registrationEnabled && /^\/support\/register\/?$/.test(canonicalPath)
+    ? 'register'
+    : 'login';
+  const authRoute = /^\/support\/(?:login|register)\/?$/.test(canonicalPath) || guestRoute;
 
   if (!config.authenticated) {
-    if (config.wordpressAuthEnabled) {
+    if (config.wordpressAuthEnabled && authMode !== 'guest') {
       const wordpressAuthUrl = authMode === 'register'
         ? config.wordpressRegistrationUrl
         : config.wordpressLoginUrl;
