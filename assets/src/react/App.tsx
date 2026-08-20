@@ -84,8 +84,7 @@ function App() {
     }
 
     if (!authRoute) {
-      const redirect = encodeURIComponent(`${pathname}${window.location.search}`);
-      window.history.replaceState({}, '', `${portalPath}/login/?redirect=${redirect}`);
+      window.history.replaceState({}, '', `${portalPath}/login/`);
     }
     return <AuthPage mode={authMode} navigate={navigate}/>;
   }

@@ -41,10 +41,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 							password,
 							password_confirmation: confirmPassword,
 						});
-			const requested = new URLSearchParams(window.location.search).get("redirect");
-			const portalPath = new URL(config.portalUrl, window.location.origin).pathname;
-			const target = requested && requested.startsWith(portalPath) ? requested : response.redirect;
-			window.location.assign(target);
+			window.location.assign(response.redirect);
 		} catch (reason) {
 			setError(reason instanceof Error ? reason.message : "Authentication failed.");
 			setBusy(false);
