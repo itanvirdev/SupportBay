@@ -298,7 +298,11 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, '<SecurityWorkspace')
       && str_contains($settingsWorkspace, 'aria-expanded={integrationsOpen}')
       && str_contains($settingsWorkspace, 'sbay-settings-subnav')
-      && str_contains($settingsWorkspace, '<EnvatoLoginWorkspace/>'),
+      && str_contains($settingsWorkspace, "url.searchParams.set('settings','integrations')")
+      && str_contains($settingsWorkspace, "url.searchParams.set('integration','envato')")
+      && str_contains($settingsWorkspace, "'login-with-envato'")
+      && str_contains($settingsWorkspace, "window.addEventListener('popstate'")
+      && str_contains($settingsWorkspace, '<EnvatoLoginWorkspace tab={envatoTab}'),
       'Settings provides shared navigation for notification templates and integrations.'
     );
 

@@ -17,7 +17,9 @@ const permissions = [
   'Verify purchases the user has made', 'View the user’s purchases of the app creator’s items',
 ];
 
-export function EnvatoLoginWorkspace(){
+interface EnvatoLoginWorkspaceProps { tab:'main'|'oauth'; onTabChange:(tab:'main'|'oauth')=>void; }
+
+export function EnvatoLoginWorkspace({tab,onTabChange}:EnvatoLoginWorkspaceProps){
   const [provider,setProvider]=useState<ProviderItem|null>(null);
   const [configuration,setConfiguration]=useState<ConfigurationForm|null>(null);
   const [values,setValues]=useState<Record<string,string>>({});
@@ -25,7 +27,6 @@ export function EnvatoLoginWorkspace(){
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState<string|null>(null);
   const [notice,setNotice]=useState<string|null>(null);
-  const [tab,setTab]=useState<'main'|'oauth'>('main');
 
   const load=async()=>{setError(null);try{
     const providers=await adminGet<ProviderItem[]>('providers');
@@ -65,7 +66,7 @@ export function EnvatoLoginWorkspace(){
     <header><small>Authentication and purchase integration</small><h2>Envato</h2><p>Configure Envato purchase verification, login, and registration.</p></header>
     {error?<p className="sbay-admin-error" role="alert">{error}</p>:null}{notice?<p className="sbay-admin-success" role="status">{notice}</p>:null}
     <div className="sbay-envato-settings-card">{!provider?<p>Envato integration is not installed.</p>:!configuration?<Preloader label="Loading Envato settings…" compact/>:<form onSubmit={save}>
-      <nav><button type="button" className={tab==='main'?'is-active':''} onClick={()=>setTab('main')}>Main</button><button type="button" className={tab==='oauth'?'is-active':''} onClick={()=>setTab('oauth')}>Login with Envato</button></nav>
+      <nav><button type="button" className={tab==='main'?'is-active':''} onClick={()=>onTabChange('main')}>Main</button><button type="button" className={tab==='oauth'?'is-active':''} onClick={()=>onTabChange('oauth')}>Login with Envato</button></nav>
       <div className="sbay-envato-login-settings">
         {enableField?toggle(enableField):null}
         {tab==='main'&&enabled?<section className="sbay-envato-token-guide"><h3>Step 2: Create an Envato API Token</h3><p>Visit <a href="https://build.envato.com/" target="_blank" rel="noreferrer">Envato API Website</a> and sign in to your account. Navigate to <strong>My Apps</strong>, scroll to <strong>Your Personal Tokens</strong>, then select <strong>Create a new token</strong>.</p><h4>Permissions to select while creating the token:</h4><ul>{permissions.map(permission=><li key={permission}>✓ {permission}</li>)}</ul></section>:null}

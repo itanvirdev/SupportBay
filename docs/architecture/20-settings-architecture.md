@@ -1,5 +1,20 @@
 # SupportBay – Settings Architecture
 
+## Administrator URL State
+
+Every React settings section persists its state in the native WordPress admin URL.
+The existing `page=supportbay-settings` parameter remains authoritative, with
+additional settings parameters layered on top:
+
+- General: `admin.php?page=supportbay-settings&settings=general`
+- Security: `admin.php?page=supportbay-settings&settings=security`
+- Envato Main: `admin.php?page=supportbay-settings&settings=integrations&integration=envato&tab=main`
+- Envato Login: `admin.php?page=supportbay-settings&settings=integrations&integration=envato&tab=login-with-envato`
+
+The React workspace initializes from these parameters, updates them with the
+History API, and responds to browser Back and Forward navigation. Reloading or
+sharing a settings URL therefore restores the same section and nested tab.
+
 ## Security: reCAPTCHA v3
 
 The React Security workspace includes a reCAPTCHA v3 tab with enable state, site key, encrypted secret key, login/guest-ticket/registration display controls, badge visibility, and Save Changes/Discard. REST responses never return the secret; they expose only whether it is configured. Blank secret submissions preserve the encrypted stored value, and reCAPTCHA cannot be enabled without both keys.
