@@ -8,12 +8,29 @@ additional settings parameters layered on top:
 
 - General: `admin.php?page=supportbay-settings&settings=general`
 - Security: `admin.php?page=supportbay-settings&settings=security`
+- Weekend: `admin.php?page=supportbay-settings&settings=weekend&tab=weekend`
+- Holiday: `admin.php?page=supportbay-settings&settings=weekend&tab=holiday`
 - Envato Main: `admin.php?page=supportbay-settings&settings=integrations&integration=envato&tab=main`
 - Envato Login: `admin.php?page=supportbay-settings&settings=integrations&integration=envato&tab=login-with-envato`
 
 The React workspace initializes from these parameters, updates them with the
 History API, and responds to browser Back and Forward navigation. Reloading or
 sharing a settings URL therefore restores the same section and nested tab.
+
+## Weekend and Holiday Availability
+
+Weekend and holiday settings are stored independently from general settings.
+Weekend periods support full days or bounded `HH:MM` ranges; holiday periods use
+inclusive WordPress-local `Y-m-d` date ranges. Runtime checks use
+`current_datetime()` and `wp_timezone()`, so they follow the timezone configured
+under WordPress General Settings.
+
+Active periods may expose customer-safe portal notices and enqueue a separate
+customer email after ticket creation. Email delivery reuses the Notifications
+module and its WordPress email channel; SupportBay does not provide SMTP.
+Weekend and holiday periods are evaluated independently, so overlapping periods
+may display and send both enabled notices. Neither feature blocks staff access or
+ticket replies.
 
 ## Security: reCAPTCHA v3
 

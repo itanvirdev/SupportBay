@@ -181,6 +181,12 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'weekend-holiday':
+        \SupportBay\Dev\WeekendHolidayFlowTest::run(
+          $container->get(\SupportBay\Modules\Settings\Services\WeekendHolidaySettingsService::class),
+        );
+        break;
+
       case 'customer':
         \SupportBay\Dev\CustomerFlowTest::run(
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)
@@ -628,6 +634,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- department\n";
         echo "- customer\n";
         echo "- auth\n";
+        echo "- weekend-holiday\n";
         echo "- provider\n";
         echo "- verification\n";
         echo "- provider-verification\n";

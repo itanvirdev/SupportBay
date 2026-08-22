@@ -14,6 +14,7 @@ use SupportBay\Modules\Notifications\Services\NotificationService;
 use SupportBay\Modules\Notifications\Services\NotificationPreferenceService;
 use SupportBay\Modules\Notifications\Services\NotificationTemplateService;
 use SupportBay\Modules\Tickets\Events\TicketCreated;
+use SupportBay\Modules\Settings\Services\WeekendHolidaySettingsService;
 
 final class SendTicketCreatedEmails implements Listener {
   public function __construct(
@@ -22,6 +23,7 @@ final class SendTicketCreatedEmails implements Listener {
     private readonly NotificationPreferenceService $preferences,
     private readonly CustomerService $customers,
     private readonly WordPressUserRepository $users,
+    private readonly WeekendHolidaySettingsService $availability,
   ) {
   }
 
@@ -98,6 +100,23 @@ final class SendTicketCreatedEmails implements Listener {
           'ticket_id' => $ticket->id(),
           'user_id'   => $customer->userId(),
         ],
+      ));
+    }
+
+    $availability=$this->availability->get();
+    $active=$this->availability->activeState($availability);
+    foreach(['weekend','holiday'] as $type){
+      if(! $active[$type]||! $availability[$type.'_email_enabled'])continue;
+      $content=strtr((string)$availability[$type.'_email_content'],[
+        '{{ticket_user}}'=>(string)$user->display_name,
+        '{{site_name}}'=>(string)get_bloginfo('name'),
+      ]);
+      $this->notifications->enqueue(new NotificationData(
+        event:$type.'_ticket_notice',
+        recipient:(string)$user->user_email,
+        subject:sprintf('%s support availability notice',(string)get_bloginfo('name')),
+        content:$content,
+        metadata:['ticket_id'=>$ticket->id(),'user_id'=>$customer->userId(),'availability_type'=>$type],
       ));
     }
   }

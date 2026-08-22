@@ -73,6 +73,7 @@ export function PortalLayout({
           </span>
           <a className="sbay-logout" href={config.logoutUrl}>Sign out</a>
         </div>
+        {config.availabilityNotices.map(notice=><aside className={`sbay-availability-notice is-${notice.type}`} role="status" key={notice.type}>{notice.message}</aside>)}
         {children}
       </main>
     </div>

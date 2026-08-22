@@ -25,6 +25,7 @@ export interface SupportBayConfig {
   guestTicketCreationEnabled: boolean;
   purchaseProviderFieldLabel: string;
   oauthLoginProviders: Array<{slug:string;name:string;url:string}>;
+  availabilityNotices: Array<{type:'weekend'|'holiday';message:string}>;
   authenticated: boolean;
 }
 

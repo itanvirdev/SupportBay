@@ -80,7 +80,8 @@ final class ReactPortalFlowTest extends FlowTest {
       str_contains(implode('', $bootstrap), 'resetPasswordUrl') &&
       str_contains(implode('', $bootstrap), 'guestTicketCreationEnabled') &&
       str_contains(implode('', $bootstrap), 'purchaseProviderFieldLabel') &&
-      str_contains(implode('', $bootstrap), 'oauthLoginProviders'),
+      str_contains(implode('', $bootstrap), 'oauthLoginProviders') &&
+      str_contains(implode('', $bootstrap), 'availabilityNotices'),
       'React bootstrap includes REST authentication configuration.'
     );
 
@@ -137,6 +138,7 @@ final class ReactPortalFlowTest extends FlowTest {
       && str_contains($portalLayout, 'config.portalLogoUrl')
       && str_contains($portalLayout, 'config.wordpressProfileEnabled')
       && str_contains($portalLayout, 'config.wordpressProfileUrl')
+      && str_contains($portalLayout, 'config.availabilityNotices')
       && is_string($portalApp)
       && str_contains($portalApp, 'Redirecting to your WordPress profile'),
       'Portal profile navigation can use the native WordPress profile.',

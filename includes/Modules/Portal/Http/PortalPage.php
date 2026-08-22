@@ -7,6 +7,7 @@ namespace SupportBay\Modules\Portal\Http;
 use SupportBay\Modules\Auth\Services\MagicLoginService;
 use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 use SupportBay\Modules\Portal\Services\PortalService;
+use SupportBay\Modules\Settings\Services\WeekendHolidaySettingsService;
 
 final class PortalPage {
   private const QUERY_VAR = 'sbay_customer_portal';
@@ -17,6 +18,7 @@ final class PortalPage {
     private readonly MagicLoginService $magicLogin,
     private readonly GeneralSettingsService $settings,
     private readonly PortalService $portal,
+    private readonly WeekendHolidaySettingsService $availability,
   ) {
   }
 
@@ -146,6 +148,7 @@ final class PortalPage {
         'guestTicketCreationEnabled' => $this->settings->guestTicketCreationEnabled(),
         'purchaseProviderFieldLabel' => $this->settings->purchaseProviderFieldLabel(),
         'oauthLoginProviders' => $this->portal->oauthLoginProviders(),
+        'availabilityNotices' => $this->availability->activeNotices(),
         'authenticated' => is_user_logged_in(),
       ]) . ';',
       'before',

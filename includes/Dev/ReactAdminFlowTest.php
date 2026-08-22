@@ -98,6 +98,9 @@ final class ReactAdminFlowTest extends FlowTest {
     $envatoProvider = file_get_contents(
       dirname(__DIR__) . '/Providers/Envato/EnvatoProvider.php'
     );
+    $weekendWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/WeekendHolidayWorkspace.tsx'
+    );
     $adminApp = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/app.tsx'
     );
@@ -304,6 +307,20 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, "window.addEventListener('popstate'")
       && str_contains($settingsWorkspace, '<EnvatoLoginWorkspace tab={envatoTab}'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($weekendWorkspace)
+      && str_contains($settingsWorkspace, '<WeekendHolidayWorkspace/>')
+      && str_contains($weekendWorkspace, 'Weekend Status')
+      && str_contains($weekendWorkspace, 'Add Weekend Day')
+      && str_contains($weekendWorkspace, 'Holiday Status')
+      && str_contains($weekendWorkspace, 'Add Holiday')
+      && str_contains($weekendWorkspace, 'Show Portal Notice')
+      && str_contains($weekendWorkspace, 'Send Email Notice')
+      && str_contains($weekendWorkspace, '{{ticket_user}}')
+      && str_contains($weekendWorkspace, '{{site_name}}'),
+      'Settings includes WordPress-timezone weekend and holiday availability controls.'
     );
 
     Assert::true(
