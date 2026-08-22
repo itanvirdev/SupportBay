@@ -11,6 +11,7 @@ use SupportBay\Modules\Auth\Services\OAuthLoginService;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Providers\Services\ProviderConfiguration;
 use SupportBay\Modules\Providers\Services\ProviderService;
+use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 
 final class OAuthRoutes {
   private const ACTION = 'sbay_oauth';
@@ -21,6 +22,7 @@ final class OAuthRoutes {
     private readonly IntegrationManager $integrations,
     private readonly ProviderService $providers,
     private readonly ProviderConfiguration $configuration,
+    private readonly GeneralSettingsService $settings,
   ) {
   }
 
@@ -36,9 +38,14 @@ final class OAuthRoutes {
   }
 
   public function handle(): void {
+    $envatoCallback = absint($_GET['sbayenvato'] ?? 0) === 1;
     $action = sanitize_key(
       wp_unslash((string) ($_GET[self::ACTION] ?? ''))
     );
+
+    if ($envatoCallback) {
+      $action = 'callback';
+    }
 
     if (! in_array($action, ['login', 'callback'], true)) {
       return;
@@ -47,6 +54,9 @@ final class OAuthRoutes {
     $provider = sanitize_key(
       wp_unslash((string) ($_GET['provider'] ?? ''))
     );
+    if ($envatoCallback) {
+      $provider = 'envato';
+    }
 
     try {
       $this->assertAvailable($provider);
@@ -116,7 +126,11 @@ final class OAuthRoutes {
       $this->providers->connected($storedProvider->id());
     }
 
-    wp_safe_redirect(home_url('/support/profile/?provider_connected=' . $provider));
+    wp_safe_redirect(add_query_arg(
+      'provider_connected',
+      $provider,
+      trailingslashit($this->settings->portalUrl()) . 'profile/',
+    ));
     exit;
   }
 
@@ -128,6 +142,7 @@ final class OAuthRoutes {
       ! $storedProvider ||
       ! $storedProvider->isEnabled() ||
       ! $this->configuration->configured($provider) ||
+      ! filter_var($this->configuration->get($provider, 'oauth_login_enabled', false), FILTER_VALIDATE_BOOL) ||
       ! $this->integrations->has($provider) ||
       ! ($this->integrations->integration($provider) instanceof OAuthProvider)
     ) {

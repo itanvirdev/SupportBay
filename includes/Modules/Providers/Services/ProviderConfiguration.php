@@ -29,6 +29,15 @@ final class ProviderConfiguration {
       }
     }
 
+    foreach ($this->fields($slug, false) as $field) {
+      if (
+        $field->defaultValue() !== null &&
+        ($field->type() === 'readonly' || ! isset($settings[$field->key()]) || $settings[$field->key()] === '')
+      ) {
+        $settings[$field->key()] = $field->defaultValue();
+      }
+    }
+
     return $settings;
   }
 
@@ -173,6 +182,14 @@ final class ProviderConfiguration {
   }
 
   private function sanitize(ProviderConfigurationField $field, mixed $value): string {
+    if ($field->type() === 'toggle') {
+      return filter_var($value, FILTER_VALIDATE_BOOL) ? '1' : '0';
+    }
+
+    if ($field->type() === 'readonly') {
+      return sanitize_text_field((string) $field->defaultValue());
+    }
+
     $value = is_scalar($value) ? trim((string) $value) : '';
 
     return $field->type() === 'url'

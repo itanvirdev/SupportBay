@@ -20,7 +20,7 @@ export interface ProviderItem {
 interface ConfigurationField {
   key: string;
   label: string;
-  type: 'text' | 'secret' | 'url';
+  type: 'text' | 'secret' | 'url' | 'toggle' | 'readonly';
   required: boolean;
   description: string | null;
   value: string;

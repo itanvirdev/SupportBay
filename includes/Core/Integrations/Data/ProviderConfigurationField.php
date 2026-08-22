@@ -13,8 +13,9 @@ final class ProviderConfigurationField {
     private readonly string $type = 'text',
     private readonly bool $required = false,
     private readonly ?string $description = null,
+    private readonly mixed $defaultValue = null,
   ) {
-    if (! in_array($type, ['text', 'secret', 'url'], true)) {
+    if (! in_array($type, ['text', 'secret', 'url', 'toggle', 'readonly'], true)) {
       throw new InvalidArgumentException('Unsupported provider configuration field type.');
     }
   }
@@ -27,7 +28,7 @@ final class ProviderConfigurationField {
       'type' => $this->type,
       'required' => $this->required,
       'description' => $this->description,
-      'value' => $this->isSecret() ? '' : $value,
+      'value' => $this->isSecret() ? '' : ($value !== null && $value !== '' ? $value : $this->defaultValue),
       'configured' => $this->isSecret() ? $configured : null,
     ];
   }
@@ -37,4 +38,5 @@ final class ProviderConfigurationField {
   public function type(): string { return $this->type; }
   public function isRequired(): bool { return $this->required; }
   public function isSecret(): bool { return $this->type === 'secret'; }
+  public function defaultValue(): mixed { return $this->defaultValue; }
 }

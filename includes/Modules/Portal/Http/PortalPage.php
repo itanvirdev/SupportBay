@@ -6,6 +6,7 @@ namespace SupportBay\Modules\Portal\Http;
 
 use SupportBay\Modules\Auth\Services\MagicLoginService;
 use SupportBay\Modules\Settings\Services\GeneralSettingsService;
+use SupportBay\Modules\Portal\Services\PortalService;
 
 final class PortalPage {
   private const QUERY_VAR = 'sbay_customer_portal';
@@ -15,6 +16,7 @@ final class PortalPage {
   public function __construct(
     private readonly MagicLoginService $magicLogin,
     private readonly GeneralSettingsService $settings,
+    private readonly PortalService $portal,
   ) {
   }
 
@@ -143,6 +145,7 @@ final class PortalPage {
         'registrationEnabled' => $this->settings->registrationEnabled(),
         'guestTicketCreationEnabled' => $this->settings->guestTicketCreationEnabled(),
         'purchaseProviderFieldLabel' => $this->settings->purchaseProviderFieldLabel(),
+        'oauthLoginProviders' => $this->portal->oauthLoginProviders(),
         'authenticated' => is_user_logged_in(),
       ]) . ';',
       'before',

@@ -92,7 +92,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 					{config.guestTicketCreationEnabled && mode !== "guest" ? <button className="sbay-guest-ticket-link" type="button" onClick={()=>navigate("/support/guest-ticket/")}><span aria-hidden="true">＋</span> Create Ticket as a Guest</button>:null}
 				</nav>
 				{guestTicket ? <section className="sbay-guest-ticket-success" role="status"><h1>Ticket submitted</h1><p>Your ticket <strong>#{guestTicket.track_id}</strong> was created successfully. We sent the ticket confirmation to your email address.</p>{guestTicket.account_created?<p>A customer account was also created for you. Check your email to set your password.</p>:null}<button className="sbay-primary-button" type="button" onClick={()=>navigate('/support/login/')}>Go to Login</button></section> :
-				<form onSubmit={submit}>
+				<>{mode !== "guest" && config.oauthLoginProviders.length?<div className="sbay-provider-auth">{config.oauthLoginProviders.map(provider=><a href={provider.url} key={provider.slug}><strong>{provider.name}</strong><span>{mode==="register"?`Register with ${provider.name}`:`Login with ${provider.name}`}</span></a>)}<div><span>or</span></div></div>:null}<form onSubmit={submit}>
 					<h1>{mode === "login" ? "Login" : mode === "register" ? "Register" : "Create Ticket as a Guest"}</h1>
 					{mode === "register" || mode === "guest" ? (
 						<>
@@ -190,7 +190,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 					<button className="sbay-primary-button" disabled={busy || (mode === "guest" && description.replace(/<[^>]*>/g, '').trim() === '')}>
 						{busy ? (mode === "login" ? "Logging in…" : mode === "register" ? "Creating account…" : "Submitting ticket…") : mode === "login" ? "Login" : mode === "register" ? "Register" : "Create Ticket"}
 					</button>
-				</form>}
+				</form></>}
 				{mode === "login" ? (
 					<footer>
 						Lost your password? <a href={config.resetPasswordUrl}>Reset Password</a>

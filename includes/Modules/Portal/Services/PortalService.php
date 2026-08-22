@@ -231,6 +231,29 @@ final class PortalService {
     return $providers;
   }
 
+  /** @return array<int, array{slug:string,name:string,url:string}> */
+  public function oauthLoginProviders(): array {
+    $providers = [];
+    foreach ($this->integrations->all() as $integration) {
+      if (! $integration instanceof OAuthProvider) {
+        continue;
+      }
+      $provider = $this->providers->findBySlug($integration->slug());
+      if (! $provider || ! $provider->isEnabled() || ! $this->providerConfiguration->configured($provider->slug())) {
+        continue;
+      }
+      if (! filter_var($this->providerConfiguration->get($provider->slug(), 'oauth_login_enabled', false), FILTER_VALIDATE_BOOL)) {
+        continue;
+      }
+      $providers[] = [
+        'slug' => $provider->slug(),
+        'name' => $provider->name(),
+        'url' => $this->oauthRoutes->connectUrl($provider->slug()),
+      ];
+    }
+    return $providers;
+  }
+
   /**
    * Return customer-safe OAuth provider connection summaries.
    *
@@ -256,7 +279,15 @@ final class PortalService {
       if (
         ! $storedProvider ||
         ! $storedProvider->isEnabled() ||
-        ! $this->providerConfiguration->configured($integration->slug())
+        ! $this->providerConfiguration->configured($integration->slug()) ||
+        ! filter_var(
+          $this->providerConfiguration->get(
+            $integration->slug(),
+            'oauth_login_enabled',
+            false,
+          ),
+          FILTER_VALIDATE_BOOL,
+        )
       ) {
         continue;
       }

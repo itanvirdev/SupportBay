@@ -24,6 +24,7 @@ export interface SupportBayConfig {
   registrationEnabled: boolean;
   guestTicketCreationEnabled: boolean;
   purchaseProviderFieldLabel: string;
+  oauthLoginProviders: Array<{slug:string;name:string;url:string}>;
   authenticated: boolean;
 }
 

@@ -92,6 +92,12 @@ final class ReactAdminFlowTest extends FlowTest {
     $settingsWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/SettingsWorkspace.tsx'
     );
+    $envatoLoginWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/EnvatoLoginWorkspace.tsx'
+    );
+    $envatoProvider = file_get_contents(
+      dirname(__DIR__) . '/Providers/Envato/EnvatoProvider.php'
+    );
     $adminApp = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/app.tsx'
     );
@@ -290,8 +296,28 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, '<DepartmentWorkspace/>')
       && str_contains($settingsWorkspace, '<GeneralWorkspace')
       && str_contains($settingsWorkspace, '<SecurityWorkspace')
-      && str_contains($settingsWorkspace, '<ProviderWorkspace/>'),
+      && str_contains($settingsWorkspace, 'aria-expanded={integrationsOpen}')
+      && str_contains($settingsWorkspace, 'sbay-settings-subnav')
+      && str_contains($settingsWorkspace, '<EnvatoLoginWorkspace/>'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($envatoLoginWorkspace)
+      && str_contains($envatoLoginWorkspace, 'Login with Envato')
+      && str_contains($envatoLoginWorkspace, 'Copy confirmation URL')
+      && str_contains($envatoLoginWorkspace, 'Save Changes')
+      && str_contains($envatoLoginWorkspace, 'Discard')
+      && str_contains($envatoLoginWorkspace, 'providers/${provider.id}/configuration')
+      && is_string($envatoProvider)
+      && str_contains($envatoProvider, "label: 'Click to enable'")
+      && str_contains($envatoProvider, "label: 'Confirmation URL'")
+      && str_contains($envatoProvider, '$this->settings->portalUrl()')
+      && str_contains($envatoProvider, "'sbayenvato'")
+      && str_contains($envatoProvider, "label: 'Envato Username'")
+      && str_contains($envatoProvider, "label: 'OAuth Client ID'")
+      && str_contains($envatoProvider, "label: 'Client Secret Key'"),
+      'Envato settings provides a schema-driven OAuth login form with copy and save controls.'
     );
 
     Assert::true(

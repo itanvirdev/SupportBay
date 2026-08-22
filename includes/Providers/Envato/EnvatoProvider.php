@@ -16,6 +16,7 @@ use SupportBay\Core\Integrations\Data\OAuthLoginData;
 use SupportBay\Core\Integrations\Data\OAuthTokenData;
 use SupportBay\Core\Integrations\Data\PurchaseVerificationData;
 use SupportBay\Modules\Providers\Enums\ProviderCategory;
+use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 use SupportBay\Providers\Envato\Services\EnvatoCustomerService;
 use SupportBay\Providers\Envato\Services\EnvatoOAuthService;
 use SupportBay\Providers\Envato\Services\EnvatoPurchaseService;
@@ -33,6 +34,7 @@ final class EnvatoProvider implements
     private readonly EnvatoPurchaseService $purchases,
     private readonly EnvatoOAuthService $oauth,
     private readonly EnvatoCustomerService $customers,
+    private readonly GeneralSettingsService $settings,
   ) {
   }
 
@@ -220,24 +222,40 @@ final class EnvatoProvider implements
   public function configurationFields(): array {
     return [
       new ProviderConfigurationField(
+        key: 'oauth_login_enabled',
+        label: 'Click to enable',
+        type: 'toggle',
+      ),
+      new ProviderConfigurationField(
+        key: 'redirect_uri',
+        label: 'Confirmation URL',
+        type: 'readonly',
+        required: true,
+        description: 'Copy this URL into the Confirmation URL field at build.envato.com.',
+        defaultValue: add_query_arg(
+          'sbayenvato',
+          '1',
+          $this->settings->portalUrl(),
+        ),
+      ),
+      new ProviderConfigurationField(
+        key: 'envato_username',
+        label: 'Envato Username',
+        required: true,
+        description: 'The username that owns the Envato OAuth application.',
+      ),
+      new ProviderConfigurationField(
         key: 'client_id',
-        label: 'Client ID',
+        label: 'OAuth Client ID',
         required: true,
         description: 'The client identifier from your Envato OAuth application.',
       ),
       new ProviderConfigurationField(
         key: 'client_secret',
-        label: 'Client Secret',
+        label: 'Client Secret Key',
         type: 'secret',
         required: true,
         description: 'Stored encrypted. Leave blank when editing to keep the existing secret.',
-      ),
-      new ProviderConfigurationField(
-        key: 'redirect_uri',
-        label: 'Redirect URI',
-        type: 'url',
-        required: true,
-        description: 'Must exactly match the callback URL registered with Envato.',
       ),
     ];
   }

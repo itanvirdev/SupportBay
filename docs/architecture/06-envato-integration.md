@@ -97,6 +97,30 @@ Customers may authenticate using:
 - Manual Registration
 - Envato OAuth
 
+## Administrator Configuration
+
+The WordPress administrator UI exposes Envato under:
+
+`SupportBay > Settings > Integrations > Envato > Login with Envato`
+
+The integration navigation is collapsible. The login configuration is defined by
+the Envato provider schema and contains:
+
+- An OAuth login enable switch
+- A read-only confirmation URL with a copy action
+- Envato username
+- OAuth client ID
+- Encrypted client secret key
+
+The confirmation URL is generated from the selected Support Portal Page URL and
+uses the callback query `?sbayenvato=1`. This URL must be registered as the OAuth
+application confirmation URL at `build.envato.com`.
+
+The Envato login and registration actions are shown above the native portal forms
+only when the provider is enabled, fully configured, and its OAuth login switch is
+on. Purchase verification remains provider-driven and separate from this portal
+authentication presentation setting.
+
 ---
 
 # Envato OAuth Flow
