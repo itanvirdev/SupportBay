@@ -165,12 +165,14 @@ final class ReactPortalFlowTest extends FlowTest {
       && str_contains($newTicketPage, 'purchase_reference: purchaseReference.trim()')
       && str_contains($newTicketPage, 'portalApi.customFields(departmentId)')
       && str_contains($newTicketPage, 'custom_fields: customFieldValues')
-      && str_contains($newTicketPage, 'Purchase Code/Key')
+      && str_contains($newTicketPage, 'selectedProvider.purchase_field_label')
+      && str_contains($newTicketPage, 'required={selectedProvider.license_required}')
+      && str_contains($newTicketPage, 'selectedProvider.check_support_expiry')
       && str_contains($newTicketPage, 'departments.length > 1')
       && str_contains($newTicketPage, 'providers.length > 1')
       && str_contains($newTicketPage, 'config.purchaseProviderFieldLabel')
       && ! str_contains($newTicketPage, 'purchase_verification_id'),
-      'Ticket creation requires entitlement and renders department custom fields.'
+      'Ticket creation renders provider-aware optional entitlement and department custom fields.'
     );
 
     $ticketDetailPage = file_get_contents(

@@ -141,7 +141,7 @@ final class OAuthRoutes {
       $provider === '' ||
       ! $storedProvider ||
       ! $storedProvider->isEnabled() ||
-      ! $this->configuration->configured($provider) ||
+      ! $this->configuration->configured($provider, 'oauth') ||
       ! filter_var($this->configuration->get($provider, 'oauth_login_enabled', false), FILTER_VALIDATE_BOOL) ||
       ! $this->integrations->has($provider) ||
       ! ($this->integrations->integration($provider) instanceof OAuthProvider)

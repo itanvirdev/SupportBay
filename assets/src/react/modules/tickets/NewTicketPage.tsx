@@ -27,6 +27,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const selectedProvider=providers.find(item=>item.slug===provider)??null;
 
   useEffect(() => {
     Promise.all([portalApi.departments(), portalApi.purchaseProviders()])
@@ -183,18 +184,18 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
             );
           })}
           {config.fileUploadEnabled?<FilePicker files={files} onChange={setFiles} disabled={submitting} maxSizeMb={config.fileUploadMaxSizeMb} allowedExtensions={config.fileUploadAllowedExtensions}/>:null}
-          <label>
-            <span>Purchase Code/Key</span>
-            <input value={purchaseReference} onChange={(event) => setPurchaseReference(event.target.value)} required autoComplete="off" />
-            <small>Your ticket is created only after the purchase and active support are confirmed.</small>
-          </label>
+          {selectedProvider?<label>
+            <span>{selectedProvider.purchase_field_label}</span>
+            <input value={purchaseReference} onChange={(event) => setPurchaseReference(event.target.value)} required={selectedProvider.license_required} autoComplete="off" />
+            <small>{selectedProvider.license_required?'A valid purchase code/key is required.':'Purchase verification is optional.'}{selectedProvider.check_support_expiry?' Active support is required.':''}</small>
+          </label>:null}
           <label>
             <span>How can we help?</span>
             <textarea value={content} onChange={(event) => setContent(event.target.value)} rows={8} required />
           </label>
-          {departments.length === 0 ? <p className="sbay-form-error">No support departments are currently available.</p> : providers.length === 0 ? <p className="sbay-form-error">Purchase verification is currently unavailable.</p> : null}
+          {departments.length === 0 ? <p className="sbay-form-error">No support departments are currently available.</p> : null}
           {error ? <p className="sbay-form-error" role="alert">{error}</p> : null}
-          <button className="sbay-primary-button" type="submit" disabled={submitting || categoriesLoading || departments.length === 0 || providers.length === 0 || (categories.length > 0 && categoryId === 0)}>
+          <button className="sbay-primary-button" type="submit" disabled={submitting || categoriesLoading || departments.length === 0 || (categories.length > 0 && categoryId === 0)}>
             {submitting ? 'Creating…' : 'Create ticket'}
           </button>
         </form>

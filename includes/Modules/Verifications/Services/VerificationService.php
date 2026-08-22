@@ -404,8 +404,11 @@ final class VerificationService {
       throw new RuntimeException('Purchase Code/Key is invalid or no longer verified.');
     }
 
-    if (! $verification->hasSupportExpiry() || $verification->supportExpired()) {
-      throw new RuntimeException('Support for this purchase has expired.');
+    if (
+      filter_var($context['check_support_expiry'] ?? true, FILTER_VALIDATE_BOOL) &&
+      (! $verification->hasSupportExpiry() || $verification->supportExpired())
+    ) {
+      throw new RuntimeException('Support is expired for this item. Please renew the support.');
     }
 
     return $verification;

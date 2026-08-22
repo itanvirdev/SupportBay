@@ -97,7 +97,11 @@ final class ProviderConfiguration {
     }
 
     foreach ($this->fields($slug) as $field) {
-      if ($field->isRequired() && empty($values[$field->key()])) {
+      $required = $field->isRequired() && (
+        $field->requiredWhen() === null ||
+        filter_var($values[$field->requiredWhen()] ?? false, FILTER_VALIDATE_BOOL)
+      );
+      if ($required && empty($values[$field->key()])) {
         throw new InvalidArgumentException(
           sprintf('%s is required.', $field->label())
         );
@@ -125,7 +129,7 @@ final class ProviderConfiguration {
   public function clientSecret(string $slug): ?string { return $this->string($slug, 'client_secret'); }
   public function redirectUri(string $slug): ?string { return $this->string($slug, 'redirect_uri'); }
 
-  public function configured(string $slug): bool {
+  public function configured(string $slug, ?string $group = null): bool {
     $fields = $this->fields($slug, false);
 
     if ($fields === []) {
@@ -135,7 +139,14 @@ final class ProviderConfiguration {
     $values = $this->all($slug);
 
     foreach ($fields as $field) {
-      if ($field->isRequired() && empty($values[$field->key()])) {
+      if ($group !== null && $field->group() !== $group) {
+        continue;
+      }
+      $required = $field->isRequired() && (
+        $field->requiredWhen() === null ||
+        filter_var($values[$field->requiredWhen()] ?? false, FILTER_VALIDATE_BOOL)
+      );
+      if ($required && empty($values[$field->key()])) {
         return false;
       }
     }

@@ -203,7 +203,7 @@ final class PortalService {
     return $this->categories->applicable($departmentId);
   }
 
-  /** @return array<int, array{slug: string, name: string}> */
+  /** @return array<int, array{slug:string,name:string,purchase_field_label:string,license_required:bool,check_support_expiry:bool}> */
   public function purchaseProviders(): array {
     $providers = [];
 
@@ -217,7 +217,12 @@ final class PortalService {
       if (
         ! $provider ||
         ! $provider->isEnabled() ||
-        ! $this->providerConfiguration->configured($integration->slug())
+        ! $this->providerConfiguration->configured($integration->slug(), 'main') ||
+        ($this->providerConfiguration->has($integration->slug(), 'purchase_verification_enabled') &&
+          ! filter_var(
+            $this->providerConfiguration->get($integration->slug(), 'purchase_verification_enabled', false),
+            FILTER_VALIDATE_BOOL,
+          ))
       ) {
         continue;
       }
@@ -225,6 +230,19 @@ final class PortalService {
       $providers[] = [
         'slug' => $integration->slug(),
         'name' => $provider->name(),
+        'purchase_field_label' => sanitize_text_field((string) $this->providerConfiguration->get(
+          $integration->slug(),
+          'purchase_field_label',
+          'Purchase Code/Key',
+        )),
+        'license_required' => filter_var(
+          $this->providerConfiguration->get($integration->slug(), 'license_required', true),
+          FILTER_VALIDATE_BOOL,
+        ),
+        'check_support_expiry' => filter_var(
+          $this->providerConfiguration->get($integration->slug(), 'check_support_expiry', true),
+          FILTER_VALIDATE_BOOL,
+        ),
       ];
     }
 
@@ -239,7 +257,7 @@ final class PortalService {
         continue;
       }
       $provider = $this->providers->findBySlug($integration->slug());
-      if (! $provider || ! $provider->isEnabled() || ! $this->providerConfiguration->configured($provider->slug())) {
+      if (! $provider || ! $provider->isEnabled() || ! $this->providerConfiguration->configured($provider->slug(), 'oauth')) {
         continue;
       }
       if (! filter_var($this->providerConfiguration->get($provider->slug(), 'oauth_login_enabled', false), FILTER_VALIDATE_BOOL)) {
@@ -279,7 +297,7 @@ final class PortalService {
       if (
         ! $storedProvider ||
         ! $storedProvider->isEnabled() ||
-        ! $this->providerConfiguration->configured($integration->slug()) ||
+        ! $this->providerConfiguration->configured($integration->slug(), 'oauth') ||
         ! filter_var(
           $this->providerConfiguration->get(
             $integration->slug(),
@@ -356,30 +374,44 @@ final class PortalService {
       throw new InvalidArgumentException('Opening message is required.');
     }
 
+    $availableProviders = [];
+    foreach ($this->purchaseProviders() as $availableProvider) {
+      $availableProviders[$availableProvider['slug']] = $availableProvider;
+    }
     $provider = sanitize_key((string) ($data['provider'] ?? ''));
     $reference = trim((string) ($data['purchase_reference'] ?? ''));
+    if ($provider === '' && count($availableProviders) === 1) {
+      $provider = (string) array_key_first($availableProviders);
+    }
 
-    if ($provider === '' || $reference === '') {
-      throw new InvalidArgumentException(
-        'Provider and Purchase Code/Key are required.'
+    $providerOption = $provider !== '' ? ($availableProviders[$provider] ?? null) : null;
+    if ($availableProviders !== [] && $providerOption === null) {
+      throw new InvalidArgumentException('Please select an available purchase provider.');
+    }
+    if ($providerOption && $providerOption['license_required'] && $reference === '') {
+      throw new InvalidArgumentException(sprintf('%s is required.', $providerOption['purchase_field_label']));
+    }
+
+    $verification = null;
+    $providerContext = [];
+    if ($providerOption && $reference !== '') {
+      $existingVerification = $this->verifications->findByReference($provider, $reference);
+      $providerContext = $this->providerConfiguration->all($provider);
+      if ($existingVerification === null && empty($providerContext['access_token'])) {
+        $providerContext = array_merge(
+          $this->oauth->providerContext($customer->id(), $provider),
+          $providerContext,
+        );
+      }
+      $verification = $this->verifications->resolveTicketEntitlement(
+        $provider,
+        $reference,
+        $customer->id(),
+        $providerContext,
       );
     }
 
-    $existingVerification = $this->verifications->findByReference(
-      $provider,
-      $reference,
-    );
-    $providerContext = $existingVerification === null
-      ? $this->oauth->providerContext($customer->id(), $provider)
-      : [];
-    $verification = $this->verifications->resolveTicketEntitlement(
-      $provider,
-      $reference,
-      $customer->id(),
-      $providerContext,
-    );
-
-    if (! $customer->isVerified()) {
+    if ($verification && ! $customer->isVerified()) {
       $this->customers->verify($customer->id());
     }
 
@@ -387,7 +419,8 @@ final class PortalService {
       'customer_id'              => $customer->id(),
       'created_by_id'            => $customer->userId(),
       'created_by_type'          => AuthorType::CUSTOMER->value,
-      'purchase_verification_id' => $verification->id(),
+      'purchase_verification_id' => $verification?->id(),
+      'allow_expired_support'     => ! (bool) ($providerContext['check_support_expiry'] ?? true),
       'department_id'            => $departmentId,
       'category_id'              => $categoryId,
       'subject'                  => $subject,

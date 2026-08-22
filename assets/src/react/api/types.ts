@@ -143,6 +143,9 @@ export interface CreateTicketInput {
 export interface PortalPurchaseProvider {
   slug: string;
   name: string;
+  purchase_field_label: string;
+  license_required: boolean;
+  check_support_expiry: boolean;
 }
 
 export interface PortalVerification {

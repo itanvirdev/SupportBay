@@ -222,9 +222,45 @@ final class EnvatoProvider implements
   public function configurationFields(): array {
     return [
       new ProviderConfigurationField(
+        key: 'purchase_verification_enabled',
+        label: 'Click to enable',
+        type: 'toggle',
+        group: 'main',
+      ),
+      new ProviderConfigurationField(
+        key: 'access_token',
+        label: 'Envato API Token',
+        type: 'secret',
+        required: true,
+        description: 'Personal token used securely for server-side purchase verification.',
+        group: 'main',
+        requiredWhen: 'purchase_verification_enabled',
+      ),
+      new ProviderConfigurationField(
+        key: 'purchase_field_label',
+        label: 'Purchase Code/Key Field Label',
+        defaultValue: 'Envato Purchase Code',
+        group: 'main',
+      ),
+      new ProviderConfigurationField(
+        key: 'license_required',
+        label: 'Enable License Required',
+        type: 'toggle',
+        defaultValue: '1',
+        group: 'main',
+      ),
+      new ProviderConfigurationField(
+        key: 'check_support_expiry',
+        label: 'Check Support Expiry',
+        type: 'toggle',
+        defaultValue: '1',
+        group: 'main',
+      ),
+      new ProviderConfigurationField(
         key: 'oauth_login_enabled',
         label: 'Click to enable',
         type: 'toggle',
+        group: 'oauth',
       ),
       new ProviderConfigurationField(
         key: 'redirect_uri',
@@ -237,18 +273,24 @@ final class EnvatoProvider implements
           '1',
           $this->settings->portalUrl(),
         ),
+        group: 'oauth',
+        requiredWhen: 'oauth_login_enabled',
       ),
       new ProviderConfigurationField(
         key: 'envato_username',
         label: 'Envato Username',
         required: true,
         description: 'The username that owns the Envato OAuth application.',
+        group: 'oauth',
+        requiredWhen: 'oauth_login_enabled',
       ),
       new ProviderConfigurationField(
         key: 'client_id',
         label: 'OAuth Client ID',
         required: true,
         description: 'The client identifier from your Envato OAuth application.',
+        group: 'oauth',
+        requiredWhen: 'oauth_login_enabled',
       ),
       new ProviderConfigurationField(
         key: 'client_secret',
@@ -256,6 +298,8 @@ final class EnvatoProvider implements
         type: 'secret',
         required: true,
         description: 'Stored encrypted. Leave blank when editing to keep the existing secret.',
+        group: 'oauth',
+        requiredWhen: 'oauth_login_enabled',
       ),
     ];
   }

@@ -121,6 +121,29 @@ only when the provider is enabled, fully configured, and its OAuth login switch 
 on. Purchase verification remains provider-driven and separate from this portal
 authentication presentation setting.
 
+## Purchase Verification Configuration
+
+The first Envato settings tab is **Main**. It independently enables server-side
+purchase verification and stores the Envato personal API token encrypted. The UI
+links administrators to `build.envato.com` and documents the account, purchase,
+sale-history, download, and purchase-verification permissions required by Envato.
+
+The Main tab also provides two entitlement policies:
+
+- **Enable License Required** makes the provider purchase-code/key field mandatory; when off, customers may create an unverified ticket without filling the field.
+- **Check Support Expiry** rejects purchases without active support.
+
+If no purchase-verification provider is enabled, the ticket form omits the
+purchase-code/key field entirely and permits ordinary ticket creation. Each
+provider supplies its own editable field label, such as **Envato Purchase Code**,
+**LemonSqueezy License Key**, or **EDD License Key**.
+
+When a ticket includes a new purchase code, SupportBay calls Envato using the
+configured server token and stores a provider snapshot. Subsequent tickets using
+the same purchase code reuse that stored verification without calling Envato
+again. The current license and support policies are still enforced against reused
+verification records before ticket creation.
+
 ---
 
 # Envato OAuth Flow

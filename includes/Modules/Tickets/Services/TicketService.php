@@ -382,9 +382,9 @@ final class TicketService {
       );
     }
 
-    if (! $verification->hasActiveSupport()) {
+    if (! filter_var($data['allow_expired_support'] ?? false, FILTER_VALIDATE_BOOL) && ! $verification->hasActiveSupport()) {
       throw new RuntimeException(
-        'Tickets require a verified purchase with active support.'
+        'Support is expired for this item. Please renew the support.'
       );
     }
 
