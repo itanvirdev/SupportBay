@@ -10,6 +10,7 @@ additional settings parameters layered on top:
 - Security: `admin.php?page=supportbay-settings&settings=security`
 - Weekend: `admin.php?page=supportbay-settings&settings=weekend&tab=weekend`
 - Holiday: `admin.php?page=supportbay-settings&settings=weekend&tab=holiday`
+- Auto Close & Delete: `admin.php?page=supportbay-settings&settings=auto-close`
 - Envato Main: `admin.php?page=supportbay-settings&settings=integrations&integration=envato&tab=main`
 - Envato Login: `admin.php?page=supportbay-settings&settings=integrations&integration=envato&tab=login-with-envato`
 
@@ -31,6 +32,27 @@ module and its WordPress email channel; SupportBay does not provide SMTP.
 Weekend and holiday periods are evaluated independently, so overlapping periods
 may display and send both enabled notices. Neither feature blocks staff access or
 ticket replies.
+
+## Auto Close and Delete
+
+The daily `sbay_ticket_lifecycle_cleanup` WordPress cron hook processes at most
+100 tickets per stage and run. Each stage is independently enabled:
+
+1. Auto-close finds Open, Pending, and Answered tickets in Active or Inactive
+   state whose latest customer message (or creation time) is older than the
+   configured cutoff. Tickets carrying an excluded tag are skipped. Closing uses
+   `TicketService::close()`, preserving normal status events and notifications.
+2. Auto-trash moves Closed tickets whose `closed_at` is older than the cutoff to
+   `TicketState::TRASH`. The transition updates `updated_at`, which becomes the
+   trash-entry timestamp and allows manual restoration before deletion.
+3. Auto-delete permanently removes eligible trashed tickets. The lifecycle
+   worker deletes local attachment files, attachment records, activities,
+   notification logs, SLA breach records, custom-field values, tag assignments,
+   messages/notes, and finally the ticket record.
+
+All intervals have a minimum of one day. Newly transitioned records cannot skip
+directly into the next stage during the same run because each transition resets
+the timestamp used by the following stage.
 
 ## Security: reCAPTCHA v3
 

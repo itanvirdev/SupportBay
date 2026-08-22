@@ -67,6 +67,7 @@ final class CustomFieldRepository extends Repository {
       ['%d', '%d'],
     ) !== false;
   }
+  public function deleteValuesForTicket(int $ticketId):int{return(int)$this->db->delete(TicketCustomFieldValueSchema::tableName(),['ticket_id'=>$ticketId],['%d']);}
 
   public function findValue(int $ticketId, int $fieldId): ?TicketCustomFieldValue {
     $row = $this->db->get_row($this->db->prepare(

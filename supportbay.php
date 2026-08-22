@@ -187,6 +187,15 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'auto-close':
+        \SupportBay\Dev\AutoCloseFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketRepository::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketLifecycleWorker::class),
+          $container->get(\SupportBay\Modules\Settings\Services\AutoCloseSettingsService::class),
+        );
+        break;
+
       case 'customer':
         \SupportBay\Dev\CustomerFlowTest::run(
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)
@@ -635,6 +644,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- customer\n";
         echo "- auth\n";
         echo "- weekend-holiday\n";
+        echo "- auto-close\n";
         echo "- provider\n";
         echo "- verification\n";
         echo "- provider-verification\n";

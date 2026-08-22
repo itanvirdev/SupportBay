@@ -118,6 +118,7 @@ final class MessageRepository extends Repository {
   public function delete(int $id): bool {
     return $this->deleteById($id);
   }
+  public function deleteByTicket(int $ticketId):int{return(int)$this->db->delete($this->table(),['ticket_id'=>$ticketId],['%d']);}
 
   public function moveToTicket(int $sourceTicketId, int $targetTicketId): int {
     $result = $this->db->update(

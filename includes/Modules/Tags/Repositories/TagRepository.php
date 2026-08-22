@@ -113,6 +113,7 @@ final class TagRepository extends Repository {
       $tagId,
     ));
   }
+  public function deleteAssignmentsForTicket(int $ticketId):int{return(int)$this->db->delete(TicketTagSchema::tableName(),['ticket_id'=>$ticketId],['%d']);}
 
   protected function hydrate(array $row): Tag {
     return new Tag(

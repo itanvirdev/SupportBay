@@ -101,6 +101,9 @@ final class ReactAdminFlowTest extends FlowTest {
     $weekendWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/WeekendHolidayWorkspace.tsx'
     );
+    $autoCloseWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/AutoCloseWorkspace.tsx'
+    );
     $adminApp = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/app.tsx'
     );
@@ -182,6 +185,17 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($slaWorkspace, 'admin/ticket-sla-policy')
       && str_contains($slaWorkspace, 'Save SLA policy'),
       'Reports combines ticket performance and notification delivery workspaces.'
+    );
+
+    Assert::true(
+      is_string($autoCloseWorkspace)
+      && str_contains($settingsWorkspace, '<AutoCloseWorkspace/>')
+      && str_contains($autoCloseWorkspace, 'Auto-Close Inactive Tickets')
+      && str_contains($autoCloseWorkspace, 'Auto-Trash Closed Tickets')
+      && str_contains($autoCloseWorkspace, 'Auto-Delete Trashed Tickets')
+      && str_contains($autoCloseWorkspace, 'Exclude Tags')
+      && str_contains($autoCloseWorkspace, 'This action is irreversible.'),
+      'Settings includes the three-stage automated ticket lifecycle policy.'
     );
 
     Assert::true(

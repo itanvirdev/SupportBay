@@ -462,6 +462,16 @@ final class TicketRepository extends Repository {
     return $this->deleteById($id);
   }
 
+  /** @param int[] $excludedTagIds @return int[] */
+  public function inactiveCandidateIds(string $cutoff, array $excludedTagIds, int $limit=100): array {
+    $exclusion='';$arguments=[];$ids=array_values(array_unique(array_filter(array_map('absint',$excludedTagIds))));
+    if($ids!==[]){$placeholders=implode(',',array_fill(0,count($ids),'%d'));$exclusion=" AND NOT EXISTS (SELECT 1 FROM ".TicketTagSchema::tableName()." xt WHERE xt.ticket_id=t.id AND xt.tag_id IN ({$placeholders}))";$arguments=$ids;}
+    $sql="SELECT t.id FROM {$this->table()} t WHERE t.state IN ('active','inactive') AND t.status IN ('open','pending','answered') AND COALESCE((SELECT MAX(m.created_at) FROM ".MessageSchema::tableName()." m WHERE m.ticket_id=t.id AND m.author_type='customer'),t.created_at)<=%s{$exclusion} ORDER BY t.id ASC LIMIT %d";
+    $arguments=array_merge([$cutoff],$arguments,[max(1,min(500,$limit))]);$rows=$this->db->get_col($this->db->prepare($sql,...$arguments));return array_map('intval',$rows);
+  }
+  /** @return int[] */ public function closedCandidateIds(string $cutoff,int $limit=100):array{$rows=$this->db->get_col($this->db->prepare("SELECT id FROM {$this->table()} WHERE state<>'trash' AND status='closed' AND closed_at IS NOT NULL AND closed_at<=%s ORDER BY id ASC LIMIT %d",$cutoff,max(1,min(500,$limit))));return array_map('intval',$rows);}
+  /** @return int[] */ public function trashedCandidateIds(string $cutoff,int $limit=100):array{$rows=$this->db->get_col($this->db->prepare("SELECT id FROM {$this->table()} WHERE state='trash' AND updated_at<=%s ORDER BY id ASC LIMIT %d",$cutoff,max(1,min(500,$limit))));return array_map('intval',$rows);}
+
   /**
    * Hydrate DB row → Ticket Entity
    */

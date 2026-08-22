@@ -31,6 +31,7 @@ use SupportBay\Modules\Tickets\Repositories\TicketSlaBreachRepository;
 use SupportBay\Modules\Tickets\Services\TicketSlaBreachService;
 use SupportBay\Modules\Tickets\Services\TicketSlaBreachWorker;
 use SupportBay\Modules\Tickets\Services\TicketTrackIdService;
+use SupportBay\Modules\Tickets\Services\TicketLifecycleWorker;
 
 final class TicketServiceProvider extends ServiceProvider {
 
@@ -71,6 +72,7 @@ final class TicketServiceProvider extends ServiceProvider {
     $container->singleton(TicketSlaBreachService::class);
     $container->singleton(TicketSlaBreachWorker::class);
     $container->singleton(TicketTrackIdService::class);
+    $container->singleton(TicketLifecycleWorker::class);
 
     $container->singleton(TicketController::class);
     $container->singleton(TicketMetricController::class);
@@ -93,6 +95,7 @@ final class TicketServiceProvider extends ServiceProvider {
       [$container->get(TicketController::class), 'registerRoutes'],
     );
     $container->get(TicketSlaBreachWorker::class)->register();
+    $container->get(TicketLifecycleWorker::class)->register();
     add_action(
       'rest_api_init',
       [$container->get(TicketMetricController::class), 'registerRoutes'],
