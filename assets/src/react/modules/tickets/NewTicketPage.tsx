@@ -116,6 +116,14 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
 
       {loading ? <Preloader label="Loading ticket options…" /> : (
         <form className="sbay-ticket-form" onSubmit={submit}>
+          {providers.length > 1 ? <label>
+            <span>{config.purchaseProviderFieldLabel}</span>
+            <select value={provider} onChange={(event) => setProvider(event.target.value)} required>
+              {providers.map((item) => (
+                <option value={item.slug} key={item.slug}>{item.name}</option>
+              ))}
+            </select>
+          </label> : null}
           <label>
             <span>Subject</span>
             <input value={subject} onChange={(event) => setSubject(event.target.value)} required maxLength={255} />
@@ -175,14 +183,6 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
             );
           })}
           {config.fileUploadEnabled?<FilePicker files={files} onChange={setFiles} disabled={submitting} maxSizeMb={config.fileUploadMaxSizeMb} allowedExtensions={config.fileUploadAllowedExtensions}/>:null}
-          <label>
-            <span>Purchase provider</span>
-            <select value={provider} onChange={(event) => setProvider(event.target.value)} required>
-              {providers.map((item) => (
-                <option value={item.slug} key={item.slug}>{item.name}</option>
-              ))}
-            </select>
-          </label>
           <label>
             <span>Purchase Code/Key</span>
             <input value={purchaseReference} onChange={(event) => setPurchaseReference(event.target.value)} required autoComplete="off" />

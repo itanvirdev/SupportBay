@@ -50,6 +50,8 @@ final class GeneralSettingsFlowTest extends FlowTest {
       Assert::true($statusLabels['ticket_status_labels']['open']==='New Request'&&$statusLabels['ticket_status_labels']['closed']==='Complete'&&$statusLabels['ticket_status_labels']['pending']==='Pending','Ticket status display labels are customizable without changing canonical values.');
       $style=$settings->update(['style_palette'=>'ocean','custom_css'=>'@import url(https://example.com/x.css); .sbay-shell { color: red; } </style>']);
       Assert::true($style['style_palette']==='ocean'&&!str_contains($style['custom_css'],'@import')&&!str_contains($style['custom_css'],'</style>')&&str_contains($settings->supportBayCss(),'--sbay-green:#2563eb'),'Predefined palettes and sanitized SupportBay-only custom CSS persist.');
+      $providerLabel=$settings->update(['purchase_provider_field_label'=>'Marketplace']);
+      Assert::true($providerLabel['purchase_provider_field_label']==='Marketplace'&&$settings->purchaseProviderFieldLabel()==='Marketplace','The multi-provider ticket-form field label is customizable.');
       $independentShortcode=$settings->update(['support_portal_page_id'=>0,'shortcode_mode'=>true]);
       Assert::true($independentShortcode['support_portal_page_id']===0&&$settings->shortcodeMode(),'Shortcode mode remains independent when no selected portal page is configured.');
       $pageId=(int)wp_insert_post(['post_title'=>'SupportBay Portal Test','post_status'=>'publish','post_type'=>'page']);
@@ -85,6 +87,7 @@ final class GeneralSettingsFlowTest extends FlowTest {
         'ticket_status_labels'=>$previous['ticket_status_labels'],
         'style_palette'=>$previous['style_palette'],
         'custom_css'=>$previous['custom_css'],
+        'purchase_provider_field_label'=>$previous['purchase_provider_field_label'],
       ]);
       if ($pageId>0) { wp_delete_post($pageId,true); }
     }

@@ -92,6 +92,9 @@ final class ProviderFlowTest extends FlowTest {
       'Name stored.'
     );
 
+    $renamed = $providerService->rename($providerId, 'Marketplace Option');
+    Assert::equals('Marketplace Option', $renamed->name(), 'Provider ticket-form option label is editable.');
+
     Assert::equals(
       ProviderCategory::MARKETPLACE,
       $provider->category(),

@@ -49,6 +49,9 @@ export function ProviderWorkspace() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [labelEditing, setLabelEditing] = useState<ProviderItem | null>(null);
+  const [labelValue, setLabelValue] = useState('');
+  const [labelSaving, setLabelSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -129,6 +132,22 @@ export function ProviderWorkspace() {
     }
   };
 
+  const saveLabel = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!labelEditing) return;
+    setLabelSaving(true);
+    setError(null);
+    try {
+      const response = await adminPut<ProviderItem>(`providers/${labelEditing.id}`, { name: labelValue });
+      setProviders(items=>items.map(item=>item.id===labelEditing.id?response.data:item));
+      setLabelEditing(null);
+    } catch (reason) {
+      setError(reason instanceof Error?reason.message:'Provider label could not be saved.');
+    } finally {
+      setLabelSaving(false);
+    }
+  };
+
   return (
     <section className="sbay-provider-content">
         <header>
@@ -157,7 +176,7 @@ export function ProviderWorkspace() {
               </dl>
               <footer>
                 <span>{provider.has_error ? 'Review this provider before enabling it.' : provider.connection_test_available ? 'This provider supports a direct credential health check.' : provider.slug === 'envato' ? 'Connection is verified after a successful Envato OAuth login.' : provider.configured ? 'Connection testing is not provided by this integration.' : 'Configuration is required for authenticated features.'}</span>
-                <div>{provider.connection_test_available ? <button type="button" disabled={!provider.configured || testing === provider.id} onClick={() => void testConnection(provider)}>{testing === provider.id ? 'Testing…' : 'Test connection'}</button> : null}<button type="button" onClick={() => void configure(provider)}>Configure</button><button type="button" className={enabled ? 'is-danger' : 'is-primary'} disabled={changing === provider.id} onClick={() => void transition(provider)}>{changing === provider.id ? 'Updating…' : enabled ? 'Disable' : 'Enable'}</button></div>
+                <div>{provider.connection_test_available ? <button type="button" disabled={!provider.configured || testing === provider.id} onClick={() => void testConnection(provider)}>{testing === provider.id ? 'Testing…' : 'Test connection'}</button> : null}<button type="button" onClick={()=>{setLabelEditing(provider);setLabelValue(provider.name);}}>Edit label</button><button type="button" onClick={() => void configure(provider)}>Configure</button><button type="button" className={enabled ? 'is-danger' : 'is-primary'} disabled={changing === provider.id} onClick={() => void transition(provider)}>{changing === provider.id ? 'Updating…' : enabled ? 'Disable' : 'Enable'}</button></div>
               </footer>
             </article>;
           })}
@@ -173,6 +192,7 @@ export function ProviderWorkspace() {
             {configuration ? <footer><button type="button" onClick={() => setEditing(null)}>Cancel</button><button type="submit" className="is-primary" disabled={saving}>{saving ? 'Saving…' : 'Save configuration'}</button></footer> : null}
           </form>
         </div> : null}
+        {labelEditing?<div className="sbay-provider-dialog" role="dialog" aria-modal="true" aria-labelledby="sbay-provider-label-title"><form onSubmit={saveLabel}><header><div><small>Ticket form option</small><h2 id="sbay-provider-label-title">Edit provider label</h2></div><button type="button" aria-label="Close label editor" onClick={()=>setLabelEditing(null)}>×</button></header><label><span>Provider label *</span><input type="text" maxLength={150} value={labelValue} required onChange={event=>setLabelValue(event.target.value)}/><small>Shown as this provider's option when the ticket form has multiple providers.</small></label><footer><button type="button" onClick={()=>setLabelEditing(null)}>Cancel</button><button type="submit" className="is-primary" disabled={labelSaving}>{labelSaving?'Saving…':'Save label'}</button></footer></form></div>:null}
     </section>
   );
 }

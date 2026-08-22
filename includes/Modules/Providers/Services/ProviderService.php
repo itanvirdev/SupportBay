@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Providers\Services;
 
+use InvalidArgumentException;
 use RuntimeException;
 use SupportBay\Modules\Providers\Entities\Provider;
 use SupportBay\Modules\Providers\Enums\ProviderCategory;
@@ -85,6 +86,22 @@ final class ProviderService {
     $data['updated_at'] = current_time('mysql');
 
     return $this->repository->update($id, $data);
+  }
+
+  public function rename(int $id, string $name): Provider {
+    $name = sanitize_text_field(wp_unslash($name));
+
+    if ($name === '' || strlen($name) > 150) {
+      throw new InvalidArgumentException('Provider label must be between 1 and 150 characters.');
+    }
+
+    if (! $this->find($id)) {
+      throw new RuntimeException('Provider was not found.');
+    }
+
+    $this->update($id, ['name' => $name]);
+
+    return $this->find($id) ?? throw new RuntimeException('Provider could not be reloaded.');
   }
 
   /**

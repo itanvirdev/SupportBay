@@ -157,6 +157,12 @@ password setup email.
 
 Main settings also include an absolute registration-form disable flag, a guest-ticket creation policy flag, and the client default role. Administrators choose the default from roles currently registered in WordPress; the backend validates that the role still exists and falls back to Subscriber if it is removed. Subscriber is the recommended customer default. The registration disable flag takes precedence over both the SupportBay override and WordPress registration.
 
+Authenticated ticket creation selects the only available purchase-verification
+provider silently. When two or more providers are available, the selector is
+rendered as the first ticket-form field. Its field label is configured in
+General settings, while every option label uses the editable provider name from
+that provider's Configure dialog. Provider slugs remain stable internal values.
+
 Custom ticket track IDs are optional. When enabled, the Tickets module retains its random uppercase hexadecimal identifier and formats it with the administrator-defined prefix and a 6–32 character random length. Ticket creation and ticket splitting share the same collision-checked generator. Random 8-character IDs remain the default, existing IDs are preserved, and `track_id` uses `VARCHAR(64)` to accommodate configured formats.
 
 Activation creates or reuses a published WordPress page named Support, inserts `[supportbay]`, and saves that page as the initial Support Portal Page; there is no synthetic hard-coded portal URL. Administrators may select another published page. The selected page always renders the isolated SupportBay portal document. Shortcode mode is an independent option that enables `[supportbay]` on other WordPress pages through their active theme. Each entry point derives its portal URL, authentication redirects, client navigation, and virtual child-route rewrites from its own page permalink.

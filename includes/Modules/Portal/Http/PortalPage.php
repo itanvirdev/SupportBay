@@ -142,6 +142,7 @@ final class PortalPage {
         'resetPasswordUrl' => esc_url_raw(wp_lostpassword_url(trailingslashit($portalUrl) . 'login/')),
         'registrationEnabled' => $this->settings->registrationEnabled(),
         'guestTicketCreationEnabled' => $this->settings->guestTicketCreationEnabled(),
+        'purchaseProviderFieldLabel' => $this->settings->purchaseProviderFieldLabel(),
         'authenticated' => is_user_logged_in(),
       ]) . ';',
       'before',

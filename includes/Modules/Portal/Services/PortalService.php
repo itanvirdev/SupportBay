@@ -224,7 +224,7 @@ final class PortalService {
 
       $providers[] = [
         'slug' => $integration->slug(),
-        'name' => $integration->name(),
+        'name' => $provider->name(),
       ];
     }
 

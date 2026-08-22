@@ -78,7 +78,8 @@ final class ReactPortalFlowTest extends FlowTest {
       str_contains(implode('', $bootstrap), 'attachmentPopupPreviewEnabled') &&
       str_contains(implode('', $bootstrap), 'ticketStatusLabels') &&
       str_contains(implode('', $bootstrap), 'resetPasswordUrl') &&
-      str_contains(implode('', $bootstrap), 'guestTicketCreationEnabled'),
+      str_contains(implode('', $bootstrap), 'guestTicketCreationEnabled') &&
+      str_contains(implode('', $bootstrap), 'purchaseProviderFieldLabel'),
       'React bootstrap includes REST authentication configuration.'
     );
 
@@ -162,6 +163,8 @@ final class ReactPortalFlowTest extends FlowTest {
       && str_contains($newTicketPage, 'custom_fields: customFieldValues')
       && str_contains($newTicketPage, 'Purchase Code/Key')
       && str_contains($newTicketPage, 'departments.length > 1')
+      && str_contains($newTicketPage, 'providers.length > 1')
+      && str_contains($newTicketPage, 'config.purchaseProviderFieldLabel')
       && ! str_contains($newTicketPage, 'purchase_verification_id'),
       'Ticket creation requires entitlement and renders department custom fields.'
     );

@@ -32,8 +32,14 @@ final class ProviderController {
       'permission_callback' => [$this, 'permissions'],
     ]);
     register_rest_route('sbay/v1', '/providers/(?P<id>\d+)', [
-      'methods' => 'GET', 'callback' => [$this, 'show'],
-      'permission_callback' => [$this, 'permissions'],
+      [
+        'methods' => 'GET', 'callback' => [$this, 'show'],
+        'permission_callback' => [$this, 'permissions'],
+      ],
+      [
+        'methods' => 'PUT', 'callback' => [$this, 'update'],
+        'permission_callback' => [$this, 'permissions'],
+      ],
     ]);
     foreach (['enable', 'disable'] as $action) {
       register_rest_route('sbay/v1', '/providers/(?P<id>\d+)/' . $action, [
@@ -113,6 +119,24 @@ final class ProviderController {
     return $provider
       ? RestResponse::success($this->data($provider), 'Provider retrieved.')
       : RestResponse::error('Provider was not found.', 'PROVIDER_NOT_FOUND', [], 404);
+  }
+
+  public function update(WP_REST_Request $request): WP_REST_Response {
+    $id = absint($request->get_param('id'));
+
+    try {
+      $provider = $this->providers->rename(
+        $id,
+        sanitize_text_field(wp_unslash((string) $request->get_param('name'))),
+      );
+    } catch (InvalidArgumentException|RuntimeException $exception) {
+      return RestResponse::error($exception->getMessage(), 'PROVIDER_UPDATE_FAILED', [], 422);
+    }
+
+    return RestResponse::success(
+      $this->data($provider),
+      'Provider ticket-form label updated.',
+    );
   }
 
   public function configuration(WP_REST_Request $request): WP_REST_Response {

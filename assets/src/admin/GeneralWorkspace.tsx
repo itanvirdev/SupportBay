@@ -36,6 +36,7 @@ interface GeneralSettings {
   style_palette:string;
   style_palettes:Record<string,{name:string;primary:string;accent:string;dark:string}>;
   custom_css:string;
+  purchase_provider_field_label:string;
   page_options:Array<{id:number;title:string;url:string}>;
   wordpress_registration_enabled:boolean;
   registration_enabled:boolean;
@@ -55,6 +56,7 @@ type GeneralDraft = Pick<GeneralSettings,
   |'file_upload_enabled'|'file_upload_max_size_mb'|'file_upload_allowed_groups'|'attachment_popup_preview_enabled'
   |'ticket_status_labels'
   |'style_palette'|'custom_css'
+  |'purchase_provider_field_label'
 >;
 
 const fileGroups=[
@@ -102,6 +104,7 @@ const draftFrom = (settings:GeneralSettings):GeneralDraft => ({
   ticket_status_labels:settings.ticket_status_labels,
   style_palette:settings.style_palette,
   custom_css:settings.custom_css,
+  purchase_provider_field_label:settings.purchase_provider_field_label,
 });
 
 export function GeneralWorkspace(){
@@ -193,8 +196,9 @@ export function GeneralWorkspace(){
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.ticket_list_auto_refresh_enabled} onChange={event=>update({ticket_list_auto_refresh_enabled:event.target.checked})}/><span>Enable ticket list auto-refresh.</span></label>
         {draft.ticket_list_auto_refresh_enabled?<label className="sbay-general-select sbay-auto-refresh-interval"><span><i aria-hidden="true">*</i> Auto refresh interval <span className="sbay-setting-help" tabIndex={0} aria-label="Auto refresh interval help">?<span role="tooltip">Minimum value is 5 seconds.</span></span></span><span><input type="number" min={5} max={3600} disabled={saving} value={draft.ticket_list_auto_refresh_interval} onChange={event=>update({ticket_list_auto_refresh_interval:Math.min(3600,Math.max(5,Number(event.target.value)||5))})}/><em>Seconds</em></span></label>:null}
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.smart_need_reply_sorting_enabled} onChange={event=>update({smart_need_reply_sorting_enabled:event.target.checked})}/><span>Enable smart sorting for need reply filter.</span></label>
+        <label className="sbay-general-select"><span>Ticket Form Provider Field Label</span><input type="text" maxLength={100} disabled={saving} value={draft.purchase_provider_field_label} onChange={event=>update({purchase_provider_field_label:event.target.value})}/><small>Displayed only when more than one purchase-verification provider is available.</small></label>
         <p>Effective registration: <strong>{effectiveRegistration?'Enabled':'Disabled'}</strong></p>
-        <footer className="sbay-general-actions"><button type="submit" disabled={saving||!changed||!draft.footer_copyright_text.trim()}>{saving?'Saving…':'Save Changes'}</button><button type="button" disabled={saving||!changed} onClick={discard}>Discard</button></footer>
+        <footer className="sbay-general-actions"><button type="submit" disabled={saving||!changed||!draft.footer_copyright_text.trim()||!draft.purchase_provider_field_label.trim()}>{saving?'Saving…':'Save Changes'}</button><button type="button" disabled={saving||!changed} onClick={discard}>Discard</button></footer>
       </div>:activeTab==='logo'?<div className="sbay-general-logo-settings">
         <article className="sbay-logo-setting">
           <div><h3>Dashboard Logo</h3><p>Displayed in the SupportBay WordPress administration header.</p></div>

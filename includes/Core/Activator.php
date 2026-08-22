@@ -57,6 +57,7 @@ final class Activator {
       'recaptcha_v3_hide_badge' => false,
       'style_palette' => 'emerald',
       'custom_css' => '',
+      'purchase_provider_field_label' => 'Purchase provider',
       'rich_text_enabled' => false,
       'registration_override' => false,
       'disable_registration_form' => false,

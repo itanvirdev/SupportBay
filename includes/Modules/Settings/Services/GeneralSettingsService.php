@@ -80,6 +80,7 @@ final class GeneralSettingsService {
       'style_palette'=>$this->normalizePalette($settings['style_palette']??'emerald'),
       'style_palettes'=>self::STYLE_PALETTES,
       'custom_css'=>$this->sanitizeCustomCss((string)($settings['custom_css']??'')),
+      'purchase_provider_field_label'=>$this->normalizeProviderFieldLabel($settings['purchase_provider_field_label']??'Purchase provider'),
       'page_options'=>$this->pageOptions(),
       'wordpress_registration_enabled'=>$wordpress,
       'registration_enabled'=>!$disabled&&($override||$wordpress),
@@ -118,6 +119,7 @@ final class GeneralSettingsService {
   public function ticketListAutoRefreshEnabled(): bool { return (bool)($this->repository->all()['ticket_list_auto_refresh_enabled']??true); }
   public function ticketListAutoRefreshInterval(): int { return $this->normalizeAutoRefreshInterval($this->repository->all()['ticket_list_auto_refresh_interval']??60); }
   public function smartNeedReplySortingEnabled(): bool { return (bool)($this->repository->all()['smart_need_reply_sorting_enabled']??true); }
+  public function purchaseProviderFieldLabel(): string { return $this->normalizeProviderFieldLabel($this->repository->all()['purchase_provider_field_label']??'Purchase provider'); }
   public function dashboardLogoUrl(): string { return $this->logoUrl($this->normalizeLogoAttachmentId($this->repository->all()['dashboard_logo_attachment_id']??0)); }
   public function portalLogoUrl(): string { return $this->logoUrl($this->normalizeLogoAttachmentId($this->repository->all()['portal_logo_attachment_id']??0)); }
   public function fileUploadEnabled(): bool { return (bool)($this->repository->all()['file_upload_enabled']??true); }
@@ -221,6 +223,7 @@ final class GeneralSettingsService {
     if((bool)($settings['recaptcha_v3_enabled']??false)&&((string)($settings['recaptcha_v3_site_key']??'')===''||(string)($settings['recaptcha_v3_secret_key']??'')==='')){throw new InvalidArgumentException('Site Key and Secret Key are required to enable reCAPTCHA v3.');}
     if(array_key_exists('style_palette',$data)){$settings['style_palette']=$this->normalizePalette($data['style_palette']);}
     if(array_key_exists('custom_css',$data)){$settings['custom_css']=$this->sanitizeCustomCss((string)$data['custom_css']);}
+    if(array_key_exists('purchase_provider_field_label',$data)){$settings['purchase_provider_field_label']=$this->normalizeProviderFieldLabel($data['purchase_provider_field_label']);}
     $this->repository->save($settings);
     if ($refreshRewrites) { flush_rewrite_rules(false); }
     return $this->get();
@@ -291,6 +294,11 @@ final class GeneralSettingsService {
   }
 
   private function normalizePalette(mixed $palette): string { $palette=sanitize_key((string)$palette);return isset(self::STYLE_PALETTES[$palette])?$palette:'emerald'; }
+
+  private function normalizeProviderFieldLabel(mixed $label): string {
+    $label=sanitize_text_field(wp_unslash((string)$label));
+    return $label!==''?substr($label,0,100):'Purchase provider';
+  }
 
   private function sanitizeCustomCss(string $css): string {
     $css=wp_strip_all_tags(wp_unslash($css));

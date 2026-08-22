@@ -23,6 +23,7 @@ export interface SupportBayConfig {
   resetPasswordUrl: string;
   registrationEnabled: boolean;
   guestTicketCreationEnabled: boolean;
+  purchaseProviderFieldLabel: string;
   authenticated: boolean;
 }
 
