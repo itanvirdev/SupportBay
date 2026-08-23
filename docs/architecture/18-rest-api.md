@@ -642,28 +642,10 @@ that could be interpreted as spreadsheet formulas are prefixed safely.
 
 # Ticket SLA Policy
 
-Administrators manage calendar-time first-response targets through
-`GET|PUT /sbay/v1/admin/ticket-sla-policy`. The policy stores one target in
-minutes for every ticket priority and validates values between 15 and 10080.
-
-Ticket report responses include the active policy, within-target, breached,
-and awaiting-within-target totals plus factual first-response bands. This
-version does not implement business-hour calendars, automatic escalation, or
-historical SLA policy snapshots.
-
-Ticket queue responses include server-calculated `sla_state`,
-`sla_target_minutes`, `sla_due_at`, and `sla_remaining_minutes`. The ticket
-list accepts `sla_state` and supports `orderby=sla_due`. An unanswered ticket
-is `due_soon` after 75 percent of its target has elapsed and `breached` after
-the target passes. Answered tickets are classified as `met` or `breached`
-against their actual first-response timestamp. A disabled policy returns the
-`disabled` state.
-
-First-response breaches are detected asynchronously every five minutes in
-batches of 20. A dedicated ticket-owned table atomically records each
-ticket-and-metric pair before the `TicketSlaBreached` domain event is
-dispatched. The initial listener creates a system-authored ticket timeline
-activity. Notification and escalation side effects remain separate listeners.
+Ticket SLA is deferred until after MVP. The policy route, queue SLA fields and
+filters, report metrics, CSV sections, scheduled detector, and notifications
+are not registered by the MVP runtime. Dormant domain and schema code is kept
+for a future version without exposing an incomplete public contract.
 
 # Ticket Tag Workflow
 

@@ -17,7 +17,6 @@ final class TicketMetricService {
   public function __construct(
     private readonly TicketRepository $tickets,
     private readonly CsvExporter $csv,
-    private readonly TicketSlaPolicyService $sla,
   ) {
   }
 
@@ -28,21 +27,11 @@ final class TicketMetricService {
     return $this->csv->generate([
       [
         'name' => 'Ticket performance summary',
-        'headers' => ['Date from', 'Date to', 'Tickets', 'Responses', 'Need reply', 'Resolved', 'Closed', 'Average first response (minutes)', 'SLA within target', 'SLA breached', 'SLA awaiting'],
+        'headers' => ['Date from', 'Date to', 'Tickets', 'Responses', 'Need reply', 'Resolved', 'Closed'],
         'rows' => [[
           $report['range']['from'], $report['range']['to'], $summary['tickets'],
           $summary['responses'], $summary['need_reply'], $summary['resolved'],
-          $summary['closed'], $summary['average_first_response_minutes'],
-          $summary['sla']['within_target'], $summary['sla']['breached'], $summary['sla']['awaiting_within_target'],
-        ]],
-      ],
-      [
-        'name' => 'First-response bands',
-        'headers' => ['Under 1 hour', '1 to 4 hours', '4 to 24 hours', '24 hours or more', 'No response'],
-        'rows' => [[
-          $summary['response_bands']['under_1h'], $summary['response_bands']['from_1h_to_4h'],
-          $summary['response_bands']['from_4h_to_24h'], $summary['response_bands']['over_24h'],
-          $summary['response_bands']['no_response'],
+          $summary['closed'],
         ]],
       ],
       [
@@ -112,12 +101,7 @@ final class TicketMetricService {
       throw new InvalidArgumentException('A custom field is required when filtering by value.');
     }
 
-    $policy = $this->sla->get();
-    $metrics = $this->tickets->metrics(
-      $query,
-      $policy->firstResponseMinutes(),
-      current_time('mysql'),
-    );
+    $metrics = $this->tickets->metrics($query);
     $daily = [];
     foreach ($metrics['daily'] as $row) {
       $daily[(string) $row['date']] = $row;
@@ -146,17 +130,7 @@ final class TicketMetricService {
         'assigned_agent_id' => $query->assignedAgentId,
         'priority' => $query->priority,
       ],
-      'summary' => [
-        ...$metrics['summary'],
-        'sla' => [
-          'enabled' => $policy->enabled(),
-          'targets' => $policy->firstResponseMinutes(),
-          'within_target' => $policy->enabled() ? $metrics['sla']['within_target'] : 0,
-          'breached' => $policy->enabled() ? $metrics['sla']['breached'] : 0,
-          'awaiting_within_target' => $policy->enabled() ? $metrics['sla']['awaiting_within_target'] : 0,
-        ],
-        'response_bands' => $metrics['response_bands'],
-      ],
+      'summary' => $metrics['summary'],
       'daily' => $filled,
       'departments' => $metrics['departments'],
       'categories' => $metrics['categories'],

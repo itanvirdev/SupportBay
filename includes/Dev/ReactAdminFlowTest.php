@@ -134,9 +134,6 @@ final class ReactAdminFlowTest extends FlowTest {
     $reportsWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/ReportsWorkspace.tsx'
     );
-    $slaWorkspace = file_get_contents(
-      dirname(__DIR__, 2) . '/assets/src/admin/TicketSlaWorkspace.tsx'
-    );
     $ticketConversation = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketConversation.tsx'
     );
@@ -182,12 +179,25 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($ticketReportWorkspace, "params.set('custom_field_value'")
       && str_contains($ticketReportWorkspace, 'All tags')
       && str_contains($ticketReportWorkspace, 'Uncategorized')
-      && str_contains($ticketReportWorkspace, 'First-response SLA')
-      && str_contains($ticketReportWorkspace, 'response_bands')
-      && is_string($slaWorkspace)
-      && str_contains($slaWorkspace, 'admin/ticket-sla-policy')
-      && str_contains($slaWorkspace, 'Save SLA policy'),
-      'Reports combines ticket performance and notification delivery workspaces.'
+      && str_contains($ticketReportWorkspace, 'window.setTimeout(() => void load(), 250)')
+      && ! str_contains($ticketReportWorkspace, 'Apply report')
+      && str_contains($ticketReportWorkspace, 'Clear report filters')
+      && str_contains($ticketReportWorkspace, 'options.departments.length?')
+      && str_contains($ticketReportWorkspace, 'options.categories.length?')
+      && str_contains($ticketReportWorkspace, 'options.tags.length?')
+      && str_contains($ticketReportWorkspace, 'options.custom_fields.length?')
+      && str_contains($ticketReportWorkspace, 'options.agents.length?')
+      && str_contains($ticketReportWorkspace, 'Report period')
+      && str_contains($ticketReportWorkspace, 'Last 60 Days')
+      && str_contains($ticketReportWorkspace, 'Last 30 Days')
+      && str_contains($ticketReportWorkspace, 'Last 14 Days')
+      && str_contains($ticketReportWorkspace, 'Last 7 Days')
+      && str_contains($ticketReportWorkspace, 'is-need-reply')
+      && str_contains($ticketReportWorkspace, 'is-closed')
+      && str_contains($ticketReportWorkspace, 'rotate(45)')
+      && ! str_contains($ticketReportWorkspace, 'First-response SLA')
+      && ! str_contains($ticketReportWorkspace, 'response_bands'),
+      'Reports combines ticket and notification metrics while omitting deferred SLA analysis.'
     );
 
     Assert::true(
@@ -262,11 +272,10 @@ final class ReactAdminFlowTest extends FlowTest {
     );
     Assert::true(
       is_string($ticketWorkspace)
-      && str_contains($ticketWorkspace, 'sla_state: query.slaState')
-      && str_contains($ticketWorkspace, 'SLA Due First')
-      && str_contains($ticketWorkspace, 'SLA Breached')
-      && str_contains($ticketWorkspace, 'mode===\'staff\'&&slaLabel(ticket)'),
-      'Shared ticket workspace renders server-owned SLA controls only for staff.',
+      && ! str_contains($ticketWorkspace, 'sla_state: query.slaState')
+      && ! str_contains($ticketWorkspace, 'SLA Due First')
+      && ! str_contains($ticketWorkspace, 'SLA Breached'),
+      'Shared ticket workspace omits deferred SLA controls.',
     );
 
     Assert::true(
@@ -305,7 +314,7 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, 'Assign Rules')
       && str_contains($settingsWorkspace, 'User Roles')
       && str_contains($settingsWorkspace, 'Departments')
-      && str_contains($settingsWorkspace, 'Ticket SLA')
+      && ! str_contains($settingsWorkspace, 'Ticket SLA')
       && str_contains($settingsWorkspace, 'Integrations')
       && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace/>')
       && str_contains($settingsWorkspace, '<NotificationLogWorkspace/>')
@@ -609,8 +618,8 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($adminBundle, 'Support Tickets Report')
       && str_contains($adminBundle, 'Daily support activity')
       && str_contains($adminBundle, 'Export CSV')
-      && str_contains($adminBundle, 'First-response SLA')
-      && str_contains($adminBundle, 'Save SLA policy'),
+      && ! str_contains($adminBundle, 'First-response SLA')
+      && ! str_contains($adminBundle, 'Save SLA policy'),
       'Compiled administrator bundle contains the notification template workspace.'
     );
 

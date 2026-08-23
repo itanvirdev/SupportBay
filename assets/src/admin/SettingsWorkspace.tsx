@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { NotificationTemplateWorkspace } from './NotificationTemplateWorkspace';
 import { EnvatoLoginWorkspace } from './EnvatoLoginWorkspace';
 import { NotificationLogWorkspace } from './NotificationLogWorkspace';
-import { TicketSlaWorkspace } from './TicketSlaWorkspace';
 import { SavedReplyWorkspace } from './SavedReplyWorkspace';
 import { CategoryWorkspace } from './CategoryWorkspace';
 import { TagWorkspace } from './TagWorkspace';
@@ -16,8 +15,8 @@ import { WeekendHolidayWorkspace } from './WeekendHolidayWorkspace';
 import { AutoCloseWorkspace } from './AutoCloseWorkspace';
 import { AssignRuleWorkspace } from './AssignRuleWorkspace';
 
-type SettingsSection = 'general'|'security'|'roles'|'departments'|'categories'|'tags'|'custom-fields'|'assign-rules'|'sla'|'saved-replies'|'notifications'|'logs'|'weekend'|'auto-close'|'envato';
-const sections:SettingsSection[]=['general','security','roles','departments','categories','tags','custom-fields','assign-rules','sla','saved-replies','notifications','logs','weekend','auto-close'];
+type SettingsSection = 'general'|'security'|'roles'|'departments'|'categories'|'tags'|'custom-fields'|'assign-rules'|'saved-replies'|'notifications'|'logs'|'weekend'|'auto-close'|'envato';
+const sections:SettingsSection[]=['general','security','roles','departments','categories','tags','custom-fields','assign-rules','saved-replies','notifications','logs','weekend','auto-close'];
 
 function route(){
   const params=new URLSearchParams(window.location.search);
@@ -49,6 +48,6 @@ export function SettingsWorkspace(){
     {config.canManageCustomFields?<button type="button" className={section==='custom-fields'?'is-active':''} onClick={()=>navigate('custom-fields')}>Custom Fields</button>:null}
     <button type="button" className={section==='assign-rules'?'is-active':''} onClick={()=>navigate('assign-rules')}>Assign Rules</button>
     {config.canManageSavedReplies?<button type="button" className={section==='saved-replies'?'is-active':''} onClick={()=>navigate('saved-replies')}>Saved Replies</button>:null}
-    <button type="button" className={section==='sla'?'is-active':''} onClick={()=>navigate('sla')}>Ticket SLA</button><button type="button" className={section==='notifications'?'is-active':''} onClick={()=>navigate('notifications')}>Email Notifications</button><button type="button" className={section==='logs'?'is-active':''} onClick={()=>navigate('logs')}>Delivery Logs</button><button type="button" className={section==='weekend'?'is-active':''} onClick={()=>navigate('weekend')}>Weekend &amp; Holiday</button><button type="button" className={section==='auto-close'?'is-active':''} onClick={()=>navigate('auto-close')}>Auto Close &amp; Delete</button><button type="button" className={section==='envato'?'is-active':''} aria-expanded={integrationsOpen} onClick={()=>setIntegrationsOpen(!integrationsOpen)}>Integrations <span>{integrationsOpen?'▾':'▸'}</span></button>{integrationsOpen?<button type="button" className={`sbay-settings-subnav ${section==='envato'?'is-active':''}`} onClick={()=>navigate('envato')}>Envato</button>:null}
-  </nav><div>{section==='general'?<GeneralWorkspace/>:section==='security'?<SecurityWorkspace/>:section==='roles'?<RoleWorkspace/>:section==='departments'?<DepartmentWorkspace/>:section==='categories'?<CategoryWorkspace/>:section==='tags'?<TagWorkspace/>:section==='custom-fields'?<CustomFieldWorkspace/>:section==='assign-rules'?<AssignRuleWorkspace/>:section==='sla'?<TicketSlaWorkspace/>:section==='saved-replies'?<SavedReplyWorkspace/>:section==='notifications'?<NotificationTemplateWorkspace/>:section==='logs'?<NotificationLogWorkspace/>:section==='weekend'?<WeekendHolidayWorkspace/>:section==='auto-close'?<AutoCloseWorkspace/>:<EnvatoLoginWorkspace tab={envatoTab} onTabChange={tab=>navigate('envato',tab)}/>}</div></section>;
+    <button type="button" className={section==='notifications'?'is-active':''} onClick={()=>navigate('notifications')}>Email Notifications</button><button type="button" className={section==='logs'?'is-active':''} onClick={()=>navigate('logs')}>Delivery Logs</button><button type="button" className={section==='weekend'?'is-active':''} onClick={()=>navigate('weekend')}>Weekend &amp; Holiday</button><button type="button" className={section==='auto-close'?'is-active':''} onClick={()=>navigate('auto-close')}>Auto Close &amp; Delete</button><button type="button" className={section==='envato'?'is-active':''} aria-expanded={integrationsOpen} onClick={()=>setIntegrationsOpen(!integrationsOpen)}>Integrations <span>{integrationsOpen?'▾':'▸'}</span></button>{integrationsOpen?<button type="button" className={`sbay-settings-subnav ${section==='envato'?'is-active':''}`} onClick={()=>navigate('envato')}>Envato</button>:null}
+  </nav><div>{section==='general'?<GeneralWorkspace/>:section==='security'?<SecurityWorkspace/>:section==='roles'?<RoleWorkspace/>:section==='departments'?<DepartmentWorkspace/>:section==='categories'?<CategoryWorkspace/>:section==='tags'?<TagWorkspace/>:section==='custom-fields'?<CustomFieldWorkspace/>:section==='assign-rules'?<AssignRuleWorkspace/>:section==='saved-replies'?<SavedReplyWorkspace/>:section==='notifications'?<NotificationTemplateWorkspace/>:section==='logs'?<NotificationLogWorkspace/>:section==='weekend'?<WeekendHolidayWorkspace/>:section==='auto-close'?<AutoCloseWorkspace/>:<EnvatoLoginWorkspace tab={envatoTab} onTabChange={tab=>navigate('envato',tab)}/>}</div></section>;
 }

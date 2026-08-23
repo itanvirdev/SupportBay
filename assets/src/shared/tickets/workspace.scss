@@ -38,10 +38,6 @@
 .sbay-ticket-priority { justify-self: start; background: #f2f4f3; color: #58645d; }
 .sbay-ticket-priority--high, .sbay-ticket-priority--urgent { background: #fff0ed; color: #b23b2f; }
 .sbay-need-reply { width: max-content; margin-top: 5px; padding: 3px 7px; border: 1px solid #f1aaa2; border-radius: 5px; background: #fff2f0; color: #b93428; font-size: 11px; font-style: normal; font-weight: 700; }
-.sbay-sla-badge { margin-left:7px; padding:3px 7px; border-radius:99px; background:#edf2ef; color:#5f6b65; font-size:11px; font-style:normal; font-weight:750; white-space:nowrap; }
-.sbay-sla-badge.is-met,.sbay-sla-badge.is-on_track { background:#e3f3ea; color:#237251; }
-.sbay-sla-badge.is-due_soon { background:#fff3d8; color:#916817; }
-.sbay-sla-badge.is-breached { background:#fde9e7; color:#ac382f; }
 .sbay-ticket-avatar { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #e5ebe7; font-weight: 700; }
 .sbay-ticket-table footer { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; background: #f8faf9; }
 .sbay-ticket-table footer select, .sbay-ticket-table footer button { min-height: 38px; margin-right: 8px; border: 1px solid #d7dfda; border-radius: 7px; background: #fff; }

@@ -34,7 +34,6 @@ final class TicketService {
     private readonly CategoryService $categories,
     private readonly TagService $tags,
     private readonly EventDispatcher $events,
-    private readonly TicketSlaPolicyService $sla,
     private readonly TicketTrackIdService $trackIds,
     private readonly GeneralSettingsService $settings,
   ) {
@@ -94,12 +93,8 @@ final class TicketService {
 
   /** @return array{items: \SupportBay\Modules\Tickets\Data\TicketQueueItem[], total: int} */
   public function searchQueue(TicketQuery $query): array {
-    $policy = $this->sla->get();
     $result = $this->repository->searchQueue(
       $query,
-      $policy->enabled(),
-      $policy->firstResponseMinutes(),
-      current_time('mysql'),
       $this->settings->smartNeedReplySortingEnabled(),
     );
     $tagMap = $this->tags->forTickets(array_map(

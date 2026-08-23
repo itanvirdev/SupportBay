@@ -461,7 +461,7 @@ Current behavior
 - Reporting responses contain aggregate operational data only and never expose recipients, subjects, bodies, payloads, headers, or metadata.
 - Reports now provides separate Ticket Performance and Notification Delivery workspaces.
 - `GET /sbay/v1/reports/tickets` requires `sbay_view_reports` and validates date, department, agent, and priority filters.
-- Ticket summaries include created tickets, staff responses, need-reply tickets, resolved/closed tickets, and average first-response minutes.
+- Ticket summaries include created tickets, staff responses, need-reply tickets, and resolved/closed tickets.
 - Daily ticket/response trends are zero-filled across the selected date range.
 - Department and agent breakdowns use the same server-side filters and exclude trashed tickets.
 - Ticket and notification reports expose capability-protected CSV export routes using the same validated queries as their on-screen reports.
@@ -469,25 +469,8 @@ Current behavior
 - CSV values beginning with spreadsheet formula characters are neutralized before output.
 - Managers can continue viewing reports, while export controls and endpoints require `sbay_export_reports`.
 - React downloads preserve server-provided filenames and release temporary browser object URLs.
-- Ticket SLA policy is option-backed with configurable first-response targets for normal, medium, high, and urgent priorities.
-- SLA targets are validated between 15 minutes and 7 days and managed through a protected Settings workspace.
-- Ticket reports classify responded-within-target, breached, and awaiting-within-target tickets using calendar minutes.
-- First-response bands report under 1 hour, 1–4 hours, 4–24 hours, 24 hours or more, and unanswered tickets.
-- SLA metrics and response bands are included in filtered CSV exports.
-- Business-hour calendars, escalation automation, and historical SLA snapshots remain explicitly deferred.
-- Ticket queue rows now expose server-calculated SLA state, target, due timestamp, and remaining calendar minutes.
-- SLA states are `disabled`, `met`, `on_track`, `due_soon`, and `breached`.
-- An unanswered ticket becomes due soon after consuming at least 75% of its priority target.
-- Staff can filter by SLA state and sort breached, due-soon, and on-track tickets in due-first order.
-- Shared React queue badges are staff-only; customer queue structure and presentation remain unchanged.
-- Disabling SLA reporting returns `disabled` for every queue row and removes active urgency classification.
-- `sbay_ticket_sla_breaches` stores durable first-response breach facts with a unique ticket-and-metric key.
-- A bounded five-minute WordPress Cron worker detects active, non-final, unanswered overdue tickets.
-- Breach records are atomically claimed before `TicketSlaBreached` is dispatched, preventing duplicate events across overlapping workers.
-- The domain event carries both Ticket and TicketSlaBreach entities.
-- A small activity listener records one system-authored first-response breach entry in the ticket timeline.
-- Database schema version 0.3.0 installs the new table automatically for already-active sites.
-- Disabling the SLA policy suppresses scheduled breach detection.
+- Ticket SLA is deferred until after MVP. Its Settings entry, queue controls, reports, exports, scheduled detection, and notifications are not active in the MVP runtime.
+- The initial schema retains the dormant SLA breach table so the feature can return later without a destructive migration.
 
 Future notification work
 
@@ -904,7 +887,7 @@ Completed
 - Slugs are normalized and unique.
 - Managers and administrators receive category-management capability.
 - Tickets store an optional category ID and existing tickets remain uncategorized.
-- Database schema version is 0.8.0.
+- Category persistence is included in the consolidated initial database schema.
 - Customer ticket forms load active global and department-scoped categories.
 - Customer ticket creation requires a category when applicable categories exist.
 - Server-side validation rejects inactive and cross-department category selections.
@@ -935,7 +918,7 @@ Completed
 - Inactive tags cannot be newly assigned and in-use tags cannot be deleted.
 - Managers and administrators receive the dedicated tag-management capability.
 - Agents, managers, and administrators receive a separate ticket-tag mutation capability.
-- Database schema version is 0.9.0.
+- Tag and ticket-tag persistence are included in the consolidated initial database schema.
 - Staff ticket queues return assigned tag metadata and support exact tag filtering.
 - Staff ticket details support idempotent tag addition and removal.
 - Bulk actions add or remove tags from up to 100 selected tickets with per-ticket failure reporting.
@@ -955,7 +938,7 @@ Completed
 - Definitions support sanitized choices, required and customer-visible flags, optional department scope, lifecycle, and sort order.
 - Ticket values are type-aware, sanitized, and unique per ticket and field.
 - Definitions with historical values cannot be deleted or change type and must be deactivated instead.
-- Database schema version is 1.0.0.
+- Custom-field definition and value persistence are included in the consolidated initial database schema.
 - Settings exposes custom-field administration only to users with `sbay_manage_custom_fields`.
 - Definition forms manage all supported types, department scope, required and customer-visible flags, lifecycle, and sort order.
 - Select choices use a one-choice-per-line editor and remain server-sanitized and deduplicated.

@@ -15,7 +15,6 @@ use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Data\TicketQuery;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
-use SupportBay\Modules\Tickets\Enums\TicketSlaState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use WP_Error;
 use WP_REST_Request;
@@ -148,7 +147,7 @@ final class TicketController {
           ? sanitize_textarea_field(wp_unslash((string) $request->get_param('custom_field_value')))
           : null,
       needsReply: rest_sanitize_boolean($request->get_param('need_reply')),
-      slaState: TicketSlaState::tryFrom(sanitize_key((string) $request->get_param('sla_state')))?->value,
+      slaState: null,
       orderBy: sanitize_key((string) $request->get_param('orderby')),
       direction: sanitize_key((string) $request->get_param('order')),
     ));

@@ -431,9 +431,7 @@ Reports uses a shared React workspace with Ticket Performance and Notification D
 
 Both report workspaces provide CSV download controls only when the PHP bootstrap reports `canExportReports`. Downloads reuse the currently applied filters, receive their filenames from protected REST responses, and use short-lived browser object URLs. Server-side capability checks remain authoritative.
 
-Settings includes a Ticket SLA workspace for priority-based calendar-minute first-response targets. Ticket Performance displays SLA compliance cards, configured targets, and response-time bands, and includes the same data in CSV exports. The interface explicitly avoids presenting these values as business-hours SLA calculations.
-
-The shared ticket queue consumes SLA state calculated by PHP. Staff views add an SLA-state filter, due-first sorting, and state badges with due-time tooltips. Customer views use the same component but hide SLA controls and indicators. React does not calculate or infer SLA state.
+Ticket SLA is deferred until after MVP. Settings, ticket queues, Ticket Performance, and CSV exports intentionally contain no SLA controls or analysis.
 
 The staff ticket composer exposes a lazy-loaded Saved Replies picker backed by the protected saved-reply API. It searches the active server-returned collection by title and readable content and can populate either the reply or internal-note draft. Replacing non-empty content requires explicit confirmation. Programmatic selection updates the WordPress TinyMCE instance, while final message content continues through the normal server-side rich-text sanitizer. Customer composers do not expose this staff tool.
 

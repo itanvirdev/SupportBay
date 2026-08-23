@@ -561,13 +561,13 @@ Ticket Performance Reporting ✅
 
 Report Export Foundation ✅
 
-Ticket SLA Metrics and Response-Time Bands ✅
+Ticket SLA Metrics and Response-Time Bands ⏳ Deferred after MVP
 
-SLA Due-State and Ticket Queue Indicators ✅
+SLA Due-State and Ticket Queue Indicators ⏳ Deferred after MVP
 
-Scheduled SLA Breach Detection and Domain Events ✅
+Scheduled SLA Breach Detection and Domain Events ⏳ Deferred after MVP
 
-SLA Breach Notifications for Assigned Staff ✅
+SLA Breach Notifications for Assigned Staff ⏳ Deferred after MVP
 
 Saved Replies Foundation ✅
 

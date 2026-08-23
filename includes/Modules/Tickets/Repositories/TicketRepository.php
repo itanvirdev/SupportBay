@@ -198,12 +198,8 @@ final class TicketRepository extends Repository {
   }
 
   /** @return array{items: TicketQueueItem[], total: int} */
-  /** @param array<string, int> $slaTargets */
   public function searchQueue(
     TicketQuery $query,
-    bool $slaEnabled = false,
-    array $slaTargets = [],
-    ?string $now = null,
     bool $smartNeedReplySorting = true,
   ): array {
     $ticketTable = $this->table();
@@ -212,18 +208,6 @@ final class TicketRepository extends Repository {
     $departmentTable = DepartmentSchema::tableName();
     $categoryTable = CategorySchema::tableName();
     $userTable = $this->db->users;
-    $now = $now ?? $this->now();
-    $slaTarget = "CASE t.priority
-      WHEN 'urgent' THEN " . min(10080, max(15, (int) ($slaTargets['urgent'] ?? 60))) . "
-      WHEN 'high' THEN " . min(10080, max(15, (int) ($slaTargets['high'] ?? 240))) . "
-      WHEN 'medium' THEN " . min(10080, max(15, (int) ($slaTargets['medium'] ?? 480))) . "
-      ELSE " . min(10080, max(15, (int) ($slaTargets['normal'] ?? 1440))) . ' END';
-    $slaElapsed = "TIMESTAMPDIFF(MINUTE, t.created_at, COALESCE(t.first_response_at, '" . esc_sql($now) . "'))";
-    $slaState = ! $slaEnabled ? "'disabled'" : "CASE
-      WHEN t.first_response_at IS NOT NULL AND {$slaElapsed} <= {$slaTarget} THEN 'met'
-      WHEN t.first_response_at IS NOT NULL OR {$slaElapsed} > {$slaTarget} THEN 'breached'
-      WHEN ({$slaElapsed} * 4) >= ({$slaTarget} * 3) THEN 'due_soon'
-      ELSE 'on_track' END";
     $clauses = [];
     $values = [];
     foreach (['status', 'state', 'priority'] as $field) {
@@ -253,10 +237,6 @@ final class TicketRepository extends Repository {
       $clauses[] = '(t.subject LIKE %s OR t.track_id LIKE %s OR cu.display_name LIKE %s)';
       array_push($values, $like, $like, $like);
     }
-    if ($query->slaState !== null) {
-      $clauses[] = "({$slaState}) = %s";
-      $values[] = $query->slaState;
-    }
     $needExpression = "(lm.author_type IN ('customer','guest') AND t.status NOT IN ('resolved','closed') AND t.state = 'active')";
     if ($query->needsReply) { $clauses[] = $needExpression; }
     $where = $clauses ? 'WHERE ' . implode(' AND ', $clauses) : '';
@@ -268,25 +248,20 @@ final class TicketRepository extends Repository {
     $orderBy = match ($query->orderBy) {
       'created_at' => 't.created_at', 'priority' => "CASE t.priority WHEN 'urgent' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END",
       'need_reply' => $query->needsReply ? $needExpression : 'COALESCE(t.last_reply_at,t.updated_at,t.created_at)',
-      'sla_due' => "CASE WHEN ({$slaState}) = 'breached' THEN 0 WHEN ({$slaState}) = 'due_soon' THEN 1 WHEN ({$slaState}) = 'on_track' THEN 2 ELSE 3 END, TIMESTAMPADD(MINUTE, {$slaTarget}, t.created_at)",
       default => 'COALESCE(t.last_reply_at,t.updated_at,t.created_at)',
     };
     if ($query->needsReply && $smartNeedReplySorting) {
       $orderBy = 'COALESCE(lm.created_at,t.last_reply_at,t.updated_at,t.created_at)';
       $order = 'ASC';
     }
-    $sql = "SELECT t.*, COALESCE(replies.reply_count,0) reply_count, {$needExpression} needs_reply, au.display_name agent_name, cu.display_name customer_name, c.avatar_url customer_avatar_url, d.name department_name, tc.name category_name,
-      {$slaState} sla_state, {$slaTarget} sla_target_minutes,
-      TIMESTAMPADD(MINUTE, {$slaTarget}, t.created_at) sla_due_at,
-      CASE WHEN t.first_response_at IS NULL THEN ({$slaTarget} - {$slaElapsed}) ELSE NULL END sla_remaining_minutes
+    $sql = "SELECT t.*, COALESCE(replies.reply_count,0) reply_count, {$needExpression} needs_reply, au.display_name agent_name, cu.display_name customer_name, c.avatar_url customer_avatar_url, d.name department_name, tc.name category_name
       FROM {$ticketTable} t {$joins} {$where} ORDER BY {$orderBy} {$order}, t.id DESC LIMIT %d OFFSET %d";
     $rows = $this->db->get_results($this->db->prepare($sql, ...[...$values, $query->perPage, ($query->page - 1) * $query->perPage]), ARRAY_A);
     return ['items' => array_map(static fn(array $row): TicketQueueItem => new TicketQueueItem($row), $rows), 'total' => $total];
   }
 
   /** @return array<string, mixed> */
-  /** @param array<string, int> $slaTargets */
-  public function metrics(TicketMetricQuery $query, array $slaTargets, string $now): array {
+  public function metrics(TicketMetricQuery $query): array {
     $ticketTable = $this->table();
     $messageTable = MessageSchema::tableName();
     $departmentTable = DepartmentSchema::tableName();
@@ -332,38 +307,16 @@ final class TicketRepository extends Repository {
       MAX(CASE WHEN type = 'reply' THEN id ELSE NULL END) AS latest_reply_id
       FROM {$messageTable} GROUP BY ticket_id) replies";
     $needReply = "(lm.author_type IN ('customer','guest') AND t.status NOT IN ('resolved','closed') AND t.state = 'active')";
-    $target = "CASE t.priority
-      WHEN 'urgent' THEN " . min(10080, max(15, (int) ($slaTargets['urgent'] ?? 60))) . "
-      WHEN 'high' THEN " . min(10080, max(15, (int) ($slaTargets['high'] ?? 240))) . "
-      WHEN 'medium' THEN " . min(10080, max(15, (int) ($slaTargets['medium'] ?? 480))) . "
-      ELSE " . min(10080, max(15, (int) ($slaTargets['normal'] ?? 1440))) . ' END';
-    $responseMinutes = 'TIMESTAMPDIFF(MINUTE, t.created_at, t.first_response_at)';
-    $ageMinutes = "TIMESTAMPDIFF(MINUTE, t.created_at, '" . esc_sql($now) . "')";
     $joins = "LEFT JOIN {$replies} ON replies.ticket_id = t.id LEFT JOIN {$messageTable} lm ON lm.id = replies.latest_reply_id";
     $summary = $this->db->get_row($this->db->prepare(
       "SELECT COUNT(*) tickets,
         COALESCE(SUM(replies.responses), 0) responses,
         SUM({$needReply}) need_reply,
         SUM(t.status = 'resolved') resolved,
-        SUM(t.status = 'closed') closed,
-        ROUND(COALESCE(AVG(CASE WHEN t.first_response_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, t.created_at, t.first_response_at) END), 0), 1) average_first_response_minutes
+        SUM(t.status = 'closed') closed
        FROM {$ticketTable} t {$joins} {$where}",
       ...$values,
     ), ARRAY_A) ?: [];
-    $sla = $this->db->get_row($this->db->prepare(
-      "SELECT
-        SUM(t.first_response_at IS NOT NULL AND {$responseMinutes} <= {$target}) within_target,
-        SUM((t.first_response_at IS NOT NULL AND {$responseMinutes} > {$target}) OR (t.first_response_at IS NULL AND {$ageMinutes} > {$target})) breached,
-        SUM(t.first_response_at IS NULL AND {$ageMinutes} <= {$target}) awaiting_within_target,
-        SUM(t.first_response_at IS NOT NULL AND {$responseMinutes} < 60) under_1h,
-        SUM(t.first_response_at IS NOT NULL AND {$responseMinutes} >= 60 AND {$responseMinutes} < 240) from_1h_to_4h,
-        SUM(t.first_response_at IS NOT NULL AND {$responseMinutes} >= 240 AND {$responseMinutes} < 1440) from_4h_to_24h,
-        SUM(t.first_response_at IS NOT NULL AND {$responseMinutes} >= 1440) over_24h,
-        SUM(t.first_response_at IS NULL) no_response
-       FROM {$ticketTable} t {$where}",
-      ...$values,
-    ), ARRAY_A) ?: [];
-
     return [
       'summary' => [
         'tickets' => (int) ($summary['tickets'] ?? 0),
@@ -371,19 +324,6 @@ final class TicketRepository extends Repository {
         'need_reply' => (int) ($summary['need_reply'] ?? 0),
         'resolved' => (int) ($summary['resolved'] ?? 0),
         'closed' => (int) ($summary['closed'] ?? 0),
-        'average_first_response_minutes' => (float) ($summary['average_first_response_minutes'] ?? 0),
-      ],
-      'sla' => [
-        'within_target' => (int) ($sla['within_target'] ?? 0),
-        'breached' => (int) ($sla['breached'] ?? 0),
-        'awaiting_within_target' => (int) ($sla['awaiting_within_target'] ?? 0),
-      ],
-      'response_bands' => [
-        'under_1h' => (int) ($sla['under_1h'] ?? 0),
-        'from_1h_to_4h' => (int) ($sla['from_1h_to_4h'] ?? 0),
-        'from_4h_to_24h' => (int) ($sla['from_4h_to_24h'] ?? 0),
-        'over_24h' => (int) ($sla['over_24h'] ?? 0),
-        'no_response' => (int) ($sla['no_response'] ?? 0),
       ],
       'daily' => $this->ticketMetricGroups(
         "DATE(t.created_at) AS group_key",

@@ -20,7 +20,6 @@ use SupportBay\Modules\Tickets\Services\TicketMetricService;
 use WP_Error;
 use WP_REST_Request;
 use SupportBay\Common\Utilities\CsvExporter;
-use SupportBay\Modules\Tickets\Services\TicketSlaPolicyService;
 use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\Tags\Services\TagService;
 use SupportBay\Modules\CustomFields\Services\CustomFieldService;
@@ -34,17 +33,15 @@ final class TicketMetricFlowTest extends FlowTest {
     /** @var TicketRepository $tickets */
     /** @var MessageRepository $messages */
     /** @var CsvExporter $csvExporter */
-    /** @var TicketSlaPolicyService $sla */
     /** @var CategoryService $categories */
     /** @var TagService $tags */
     /** @var CustomFieldService $customFields */
-    [$metrics, $controller, $tickets, $messages, $csvExporter, $sla, $categories, $tags, $customFields] = $services;
+    [$metrics, $controller, $tickets, $messages, $csvExporter, $categories, $tags, $customFields] = $services;
     $today = current_time('Y-m-d');
     $now = $today . ' 00:00:00';
     $ticketIds = [];
     $messageIds = [];
     $agentId = 900000000 + wp_rand(1, 9999999);
-    $existingSla = get_option('sbay_ticket_sla_policy', null);
     $category = $categories->create([
       'name' => 'Metric Category ' . strtolower(
         wp_generate_password(8, false, false)
@@ -61,9 +58,6 @@ final class TicketMetricFlowTest extends FlowTest {
     ]);
 
     try {
-      $sla->update(['enabled' => true, 'first_response_minutes' => [
-        'normal' => 15, 'medium' => 30, 'high' => 45, 'urgent' => 60,
-      ]]);
       $escaped = $csvExporter->generate([[
         'name' => 'Formula safety',
         'headers' => ['Value'],
@@ -124,15 +118,9 @@ final class TicketMetricFlowTest extends FlowTest {
         && $report['summary']['responses'] === 1
         && $report['summary']['need_reply'] === 1
         && $report['summary']['closed'] === 1
-        && $report['summary']['average_first_response_minutes'] === 15.0,
-        'Ticket report derives volume, response, queue, closure, and response-time metrics.',
-      );
-      Assert::true(
-        $report['summary']['sla']['within_target'] === 1
-        && $report['summary']['sla']['breached'] === 2
-        && $report['summary']['response_bands']['under_1h'] === 1
-        && $report['summary']['response_bands']['no_response'] === 2,
-        'SLA compliance and response-time bands use the configured priority target.',
+        && ! isset($report['summary']['sla'])
+        && ! isset($report['summary']['response_bands']),
+        'Ticket report derives MVP volume, response, queue, and closure metrics without SLA analysis.',
       );
       Assert::true(
         count($report['daily']) === 1
@@ -247,8 +235,6 @@ final class TicketMetricFlowTest extends FlowTest {
       $tags->delete($secondTag->id());
       $categories->delete($category->id());
       $customFields->delete($customField->id());
-      if ($existingSla === null) { delete_option('sbay_ticket_sla_policy'); }
-      else { update_option('sbay_ticket_sla_policy', $existingSla, false); }
       wp_set_current_user(0);
     }
   }

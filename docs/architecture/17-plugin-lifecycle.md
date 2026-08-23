@@ -250,6 +250,11 @@ Update Version Option
 
 ## Migration System
 
+The unreleased development schemas are consolidated into database version
+`1.0.0`. A fresh SupportBay installation creates every currently registered
+table directly from `MigrationRegistry`; there are no pre-release incremental
+migrations. Versioned upgrades begin only after the initial production release.
+
 Each version upgrade can have:
 
 ```text id="l13"

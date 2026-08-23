@@ -132,6 +132,10 @@ Admin Features
 
 # Completed Foundation
 
+Database version `1.0.0` is the consolidated initial-release schema. All tables
+completed during local development are installed together; incremental database
+versions begin after the first production release.
+
 ## Core Framework
 
 Status
@@ -1234,13 +1238,13 @@ Ticket Performance Reporting ✅
 
 Report Export Foundation ✅
 
-Ticket SLA Metrics and Response-Time Bands ✅
+Ticket SLA Metrics and Response-Time Bands ⏳ Deferred after MVP
 
-SLA Due-State and Ticket Queue Indicators ✅
+SLA Due-State and Ticket Queue Indicators ⏳ Deferred after MVP
 
-Scheduled SLA Breach Detection and Domain Events ✅
+Scheduled SLA Breach Detection and Domain Events ⏳ Deferred after MVP
 
-SLA Breach Notifications for Assigned Staff ✅
+SLA Breach Notifications for Assigned Staff ⏳ Deferred after MVP
 
 Saved Replies Foundation ✅
 

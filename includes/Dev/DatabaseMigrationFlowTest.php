@@ -29,7 +29,7 @@ final class DatabaseMigrationFlowTest extends FlowTest {
     Assert::equals(
       SBAY_DB_VERSION,
       get_option('sbay_db_version'),
-      'Database version is stored after successful migrations.'
+      'Initial database schema version is stored after successful installation.'
     );
 
     foreach (MigrationRegistry::tables() as $schema) {
@@ -54,7 +54,7 @@ final class DatabaseMigrationFlowTest extends FlowTest {
     Assert::equals(
       '',
       $wpdb->last_error,
-      'Repeated database installation completes without SQL errors.'
+      'The complete initial database installation is repeatable without SQL errors.'
     );
 
     $trackColumn=$wpdb->get_row('SHOW COLUMNS FROM '.\SupportBay\Modules\Tickets\Database\TicketSchema::tableName()." LIKE 'track_id'",ARRAY_A);

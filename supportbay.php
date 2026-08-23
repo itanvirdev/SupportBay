@@ -397,37 +397,9 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Tickets\Repositories\TicketRepository::class),
           $container->get(\SupportBay\Modules\Messages\Repositories\MessageRepository::class),
           $container->get(\SupportBay\Common\Utilities\CsvExporter::class),
-          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
           $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
           $container->get(\SupportBay\Modules\Tags\Services\TagService::class),
           $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
-        );
-        break;
-
-      case 'ticket-sla':
-        \SupportBay\Dev\TicketSlaPolicyFlowTest::run(
-          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
-          $container->get(\SupportBay\Modules\Tickets\Http\Controllers\TicketSlaPolicyController::class),
-        );
-        break;
-
-      case 'ticket-sla-queue':
-        \SupportBay\Dev\TicketSlaQueueFlowTest::run(
-          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
-          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketRepository::class),
-          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
-        );
-        break;
-
-      case 'ticket-sla-breach':
-        \SupportBay\Dev\TicketSlaBreachFlowTest::run(
-          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaBreachService::class),
-          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketSlaBreachRepository::class),
-          $container->get(\SupportBay\Modules\Tickets\Services\TicketSlaPolicyService::class),
-          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketRepository::class),
-          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
-          $container->get(\SupportBay\Modules\Activities\Repositories\ActivityRepository::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
         );
         break;
 
