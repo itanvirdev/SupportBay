@@ -445,21 +445,13 @@ Current behavior
 - Resolved tickets reject replies in both REST and React interfaces until reopened.
 - Existing reopen behavior now supports resolved and closed tickets and clears final-state timestamps.
 - Agent ticket details expose distinct Resolve, Close, and Reopen actions; customers can reopen resolved tickets.
-- Settings now includes a Delivery Logs workspace backed by the protected notification-log API.
-- Administrators can search recipients, subjects, and errors and filter by status, event, and channel.
-- The workspace provides server pagination, selectable safe diagnostics, refresh, and clear empty/error states.
-- Retry controls appear only when the server returns `can_retry`, preserving atomic claims and the three-attempt limit.
 - Message bodies, headers, stored payloads, and raw metadata remain unavailable to the React application.
 - Notification log retention is option-backed and defaults to 90 days with bounded daily batches.
 - Daily and manual cleanup remove only successful, cancelled, and retry-exhausted records older than the cutoff.
 - Pending, processing, and retry-eligible failed deliveries are never selected for retention cleanup.
-- Delivery Logs exposes protected retention controls and an explicit manual cleanup action.
-- The Reports workspace now renders real notification delivery metrics instead of placeholder ticket counts.
-- `GET /sbay/v1/reports/notifications` requires `sbay_view_reports` and accepts validated date, channel, and event filters.
-- Summary totals include successful, failed, queued, cancelled, retries, success rate, and failure rate.
-- Daily trend rows are zero-filled across the requested range, with event and channel breakdowns using identical filters.
-- Reporting responses contain aggregate operational data only and never expose recipients, subjects, bodies, payloads, headers, or metadata.
-- Reports now provides separate Ticket Performance and Notification Delivery workspaces.
+- Notification Delivery reporting and the Delivery Logs administrator workspace are deferred after MVP.
+- Delivery logs remain internal because asynchronous dispatch, retry enforcement, auditing, and automatic retention depend on them.
+- Reports provides the Ticket Performance workspace for MVP.
 - `GET /sbay/v1/reports/tickets` requires `sbay_view_reports` and validates date, department, agent, and priority filters.
 - Ticket summaries include created tickets, staff responses, need-reply tickets, and resolved/closed tickets.
 - Daily ticket/response trends are zero-filled across the selected date range.

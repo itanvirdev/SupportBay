@@ -423,11 +423,11 @@ Implemented administrator template workspace:
 - installation-wide master email switch
 - independent predefined event/recipient controls
 
-The Settings Delivery Logs workspace uses protected administrator endpoints for paginated delivery history, safe diagnostic detail, and retry. Search and filters remain server-backed. Retry buttons are rendered only from server `can_retry` state, and the frontend model intentionally omits stored content, headers, payloads, and raw metadata.
+The Delivery Logs administrator workspace is deferred after MVP. Internal delivery records remain active for asynchronous dispatch, retry enforcement, auditing, and cleanup.
 
 The Reports workspace loads aggregate notification delivery data from the protected reporting API. It presents date/channel/event filters, delivery-health summaries, a zero-filled daily trend, and event/channel tables. The client model contains no recipient or message fields.
 
-Reports uses a shared React workspace with Ticket Performance and Notification Delivery tabs. Ticket Performance loads protected aggregate metrics, reuses server-provided department and agent options, and provides date, department, agent, and priority filters. It renders ticket/response summary cards, a daily activity chart, and department/agent workload tables.
+Reports uses the Ticket Performance workspace for MVP. It loads protected aggregate metrics, reuses server-provided filter options, and renders ticket summary cards, daily activity, and workload tables. Notification Delivery reporting is deferred.
 
 Both report workspaces provide CSV download controls only when the PHP bootstrap reports `canExportReports`. Downloads reuse the currently applied filters, receive their filenames from protected REST responses, and use short-lived browser object URLs. Server-side capability checks remain authoritative.
 

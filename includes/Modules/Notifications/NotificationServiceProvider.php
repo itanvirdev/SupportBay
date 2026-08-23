@@ -9,10 +9,7 @@ use SupportBay\Core\Foundation\ServiceProvider;
 use SupportBay\Modules\Messages\Events\MessageCreated;
 use SupportBay\Modules\Notifications\Channels\WordPressEmailChannel;
 use SupportBay\Modules\Notifications\Contracts\NotificationChannel;
-use SupportBay\Modules\Notifications\Http\Controllers\NotificationController;
-use SupportBay\Modules\Notifications\Http\Controllers\NotificationMetricController;
 use SupportBay\Modules\Notifications\Http\Controllers\NotificationPreferenceController;
-use SupportBay\Modules\Notifications\Http\Controllers\NotificationRetentionController;
 use SupportBay\Modules\Notifications\Http\Controllers\NotificationTemplateController;
 use SupportBay\Modules\Notifications\Listeners\SendMessageCreatedEmail;
 use SupportBay\Modules\Notifications\Listeners\SendTicketCreatedEmails;
@@ -24,7 +21,6 @@ use SupportBay\Modules\Notifications\Repositories\NotificationRetentionRepositor
 use SupportBay\Modules\Notifications\Repositories\NotificationTemplateRepository;
 use SupportBay\Modules\Notifications\Services\NotificationRetryWorker;
 use SupportBay\Modules\Notifications\Services\NotificationCleanupWorker;
-use SupportBay\Modules\Notifications\Services\NotificationMetricService;
 use SupportBay\Modules\Notifications\Services\NotificationPreferenceService;
 use SupportBay\Modules\Notifications\Services\NotificationRetentionService;
 use SupportBay\Modules\Notifications\Services\NotificationScheduler;
@@ -73,15 +69,11 @@ final class NotificationServiceProvider extends ServiceProvider {
     $container->singleton(NotificationPreferenceRepository::class);
     $container->singleton(NotificationRetentionRepository::class);
     $container->singleton(NotificationTemplateRepository::class);
-    $container->singleton(NotificationController::class);
-    $container->singleton(NotificationMetricController::class);
     $container->singleton(NotificationPreferenceController::class);
-    $container->singleton(NotificationRetentionController::class);
     $container->singleton(NotificationTemplateController::class);
     $container->singleton(NotificationTemplateService::class);
     $container->singleton(NotificationPreferenceService::class);
     $container->singleton(NotificationRetentionService::class);
-    $container->singleton(NotificationMetricService::class);
     $container->singleton(DefaultNotificationTemplates::class);
     $container->singleton(SendTicketCreatedEmails::class);
     $container->singleton(SendTicketLifecycleEmail::class);
@@ -93,14 +85,6 @@ final class NotificationServiceProvider extends ServiceProvider {
     parent::boot($container);
 
     add_action('rest_api_init', [
-      $container->get(NotificationController::class),
-      'registerRoutes',
-    ]);
-    add_action('rest_api_init', [
-      $container->get(NotificationMetricController::class),
-      'registerRoutes',
-    ]);
-    add_action('rest_api_init', [
       $container->get(NotificationTemplateController::class),
       'registerRoutes',
     ]);
@@ -108,11 +92,6 @@ final class NotificationServiceProvider extends ServiceProvider {
       $container->get(NotificationPreferenceController::class),
       'registerRoutes',
     ]);
-    add_action('rest_api_init', [
-      $container->get(NotificationRetentionController::class),
-      'registerRoutes',
-    ]);
-
     $container->get(NotificationScheduler::class)->register();
     $container->get(NotificationRetryWorker::class)->register();
     $container->get(NotificationCleanupWorker::class)->register();

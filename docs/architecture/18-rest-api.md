@@ -594,24 +594,15 @@ Used by:
 ---
 # Notification Retention
 
-Administrators with the SupportBay settings capability can read and update the
-notification retention policy through `GET|PUT /sbay/v1/admin/notification-retention`.
-They can trigger one bounded cleanup batch through
-`POST /sbay/v1/admin/notification-retention/cleanup`.
-
-Cleanup is restricted to terminal records older than the configured cutoff.
-Pending, processing, and retry-eligible failed deliveries are not deleted.
+Notification retention runs internally for MVP. Its administrator REST routes
+and manual cleanup controls are not registered. Automatic cleanup remains
+restricted to terminal records older than the configured cutoff; pending,
+processing, and retry-eligible failed deliveries are preserved.
 
 # Notification Delivery Reports
 
-Managers and administrators with `sbay_view_reports` can request aggregate
-delivery metrics through `GET /sbay/v1/reports/notifications`.
-
-Supported filters are `date_from`, `date_to`, `channel`, and `event`. Date
-ranges use `Y-m-d`, must be ordered, and are limited to 367 days. The response
-contains summary counters and rates plus daily, event, and channel breakdowns.
-It intentionally excludes recipient, subject, content, payload, headers, and
-metadata.
+Notification Delivery reporting is deferred after MVP. Its report and export
+routes are not registered by the MVP runtime.
 
 # Ticket Performance Reports
 
@@ -621,7 +612,7 @@ performance metrics through `GET /sbay/v1/reports/tickets`.
 Supported filters are `date_from`, `date_to`, `department_id`, `category_id`,
 `tag_id`, `assigned_agent_id`, and `priority`. `category_id=uncategorized` selects tickets
 without classification. The endpoint returns aggregate ticket,
-staff-response, need-reply, resolved, closed, and average first-response values,
+staff-response, need-reply, resolved, and closed values,
 plus daily, department, category, and agent breakdowns. Category groups retain
 historical names for inactive records and label null relationships as
 `Uncategorized`. Tag workload preserves historical tag names, labels tickets without tags as `Untagged`, and counts a multi-tag ticket in every applicable tag row while summary totals remain unique. Date ranges are limited to 367

@@ -334,14 +334,6 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         \SupportBay\Dev\DatabaseMigrationFlowTest::run();
         break;
 
-      case 'notification-api':
-        \SupportBay\Dev\NotificationApiFlowTest::run(
-          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationController::class),
-          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
-        );
-        break;
-
       case 'notification-retry':
         \SupportBay\Dev\NotificationRetryFlowTest::run(
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationRetryWorker::class),
@@ -378,14 +370,6 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
       case 'notification-retention':
         \SupportBay\Dev\NotificationRetentionFlowTest::run(
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationRetentionService::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
-        );
-        break;
-
-      case 'notification-metrics':
-        \SupportBay\Dev\NotificationMetricFlowTest::run(
-          $container->get(\SupportBay\Modules\Notifications\Services\NotificationMetricService::class),
-          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationMetricController::class),
           $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
         );
         break;
@@ -564,12 +548,6 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
 
         \SupportBay\Dev\DatabaseMigrationFlowTest::run();
-
-        \SupportBay\Dev\NotificationApiFlowTest::run(
-          $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationController::class),
-          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
-        );
 
         \SupportBay\Dev\NotificationRetryFlowTest::run(
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationRetryWorker::class),
