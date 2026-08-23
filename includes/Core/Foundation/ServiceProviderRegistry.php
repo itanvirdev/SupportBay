@@ -26,6 +26,7 @@ use SupportBay\Modules\Tags\TagServiceProvider;
 use SupportBay\Modules\CustomFields\CustomFieldServiceProvider;
 use SupportBay\Modules\Roles\RoleServiceProvider;
 use SupportBay\Modules\Settings\SettingsServiceProvider;
+use SupportBay\Modules\AssignRules\AssignRuleServiceProvider;
 
 final class ServiceProviderRegistry {
   /**
@@ -70,6 +71,7 @@ final class ServiceProviderRegistry {
     self::addProvider(new TagServiceProvider());
     self::addProvider(new CustomFieldServiceProvider());
     self::addProvider(new RoleServiceProvider());
+    self::addProvider(new AssignRuleServiceProvider());
     self::addProvider(new WebhookServiceProvider());
     self::addProvider(new AdminServiceProvider());
     self::addProvider(new PortalServiceProvider());

@@ -18,11 +18,14 @@ main
 
 # Current Sprint
 
-User Role Settings Foundation
+Assign Rules Settings
 
 Current Objective
 
-Manage native SupportBay role definitions through a protected categorized capability workspace.
+Automate ticket assignment and staff notification from ticket categories.
+
+Default routing provisions active Support Agent and Support Manager fallback
+rules for All Categories, including uncategorized tickets.
 
 ---
 

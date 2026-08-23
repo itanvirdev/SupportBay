@@ -126,6 +126,20 @@ final class TicketRepository extends Repository {
     ));
   }
 
+  /** @param int[] $agentIds @return array<int, int> */
+  public function activeAssignmentCounts(array $agentIds): array {
+    $agentIds = array_values(array_unique(array_filter(array_map('absint', $agentIds))));
+    if ($agentIds === []) { return []; }
+    $placeholders = implode(',', array_fill(0, count($agentIds), '%d'));
+    $rows = $this->db->get_results($this->db->prepare(
+      "SELECT assigned_agent_id, COUNT(*) total FROM {$this->table()} WHERE assigned_agent_id IN ({$placeholders}) AND state = %s AND status NOT IN (%s, %s) GROUP BY assigned_agent_id",
+      ...[...$agentIds, TicketState::ACTIVE->value, TicketStatus::RESOLVED->value, TicketStatus::CLOSED->value],
+    ), ARRAY_A);
+    $counts = array_fill_keys($agentIds, 0);
+    foreach ($rows as $row) { $counts[(int) $row['assigned_agent_id']] = (int) $row['total']; }
+    return $counts;
+  }
+
   /**
    * Query a paginated ticket workspace.
    *

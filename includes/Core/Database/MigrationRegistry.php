@@ -21,6 +21,7 @@ use SupportBay\Modules\Tags\Database\TagSchema;
 use SupportBay\Modules\Tags\Database\TicketTagSchema;
 use SupportBay\Modules\CustomFields\Database\CustomFieldSchema;
 use SupportBay\Modules\CustomFields\Database\TicketCustomFieldValueSchema;
+use SupportBay\Modules\AssignRules\Database\AssignRuleSchema;
 
 final class MigrationRegistry {
   /**
@@ -47,6 +48,7 @@ final class MigrationRegistry {
       TicketTagSchema::class,
       CustomFieldSchema::class,
       TicketCustomFieldValueSchema::class,
+      AssignRuleSchema::class,
     ];
   }
 }

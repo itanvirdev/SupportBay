@@ -132,6 +132,14 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         );
         break;
 
+      case 'assign-rule':
+        \SupportBay\Dev\AssignRuleFlowTest::run(
+          $container->get(\SupportBay\Modules\AssignRules\Services\AssignRuleService::class),
+          $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
+          $container->get(\SupportBay\Modules\AssignRules\Http\Controllers\AssignRuleController::class),
+        );
+        break;
+
       case 'tag':
         \SupportBay\Dev\TagFlowTest::run(
           $container->get(\SupportBay\Modules\Tags\Services\TagService::class),
@@ -645,6 +653,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo "- auth\n";
         echo "- weekend-holiday\n";
         echo "- auto-close\n";
+        echo "- assign-rule\n";
         echo "- provider\n";
         echo "- verification\n";
         echo "- provider-verification\n";

@@ -24,7 +24,7 @@ final class Constants {
     }
 
     if (! defined('SBAY_DB_VERSION')) {
-      define('SBAY_DB_VERSION', '1.0.1');
+      define('SBAY_DB_VERSION', '1.1.0');
     }
   }
 

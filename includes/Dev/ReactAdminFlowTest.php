@@ -104,6 +104,9 @@ final class ReactAdminFlowTest extends FlowTest {
     $autoCloseWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/AutoCloseWorkspace.tsx'
     );
+    $assignRuleWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/AssignRuleWorkspace.tsx'
+    );
     $adminApp = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/app.tsx'
     );
@@ -299,6 +302,7 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, 'Categories')
       && str_contains($settingsWorkspace, 'Tags')
       && str_contains($settingsWorkspace, 'Custom Fields')
+      && str_contains($settingsWorkspace, 'Assign Rules')
       && str_contains($settingsWorkspace, 'User Roles')
       && str_contains($settingsWorkspace, 'Departments')
       && str_contains($settingsWorkspace, 'Ticket SLA')
@@ -309,6 +313,7 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, '<CategoryWorkspace/>')
       && str_contains($settingsWorkspace, '<TagWorkspace/>')
       && str_contains($settingsWorkspace, '<CustomFieldWorkspace/>')
+      && str_contains($settingsWorkspace, '<AssignRuleWorkspace/>')
       && str_contains($settingsWorkspace, '<RoleWorkspace/>')
       && str_contains($settingsWorkspace, '<DepartmentWorkspace/>')
       && str_contains($settingsWorkspace, '<GeneralWorkspace')
@@ -321,6 +326,21 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($settingsWorkspace, "window.addEventListener('popstate'")
       && str_contains($settingsWorkspace, '<EnvatoLoginWorkspace tab={envatoTab}'),
       'Settings provides shared navigation for notification templates and integrations.'
+    );
+
+    Assert::true(
+      is_string($assignRuleWorkspace)
+      && str_contains($assignRuleWorkspace, "adminGet<Rule[]>('admin/assign-rules')")
+      && str_contains($assignRuleWorkspace, 'Bulk Actions')
+      && str_contains($assignRuleWorkspace, 'Choose Category')
+      && str_contains($assignRuleWorkspace, 'All Categories')
+      && str_contains($assignRuleWorkspace, 'sbay-category-chip')
+      && str_contains($assignRuleWorkspace, 'Search categories')
+      && str_contains($assignRuleWorkspace, 'sbay-general-toggle')
+      && str_contains($assignRuleWorkspace, 'value="activate"')
+      && str_contains($assignRuleWorkspace, 'value="deactivate"')
+      && str_contains($assignRuleWorkspace, 'value="delete"'),
+      'Settings includes server-driven assignment rules with category selection and lifecycle bulk actions.'
     );
 
     Assert::true(

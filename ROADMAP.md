@@ -1300,6 +1300,8 @@ First Reply Ownership and Agent Handoff ✅
 
 User Role Settings Foundation ✅
 
+Category-based Assign Rules (role, agent, notification, lifecycle, and bulk actions) ✅
+
 Queue ✅
 
 Asynchronous Initial Delivery ✅

@@ -11,12 +11,26 @@ additional settings parameters layered on top:
 - Weekend: `admin.php?page=supportbay-settings&settings=weekend&tab=weekend`
 - Holiday: `admin.php?page=supportbay-settings&settings=weekend&tab=holiday`
 - Auto Close & Delete: `admin.php?page=supportbay-settings&settings=auto-close`
+- Assign Rules: `admin.php?page=supportbay-settings&settings=assign-rules`
 - Envato Main: `admin.php?page=supportbay-settings&settings=integrations&integration=envato&tab=main`
 - Envato Login: `admin.php?page=supportbay-settings&settings=integrations&integration=envato&tab=login-with-envato`
 
 The React workspace initializes from these parameters, updates them with the
 History API, and responds to browser Back and Forward navigation. Reloading or
 sharing a settings URL therefore restores the same section and nested tab.
+
+## Assign Rules
+
+Assign Rules are database-backed and react to the `TicketCreated` domain event.
+Rules match one or more active categories. Agent rules assign directly, role
+rules select the least-loaded eligible active user in that role, and notification
+rules queue email without changing ticket ownership. The first matching
+assignment wins, while every matching notification rule may run.
+
+New and upgraded installations receive two active All Categories role rules:
+Support Agent first and Support Manager second. All Categories is a wildcard
+that also matches uncategorized tickets and works before categories are created.
+Default provisioning runs once, so deleting either default is respected.
 
 ## Weekend and Holiday Availability
 
