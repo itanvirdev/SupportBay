@@ -30,6 +30,9 @@ The release builder:
 3. Installs Composer production autoloading with `--no-dev` and an authoritative
    classmap.
 4. Creates `build/supportbay-{version}.zip` with a single `SupportBay/` root.
+5. Removes the guarded local flow-test dispatcher from the staged bootstrap.
+6. Fails when a required runtime file is missing or a known development artifact
+   enters the staged package.
 
 Do not distribute `composer archive` output from a development working tree. It
 can include local development dependencies and ignored files. The release builder
@@ -45,4 +48,5 @@ A release must contain:
 - production `vendor/autoload.php` and Composer metadata.
 
 A release must not contain source TypeScript, Node modules, flow tests, developer
-tools, project-planning documents, or local operating-system files.
+tools, internal provider manuals, deferred MVP feature handlers,
+project-planning documents, or local operating-system files.

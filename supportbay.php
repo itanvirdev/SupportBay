@@ -731,6 +731,7 @@ if (
         echo '</pre>';
     }
 
+    $GLOBALS['sbay_flow_test_completed'] = true;
     exit($isCli && \SupportBay\Core\Testing\FlowTest::failureCount() > 0 ? 1 : 0);
   });
 }

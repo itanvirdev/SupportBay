@@ -1069,6 +1069,18 @@ Next Target
 Department Settings Foundation
 ```
 
+### Production Package Audit
+
+- The canonical release ZIP excludes development source, flow tests, project
+  documentation, internal provider manuals, and inactive MVP SLA handlers.
+- Local flow-test dispatch remains available in the working tree but is removed
+  from the staged production bootstrap.
+- Release construction now fails closed when required runtime assets are missing,
+  forbidden development artifacts leak into staging, or dev-test code remains in
+  the production bootstrap.
+- The CLI flow runner now exits nonzero when WordPress cannot bootstrap instead
+  of reporting a false successful test run.
+
 - The protected active Support department is provisioned automatically and used as the server-side ticket fallback.
 - Department settings now provide list, create, edit, lifecycle, priority, and ordering controls.
 - The customer ticket form hides department selection when Support is the only active choice.

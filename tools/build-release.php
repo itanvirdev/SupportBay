@@ -96,6 +96,22 @@ foreach ($iterator as $item) {
   copy($item->getPathname(), $destination);
 }
 
+// Keep the local flow-test dispatcher available to developers without shipping
+// test namespaces or several hundred lines of unreachable test bootstrap code.
+$stagedBootstrap = $stageDirectory . '/supportbay.php';
+$bootstrap = (string) file_get_contents($stagedBootstrap);
+$developmentMarker = "/**\n * DEV ONLY: Flow Test\n */";
+$developmentOffset = strpos($bootstrap, $developmentMarker);
+if ($developmentOffset === false) {
+  $remove($stageDirectory);
+  fwrite(STDERR, "Could not locate the development-only bootstrap marker.\n");
+  exit(1);
+}
+file_put_contents(
+  $stagedBootstrap,
+  rtrim(substr($bootstrap, 0, $developmentOffset)) . PHP_EOL,
+);
+
 copy($root . '/composer.json', $stageDirectory . '/composer.json');
 if (is_file($root . '/composer.lock')) {
   copy($root . '/composer.lock', $stageDirectory . '/composer.lock');
@@ -133,6 +149,59 @@ $remove($temporaryDirectory);
 if ($exitCode !== 0 || ! is_file($stageDirectory . '/vendor/autoload.php')) {
   $remove($stageDirectory);
   fwrite(STDERR, "Production Composer autoloading could not be built.\n");
+  exit(1);
+}
+
+$requiredFiles = [
+  'supportbay.php',
+  'uninstall.php',
+  'readme.txt',
+  'license.txt',
+  'vendor/autoload.php',
+  'assets/dist/supportbay-admin.js',
+  'assets/dist/supportbay-customer.js',
+];
+foreach ($requiredFiles as $requiredFile) {
+  if (! is_file($stageDirectory . '/' . $requiredFile)) {
+    $remove($stageDirectory);
+    fwrite(STDERR, "Required production file is missing: {$requiredFile}\n");
+    exit(1);
+  }
+}
+
+$forbiddenFragments = [
+  '/.DS_Store',
+  '/AGENTS.md',
+  '/CODEX.md',
+  '/CURRENT_STATUS.md',
+  '/MASTER_PLAN.md',
+  '/NEXT_TASK.md',
+  '/ROADMAP.md',
+  '/assets/src/',
+  '/docs/',
+  '/includes/Dev/',
+  '/includes/Core/Testing/',
+  '/node_modules/',
+  '/tools/',
+];
+$stagedFiles = new RecursiveIteratorIterator(
+  new RecursiveDirectoryIterator($stageDirectory, FilesystemIterator::SKIP_DOTS),
+);
+foreach ($stagedFiles as $stagedFile) {
+  $relative = '/' . str_replace('\\', '/', substr($stagedFile->getPathname(), strlen($stageDirectory) + 1));
+  foreach ($forbiddenFragments as $fragment) {
+    if (str_contains($relative, $fragment)) {
+      $remove($stageDirectory);
+      fwrite(STDERR, "Forbidden development artifact entered the release: {$relative}\n");
+      exit(1);
+    }
+  }
+}
+
+$productionBootstrap = (string) file_get_contents($stagedBootstrap);
+if (str_contains($productionBootstrap, 'SupportBay\\Dev\\') || str_contains($productionBootstrap, 'sbay_test')) {
+  $remove($stageDirectory);
+  fwrite(STDERR, "Development flow-test code entered the production bootstrap.\n");
   exit(1);
 }
 
