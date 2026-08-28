@@ -12,6 +12,7 @@ use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
+use SupportBay\Modules\Tickets\Services\TicketAccessPolicy;
 use SupportBay\Modules\Tickets\Data\TicketQuery;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
@@ -26,6 +27,7 @@ final class TicketController {
   public function __construct(
     private readonly TicketService $tickets,
     private readonly MessageService $messages,
+    private readonly TicketAccessPolicy $access,
   ) {
   }
 
@@ -72,7 +74,7 @@ final class TicketController {
     }
   }
 
-  public function permissions(): bool|WP_Error {
+  public function permissions(?WP_REST_Request $request = null): bool|WP_Error {
     if (! is_user_logged_in()) {
       return new WP_Error(
         'sbay_authentication_required',
@@ -89,6 +91,13 @@ final class TicketController {
       );
     }
 
+    $ticketId = $request ? absint($request->get_param('id')) : 0;
+    if ($ticketId > 0) {
+      $ticket = $this->tickets->find($ticketId);
+      if (! $ticket || ! $this->access->canView($ticket)) {
+        return new WP_Error('sbay_ticket_access_denied', 'You are not allowed to access this ticket.', ['status' => 403]);
+      }
+    }
     return true;
   }
 
@@ -98,11 +107,13 @@ final class TicketController {
       ? CapabilityManager::CREATE_INTERNAL_NOTE
       : CapabilityManager::REPLY_TICKET;
 
-    return $this->requires($capability);
+    $allowed = $this->requires($capability);
+    return $allowed === true ? $this->permissions($request) : $allowed;
   }
 
-  public function canChangeStatus(): bool|WP_Error {
-    return $this->requires(CapabilityManager::CHANGE_TICKET_STATUS);
+  public function canChangeStatus(WP_REST_Request $request): bool|WP_Error {
+    $allowed = $this->requires(CapabilityManager::CHANGE_TICKET_STATUS);
+    return $allowed === true ? $this->permissions($request) : $allowed;
   }
 
   private function requires(string $capability): bool|WP_Error {
@@ -135,6 +146,8 @@ final class TicketController {
       priority: TicketPriority::tryFrom($priority)?->value,
       assignedAgentId: $agentId ?? ($assignment === 'mine' ? get_current_user_id() : null),
       unassigned: $assignment === 'unassigned',
+      accessAgentId: $this->access->queueScopeAgentId(),
+      accessUnassigned: $this->access->canViewUnassigned(),
       departmentId: absint($request->get_param('department_id')) ?: null,
       categoryId: $category !== 'uncategorized'
         ? (absint($category) ?: null)

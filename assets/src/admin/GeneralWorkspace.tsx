@@ -1,5 +1,6 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Preloader } from '../shared/components/Preloader';
+import { RequestState } from '../shared/components/RequestState';
 import { adminGet, adminPut } from './api';
 
 interface GeneralSettings {
@@ -13,6 +14,7 @@ interface GeneralSettings {
   shortcode_mode:boolean;
   footer_copyright_text:string;
   remove_powered_by_branding:boolean;
+  delete_data_on_uninstall:boolean;
   wordpress_auth_enabled:boolean;
   wordpress_login_url:string;
   wordpress_registration_url:string;
@@ -46,6 +48,7 @@ type GeneralDraft = Pick<GeneralSettings,
   'registration_override'|'disable_registration_form'|'disable_guest_ticket_creation'|
   'client_user_default_role'|'support_portal_page_id'|'shortcode_mode'|
   'footer_copyright_text'|'remove_powered_by_branding'|'wordpress_auth_enabled'|
+  'delete_data_on_uninstall'|
   'wordpress_login_url'|'wordpress_registration_url'
   |'wordpress_profile_enabled'
   |'sequential_track_id_enabled'|'sequential_track_id_prefix'|'sequential_track_id_length'
@@ -83,6 +86,7 @@ const draftFrom = (settings:GeneralSettings):GeneralDraft => ({
   shortcode_mode:settings.shortcode_mode,
   footer_copyright_text:settings.footer_copyright_text,
   remove_powered_by_branding:settings.remove_powered_by_branding,
+  delete_data_on_uninstall:settings.delete_data_on_uninstall,
   wordpress_auth_enabled:settings.wordpress_auth_enabled,
   wordpress_login_url:settings.wordpress_login_url,
   wordpress_registration_url:settings.wordpress_registration_url,
@@ -115,11 +119,13 @@ export function GeneralWorkspace(){
   const [notice,setNotice]=useState<string|null>(null);
   const [activeTab,setActiveTab]=useState<'main'|'logo'|'file'|'status'|'style'>('main');
 
-  useEffect(()=>{
-    adminGet<GeneralSettings>('settings/general')
+  const load=useCallback(()=>{
+    setError(null);
+    return adminGet<GeneralSettings>('settings/general')
       .then(response=>{setSettings(response.data);setDraft(draftFrom(response.data));})
       .catch(reason=>setError(reason instanceof Error?reason.message:'General settings could not be loaded.'));
   },[]);
+  useEffect(()=>{void load();},[load]);
 
   const changed=useMemo(()=>settings!==null&&draft!==null&&JSON.stringify(draft)!==JSON.stringify(draftFrom(settings)),[draft,settings]);
   const update=(changes:Partial<GeneralDraft>)=>setDraft(current=>current?{...current,...changes}:current);
@@ -159,7 +165,7 @@ export function GeneralWorkspace(){
       :{portal_logo_attachment_id:0,portal_logo_url:settings.default_logo_url});
   };
 
-  if(!settings||!draft)return <section className="sbay-general-settings"><header><small>SupportBay configuration</small><h2>General</h2></header>{error?<p className="sbay-admin-error" role="alert">{error}</p>:null}<Preloader label="Loading general settings…" /></section>;
+  if(!settings||!draft)return <section className="sbay-general-settings"><header><small>SupportBay configuration</small><h2>General</h2></header>{error?<RequestState title="General settings unavailable" message={error} retry={()=>void load()}/>:<Preloader label="Loading general settings…" />}</section>;
 
   const effectiveRegistration=!draft.disable_registration_form&&(draft.registration_override||settings.wordpress_registration_enabled);
   const portalUrl=settings.page_options.find(page=>page.id===draft.support_portal_page_id)?.url??settings.support_portal_url;
@@ -174,13 +180,14 @@ export function GeneralWorkspace(){
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.registration_override} onChange={event=>update({registration_override:event.target.checked})}/><span>Override WordPress registration setting.</span><span className="sbay-setting-help" tabIndex={0} aria-label="Registration override help">?<span role="tooltip">Allow SupportBay to create user accounts even if WordPress “Anyone can register” is off.<br/><br/>Turn OFF to strictly follow WordPress&apos;s global setting.</span></span></label>
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.disable_registration_form} onChange={event=>update({disable_registration_form:event.target.checked})}/><span>Disable registration form.</span></label>
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.disable_guest_ticket_creation} onChange={event=>update({disable_guest_ticket_creation:event.target.checked})}/><span>Disable guest ticket creation.</span></label>
-        <label className="sbay-general-select"><span>Client User Default Role</span><select disabled={saving} value={draft.client_user_default_role} onChange={event=>update({client_user_default_role:event.target.value})} aria-describedby="sbay-client-role-help">{settings.role_options.map(role=><option value={role.slug} key={role.slug}>{role.name}</option>)}</select><small id="sbay-client-role-help">This WordPress role is assigned to every new SupportBay registration. Subscriber is recommended for customers.</small></label>
+        <label className="sbay-general-select"><span>Client User Default Role</span><select disabled value="subscriber" aria-describedby="sbay-client-role-help"><option value="subscriber">Subscriber</option></select><small id="sbay-client-role-help">Public SupportBay registration is security-locked to the Subscriber role.</small></label>
         <label className="sbay-general-select"><span>Support Portal Page</span><select disabled={saving} value={draft.support_portal_page_id} onChange={event=>update({support_portal_page_id:Number(event.target.value)})}><option value="0">No portal page selected</option>{settings.page_options.map(page=><option value={page.id} key={page.id}>{page.title}</option>)}</select></label>
         <p className="sbay-portal-visit">Visit: <a href={portalUrl} target="_blank" rel="noreferrer">Support Portal</a></p>
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.shortcode_mode} onChange={event=>update({shortcode_mode:event.target.checked})}/><span>Enable <code>[supportbay]</code> shortcode on other pages.</span></label>
         {draft.shortcode_mode?<p className="sbay-shortcode-notice">Add <code>[supportbay]</code> to any other WordPress page. The selected Support Portal Page continues to work independently.</p>:null}
         <label className="sbay-general-select"><span>Footer Copyright Text</span><input type="text" disabled={saving} value={draft.footer_copyright_text} onChange={event=>update({footer_copyright_text:event.target.value})}/><small>Use <code>{'{year}'}</code> for the current year and <code>{'{site_name}'}</code> for the clickable site name.</small></label>
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.remove_powered_by_branding} onChange={event=>update({remove_powered_by_branding:event.target.checked})}/><span>Remove &apos;powered by&apos; branding.</span></label>
+        <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.delete_data_on_uninstall} onChange={event=>update({delete_data_on_uninstall:event.target.checked})}/><span>Delete all SupportBay data when the plugin is uninstalled.</span><span className="sbay-setting-help" tabIndex={0} aria-label="Uninstall data policy help">?<span role="tooltip">OFF preserves tickets, settings, roles, and attachments. ON permanently removes all SupportBay data only when the plugin is deleted from WordPress.</span></span></label>
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.wordpress_auth_enabled} onChange={event=>update({wordpress_auth_enabled:event.target.checked})}/><span>Enable WordPress login &amp; registration.</span></label>
         {draft.wordpress_auth_enabled?<div className="sbay-wordpress-auth-links">
           <label className="sbay-general-select"><span>Login Page Link</span><input type="url" disabled={saving} value={draft.wordpress_login_url} placeholder="Native WordPress login" onChange={event=>update({wordpress_login_url:event.target.value})}/><small>Leave empty to use the native WordPress login page.</small></label>

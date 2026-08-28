@@ -69,8 +69,8 @@ final class GuestTicketFlowTest extends FlowTest {
       Assert::true(
         ! $second['account_created']
         && $second['ticket']->customerId() === $customerId
-        && $profile->displayName() === 'Updated Name',
-        'A repeated guest email reuses the customer and refreshes the submitted name.',
+        && $profile->displayName() === 'Guest Customer',
+        'A repeated guest email reuses the customer without mutating its verified profile.',
       );
     } finally {
       foreach ($ticketIds as $ticketId) {

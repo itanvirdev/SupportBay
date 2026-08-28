@@ -310,20 +310,13 @@ final class AttachmentService {
    * Resolve and protect the local attachment directory.
    */
   private function storageDirectory(): string {
-    $uploads = wp_upload_dir();
-
-    if (! empty($uploads['error'])) {
-      throw new RuntimeException((string) $uploads['error']);
-    }
-
-    $directory = trailingslashit((string) $uploads['basedir'])
-      . 'supportbay/' . current_time('Y/m');
+    $root = trailingslashit(dirname(untrailingslashit(ABSPATH))) . 'supportbay-private';
+    $directory = trailingslashit($root) . current_time('Y/m');
 
     if (! wp_mkdir_p($directory)) {
       throw new RuntimeException('Attachment storage is unavailable.');
     }
 
-    $root = trailingslashit((string) $uploads['basedir']) . 'supportbay';
     $this->protectDirectory($root);
 
     return $directory;

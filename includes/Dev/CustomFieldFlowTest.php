@@ -49,7 +49,7 @@ final class CustomFieldFlowTest extends FlowTest {
       'sort_order' => 10,
     ]);
     $ticketId = $tickets->create([
-      'customer_id' => null,
+      'customer_id' => 1,
       'department_id' => 1,
       'subject' => 'Custom field foundation ' . $suffix,
     ]);
@@ -112,7 +112,7 @@ final class CustomFieldFlowTest extends FlowTest {
       $fields->update($field->id(), ['is_required' => false]);
       $fields->setValue($ticketId, $field->id(), '', 1);
       $audit = array_values(array_filter(
-        $activities->timeline($ticketId),
+        $activities->getByTicket($ticketId),
         static fn($activity): bool => in_array($activity->eventType(), [
           ActivityType::CUSTOM_FIELD_SET,
           ActivityType::CUSTOM_FIELD_UPDATED,

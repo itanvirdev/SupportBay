@@ -1,5 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { adminGet } from './api';
+import { Preloader } from '../shared/components/Preloader';
+import { RequestState } from '../shared/components/RequestState';
 
 interface VerificationItem {
   id: number;
@@ -78,10 +80,10 @@ export function VerificationDirectory({ back }: Props) {
       <select aria-label="Sort verifications" value={sort} onChange={(event) => update(setSort, event.target.value)}><option value="updated_at:desc">Recently Updated</option><option value="verified_at:desc">Recently Verified</option><option value="support_expires_at:asc">Support Expiring First</option><option value="product:asc">Product Name</option><option value="provider:asc">Provider</option></select>
       <button disabled={!search && !provider && !status && sort === 'updated_at:desc'} onClick={() => { setDraft(''); setSearch(''); setProvider(''); setStatus(''); setSort('updated_at:desc'); setPage(1); }}>Reset</button>
     </div>
-    {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
+    {error && result ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
     <div className="sbay-verification-table">
       <div className="is-header"><span>Purchase</span><span>Status</span><span>Support</span><span>Tickets</span><span>Last checked</span></div>
-      {!result ? <p>Loading verifications…</p> : result.items.length === 0 ? <p>No verifications match these filters.</p> : result.items.map((item) => <div className="sbay-verification-row" key={item.id}>
+      {!result && error ? <RequestState compact title="Verifications could not be loaded" message={error} retry={()=>void load()}/> : !result ? <Preloader label="Loading verifications…" compact/> : result.items.length === 0 ? <RequestState compact title={search||provider||status?'No matching verifications':'No purchase verifications yet'} message={search||provider||status?'Adjust or reset the filters to see other purchase records.':'Verified purchase information will appear after a customer submits a valid Purchase Code/Key.'} action={search||provider||status?()=>{setDraft('');setSearch('');setProvider('');setStatus('');setSort('updated_at:desc');setPage(1);}:undefined} actionLabel={search||provider||status?'Reset filters':undefined}/> : result.items.map((item) => <div className="sbay-verification-row" key={item.id}>
         <span><strong>{item.product_name || item.product_id || 'Unknown product'}</strong><small>{item.provider} · {item.reference}{item.customer_name ? ` · ${item.customer_name}` : ''}</small></span>
         <span><i className={`is-${item.verification_status}`}>{labels[item.verification_status] || item.verification_status}</i><small>{item.license_type || 'License unknown'}</small></span>
         <span><i className={`is-${item.support_status}`}>{item.support_status}</i><small>{item.support_expires_at ? new Date(item.support_expires_at).toLocaleDateString() : 'No expiry'}</small></span>

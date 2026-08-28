@@ -219,6 +219,13 @@ Responsibilities:
 - Clear logs
 - Remove scheduled events
 
+The General setting **Delete all SupportBay data when the plugin is
+uninstalled** is OFF by default. Cron events are always cleared. With the
+setting OFF, uninstall preserves business data. With it ON, uninstall
+permanently removes registered SupportBay tables and options, SupportBay roles
+and capabilities, SupportBay-owned portal pages, and private or legacy
+attachment storage.
+
 ---
 
 # Version Upgrade System
@@ -254,6 +261,10 @@ The unreleased development schemas are consolidated into database version
 `1.0.0`. A fresh SupportBay installation creates every currently registered
 table directly from `MigrationRegistry`; there are no pre-release incremental
 migrations. Versioned upgrades begin only after the initial production release.
+
+`UpgradeManager` runs during normal boot. It merges newly introduced defaults
+without overwriting saved values, executes ordered version migrations, and
+updates `sbay_version` only after successful completion.
 
 Each version upgrade can have:
 
@@ -318,6 +329,23 @@ If something fails during boot:
 - Log error to debug log
 - Disable only affected module (not entire plugin)
 - Continue boot process if possible
+
+---
+
+# Multisite Policy
+
+SupportBay v1 supports single-site WordPress installations only. Both
+individual-site and network-wide activation on multisite are blocked. Network
+lifecycle orchestration is deferred.
+
+---
+
+# Development Flow Tests
+
+URL-triggered flow tests require `WP_DEBUG`, the explicit
+`SBAY_ENABLE_FLOW_TESTS` constant, a `local` or `development` WordPress
+environment, a logged-in administrator with `manage_options`, and a valid
+`sbay_test_nonce` for the `sbay_run_flow_test` action.
 
 ---
 

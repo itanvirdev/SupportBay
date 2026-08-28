@@ -1,4 +1,4 @@
-import { StrictMode, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, StrictMode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { adminDownload, adminGet, adminPost, adminUpload } from './api';
 import { getAdminConfig } from './config';
@@ -9,10 +9,12 @@ import { TicketConversation, type ConversationMessage, type ConversationTicket, 
 import type { SavedReply } from '../shared/tickets/SavedReplyPicker';
 import { CustomerProfile, type CustomerProfileData } from './CustomerProfile';
 import { CustomerDirectory } from './CustomerDirectory';
-import { SettingsWorkspace } from './SettingsWorkspace';
 import { VerificationDirectory } from './VerificationDirectory';
-import { ReportsWorkspace } from './ReportsWorkspace';
 import { Preloader } from '../shared/components/Preloader';
+import { RequestState } from '../shared/components/RequestState';
+
+const ReportsWorkspace = lazy(() => import('./ReportsWorkspace').then((module) => ({ default: module.ReportsWorkspace })));
+const SettingsWorkspace = lazy(() => import('./SettingsWorkspace').then((module) => ({ default: module.SettingsWorkspace })));
 
 async function loadTickets(query: TicketQueryParams): Promise<TicketPage> {
   const response = await adminGet<WorkspaceTicket[]>(`tickets?${ticketQueryString(query)}`);
@@ -76,6 +78,7 @@ function AdminApp() {
   const loadTicketDetail=useCallback(async(background=false)=>{
     if(!ticketId)return;
     const currentRequest=++detailRequestId.current;
+    if(!background)setError(null);
     try{
       const [ticket,messages,context]=await Promise.all([
       adminGet<ConversationTicket>(`tickets/${ticketId}`),
@@ -97,6 +100,7 @@ function AdminApp() {
   },[config.ticketListAutoRefreshEnabled,config.ticketListAutoRefreshInterval,loadTicketDetail,ticketId]);
 
   const loadCustomerProfile = async (id: number) => {
+    setError(null);
     const response = await adminGet<CustomerProfileData>(`admin/customers/${id}/profile`);
     setCustomerProfile(response.data);
   };
@@ -195,10 +199,10 @@ function AdminApp() {
         <span>{config.userName || 'Administrator'}</span>
       </header>
       <p className="sbay-admin-intro">{content.description}</p>
-      {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
+      {error && !ticketId && !customerId ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
 
       {config.section === 'tickets' ? (
-        verificationDirectory ? <VerificationDirectory back={()=>{window.location.href=config.adminUrl;}}/> : customerDirectory ? <CustomerDirectory back={()=>{window.location.href=config.adminUrl;}} openCustomer={id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_customers=1`;}}/> : customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:returnCustomers?`${config.adminUrl}&customers=1`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : <Preloader label="Loading customer profile…" />) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} split={splitTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
+        verificationDirectory ? <VerificationDirectory back={()=>{window.location.href=config.adminUrl;}}/> : customerDirectory ? <CustomerDirectory back={()=>{window.location.href=config.adminUrl;}} openCustomer={id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_customers=1`;}}/> : customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:returnCustomers?`${config.adminUrl}&customers=1`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : error ? <RequestState title="Customer profile could not be loaded" message={error} retry={()=>void loadCustomerProfile(customerId).catch((reason:unknown)=>setError(reason instanceof Error?reason.message:'Customer profile could not be loaded.'))}/> : <Preloader label="Loading customer profile…" />) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} split={splitTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : error ? <RequestState title="Ticket could not be loaded" message={error} retry={()=>void loadTicketDetail(false)}/> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
           mode="staff"
           load={loadTickets}
           options={queueOptions}
@@ -213,11 +217,11 @@ function AdminApp() {
       ) : null}
 
       {config.section === 'reports' ? (
-        <ReportsWorkspace />
+        <Suspense fallback={<Preloader label="Loading reports workspace…" />}><ReportsWorkspace /></Suspense>
       ) : null}
 
       {config.section === 'settings' ? (
-        <SettingsWorkspace />
+        <Suspense fallback={<Preloader label="Loading settings workspace…" />}><SettingsWorkspace /></Suspense>
       ) : null}
     </main>
   );

@@ -23,6 +23,10 @@ export interface SupportBayConfig {
   resetPasswordUrl: string;
   registrationEnabled: boolean;
   guestTicketCreationEnabled: boolean;
+  recaptchaSiteKey: string;
+  recaptchaLoginEnabled: boolean;
+  recaptchaRegistrationEnabled: boolean;
+  recaptchaGuestTicketEnabled: boolean;
   purchaseProviderFieldLabel: string;
   oauthLoginProviders: Array<{slug:string;name:string;url:string}>;
   availabilityNotices: Array<{type:'weekend'|'holiday';message:string}>;

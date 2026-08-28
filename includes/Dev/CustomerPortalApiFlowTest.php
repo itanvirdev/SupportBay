@@ -55,6 +55,16 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       $customFields,
     ] = $services;
 
+    foreach (['fake-purchase', 'fake-oauth'] as $testProviderSlug) {
+      if ($integrations->has($testProviderSlug)) {
+        $integrations->unregister($testProviderSlug);
+      }
+      $existingProvider = $providers->findBySlug($testProviderSlug);
+      if ($existingProvider) {
+        $providers->delete($existingProvider->id());
+      }
+    }
+
     $purchaseProvider = new FakePurchaseProvider();
     $integrations->register($purchaseProvider);
     $providerId = $providers->create([
@@ -71,7 +81,10 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'name' => $oauthProvider->name(),
       'category' => ProviderCategory::MARKETPLACE,
       'status' => ProviderStatus::ENABLED,
-      'settings' => ['available' => true],
+      'settings' => [
+        'available' => true,
+        'oauth_login_enabled' => true,
+      ],
     ]);
 
     $userId = wp_insert_user([
@@ -133,14 +146,14 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'department_id' => $departmentId,
     ]);
     $customField = $customFields->create([
-      'name'             => 'Site URL',
+      'name'             => 'Site URL ' . $userId,
       'type'             => 'url',
       'is_required'      => true,
       'customer_visible' => true,
       'department_id'    => $departmentId,
     ]);
     $privateCustomField = $customFields->create([
-      'name'             => 'Internal account tier',
+      'name'             => 'Internal account tier ' . $userId,
       'type'             => 'text',
       'customer_visible' => false,
       'department_id'    => $departmentId,
@@ -269,11 +282,12 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Profile updates cannot change account identity fields.'
     );
 
+    $oauthReference = 'PORTAL-OAUTH-CUSTOMER-' . $userId;
     $customers->connectProvider(
       $customerId,
       $oauthProvider->authenticateOAuth(
         'portal-connect',
-        ['reference' => 'PORTAL-OAUTH-CUSTOMER'],
+        ['reference' => $oauthReference],
       ),
     );
     $providerConnectionsResponse = rest_do_request(
@@ -289,7 +303,7 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::true(
       ($oauthConnection['connected'] ?? false) === true
       && str_contains((string) ($oauthConnection['connect_url'] ?? ''), 'sbay_oauth=login')
-      && ! str_contains((string) ($oauthConnection['reference'] ?? ''), 'PORTAL-OAUTH-CUSTOMER'),
+      && ! str_contains((string) ($oauthConnection['reference'] ?? ''), $oauthReference),
       'Portal exposes a masked connected-provider summary and generic reconnect URL.'
     );
 
@@ -459,6 +473,9 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'category_id' => $category->id(),
       'provider' => 'fake-purchase',
       'purchase_reference' => $expiredReference,
+      'custom_fields' => [
+        (string) $customField->id() => 'https://example.com/expired-support',
+      ],
     ]);
     $expiredResponse = rest_do_request($expiredRequest);
 

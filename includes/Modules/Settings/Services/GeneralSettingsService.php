@@ -32,8 +32,7 @@ final class GeneralSettingsService {
     $override = (bool) ($settings['registration_override'] ?? false);
     $disabled = (bool) ($settings['disable_registration_form'] ?? false);
     $wordpress = (bool) get_option('users_can_register');
-    $role = sanitize_key((string)($settings['client_user_default_role']??'subscriber'));
-    if (! get_role($role)) { $role='subscriber'; }
+    $role = 'subscriber';
     $pageId=absint($settings['support_portal_page_id']??0);
     if ($pageId>0&&get_post_status($pageId)!=='publish') { $pageId=0; }
     $dashboardLogoId=$this->normalizeLogoAttachmentId($settings['dashboard_logo_attachment_id']??0);
@@ -49,6 +48,7 @@ final class GeneralSettingsService {
       'shortcode_mode'=>(bool)($settings['shortcode_mode']??false),
       'footer_copyright_text'=>$this->normalizeFooterCopyrightText($settings),
       'remove_powered_by_branding'=>(bool)($settings['remove_powered_by_branding']??false),
+      'delete_data_on_uninstall'=>(bool)($settings['delete_data_on_uninstall']??false),
       'wordpress_auth_enabled'=>(bool)($settings['wordpress_auth_enabled']??false),
       'wordpress_login_url'=>esc_url_raw((string)($settings['wordpress_login_url']??'')),
       'wordpress_registration_url'=>esc_url_raw((string)($settings['wordpress_registration_url']??'')),
@@ -92,10 +92,22 @@ final class GeneralSettingsService {
     return !($settings['disable_registration_form']??false)&&((bool)($settings['registration_override']??false)||(bool)get_option('users_can_register'));
   }
   public function clientUserDefaultRole(): string {
-    $role=sanitize_key((string)($this->repository->all()['client_user_default_role']??'subscriber'));
-    return get_role($role)?$role:'subscriber';
+    return 'subscriber';
   }
   public function guestTicketCreationEnabled(): bool { return !(bool)($this->repository->all()['disable_guest_ticket_creation']??true); }
+  /** @return array{enabled:bool,site_key:string,secret_key:string,show_login:bool,show_registration:bool,show_guest_ticket:bool} */
+  public function recaptchaConfiguration(): array {
+    $settings=$this->repository->all();
+    $encrypted=(string)($settings['recaptcha_v3_secret_key']??'');
+    return [
+      'enabled'=>(bool)($settings['recaptcha_v3_enabled']??false),
+      'site_key'=>sanitize_text_field((string)($settings['recaptcha_v3_site_key']??'')),
+      'secret_key'=>$encrypted!==''?$this->cipher->decrypt($encrypted):'',
+      'show_login'=>(bool)($settings['recaptcha_v3_show_login']??true),
+      'show_registration'=>(bool)($settings['recaptcha_v3_show_registration']??true),
+      'show_guest_ticket'=>(bool)($settings['recaptcha_v3_show_guest_ticket']??true),
+    ];
+  }
   public function portalPageId(): int {
     $id=absint($this->repository->all()['support_portal_page_id']??0);
     return $id>0&&get_post_status($id)==='publish'?$id:0;
@@ -159,8 +171,7 @@ final class GeneralSettingsService {
       $settings['disable_guest_ticket_creation'] = filter_var($data['disable_guest_ticket_creation'], FILTER_VALIDATE_BOOL);
     }
     if (array_key_exists('client_user_default_role',$data)) {
-      $role=sanitize_key((string)$data['client_user_default_role']);
-      if (get_role($role)) { $settings['client_user_default_role']=$role; }
+      $settings['client_user_default_role']='subscriber';
     }
     if (array_key_exists('support_portal_page_id',$data)) {
       $pageId=absint($data['support_portal_page_id']);
@@ -175,6 +186,9 @@ final class GeneralSettingsService {
     }
     if (array_key_exists('remove_powered_by_branding',$data)) {
       $settings['remove_powered_by_branding']=filter_var($data['remove_powered_by_branding'],FILTER_VALIDATE_BOOL);
+    }
+    if (array_key_exists('delete_data_on_uninstall',$data)) {
+      $settings['delete_data_on_uninstall']=filter_var($data['delete_data_on_uninstall'],FILTER_VALIDATE_BOOL);
     }
     if (array_key_exists('wordpress_auth_enabled',$data)) {
       $settings['wordpress_auth_enabled']=filter_var($data['wordpress_auth_enabled'],FILTER_VALIDATE_BOOL);
@@ -231,12 +245,7 @@ final class GeneralSettingsService {
 
   /** @return array<int, array{slug:string,name:string}> */
   private function roleOptions(): array {
-    $options=[];
-    foreach (wp_roles()->role_names as $slug=>$name) {
-      $options[]=['slug'=>sanitize_key((string)$slug),'name'=>translate_user_role((string)$name)];
-    }
-    usort($options,static fn(array $left,array $right):int=>strcasecmp($left['name'],$right['name']));
-    return $options;
+    return [['slug'=>'subscriber','name'=>translate_user_role('Subscriber')]];
   }
 
   /** @return array<int, array{id:int,title:string,url:string}> */

@@ -8,6 +8,7 @@ use SupportBay\Modules\Auth\Services\MagicLoginService;
 use SupportBay\Modules\Settings\Services\GeneralSettingsService;
 use SupportBay\Modules\Portal\Services\PortalService;
 use SupportBay\Modules\Settings\Services\WeekendHolidaySettingsService;
+use SupportBay\Modules\Settings\Services\RecaptchaService;
 
 final class PortalPage {
   private const QUERY_VAR = 'sbay_customer_portal';
@@ -19,6 +20,7 @@ final class PortalPage {
     private readonly GeneralSettingsService $settings,
     private readonly PortalService $portal,
     private readonly WeekendHolidaySettingsService $availability,
+    private readonly RecaptchaService $recaptcha,
   ) {
   }
 
@@ -146,6 +148,10 @@ final class PortalPage {
         'resetPasswordUrl' => esc_url_raw(wp_lostpassword_url(trailingslashit($portalUrl) . 'login/')),
         'registrationEnabled' => $this->settings->registrationEnabled(),
         'guestTicketCreationEnabled' => $this->settings->guestTicketCreationEnabled(),
+        'recaptchaSiteKey' => $this->recaptcha->siteKey(),
+        'recaptchaLoginEnabled' => $this->recaptcha->enabledFor('login'),
+        'recaptchaRegistrationEnabled' => $this->recaptcha->enabledFor('registration'),
+        'recaptchaGuestTicketEnabled' => $this->recaptcha->enabledFor('guest_ticket'),
         'purchaseProviderFieldLabel' => $this->settings->purchaseProviderFieldLabel(),
         'oauthLoginProviders' => $this->portal->oauthLoginProviders(),
         'availabilityNotices' => $this->availability->activeNotices(),

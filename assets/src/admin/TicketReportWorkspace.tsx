@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { adminDownloadFile, adminGet } from './api';
 import { getAdminConfig } from './config';
 import { Preloader } from '../shared/components/Preloader';
+import { RequestState } from '../shared/components/RequestState';
 
 interface TicketMetricRow { tickets: number; responses: number; need_reply: number; closed: number; }
 interface TicketReport {
@@ -117,8 +118,8 @@ export function TicketReportWorkspace() {
       <label><span>Priority</span><select value={filters.priority} onChange={(event) => setFilters({...filters,priority:event.target.value})}><option value="">All priorities</option><option value="normal">Normal</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
       <button className="sbay-report-reset" type="button" onClick={resetFilters} disabled={JSON.stringify(filters)===JSON.stringify(defaults)} title="Clear filters" aria-label="Clear report filters">↺</button>
     </div>
-    {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
-    {loading && !report ? <Preloader label="Loading ticket performance…" /> : report ? <>
+    {error && report ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
+    {error && !report && !loading ? <RequestState title="Ticket report could not be loaded" message={error} retry={()=>void load()}/> : loading && !report ? <Preloader label="Loading ticket performance…" /> : report ? <>
       <div className="sbay-report-summary sbay-ticket-report-summary">
         <article><span>Tickets</span><strong>{report.summary.tickets}</strong></article>
         <article><span>Responses</span><strong>{report.summary.responses}</strong></article>

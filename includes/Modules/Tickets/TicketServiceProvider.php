@@ -25,6 +25,7 @@ use SupportBay\Common\Utilities\CsvExporter;
 use SupportBay\Modules\Tickets\Repositories\TicketSlaBreachRepository;
 use SupportBay\Modules\Tickets\Services\TicketTrackIdService;
 use SupportBay\Modules\Tickets\Services\TicketLifecycleWorker;
+use SupportBay\Modules\Tickets\Services\TicketAccessPolicy;
 
 final class TicketServiceProvider extends ServiceProvider {
 
@@ -62,6 +63,7 @@ final class TicketServiceProvider extends ServiceProvider {
     $container->singleton(TicketMetricService::class);
     $container->singleton(TicketTrackIdService::class);
     $container->singleton(TicketLifecycleWorker::class);
+    $container->singleton(TicketAccessPolicy::class);
 
     $container->singleton(TicketController::class);
     $container->singleton(TicketMetricController::class);

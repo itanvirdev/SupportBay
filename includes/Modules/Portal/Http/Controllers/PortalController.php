@@ -23,6 +23,7 @@ use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketStatus;
 use SupportBay\Modules\Verifications\Entities\Verification;
 use SupportBay\Modules\Settings\Services\GeneralSettingsService;
+use SupportBay\Modules\Settings\Services\RecaptchaService;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -34,6 +35,7 @@ final class PortalController {
   public function __construct(
     private readonly PortalService $portal,
     private readonly GeneralSettingsService $settings,
+    private readonly RecaptchaService $recaptcha,
   ) {
   }
 
@@ -427,6 +429,7 @@ final class PortalController {
     WP_REST_Request $request,
   ): WP_REST_Response {
     try {
+      $this->recaptcha->verify((string)$request->get_param('recaptcha_token'),'guest_ticket',isset($_SERVER['REMOTE_ADDR'])?sanitize_text_field((string)$_SERVER['REMOTE_ADDR']):null);
       $result = $this->portal->createGuestTicket([
         'first_name' => sanitize_text_field(
           wp_unslash((string) $request->get_param('first_name'))

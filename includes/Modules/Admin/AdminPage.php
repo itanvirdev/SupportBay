@@ -70,8 +70,15 @@ final class AdminPage {
       return;
     }
 
-    wp_enqueue_editor();
-    wp_enqueue_media();
+    $ticketId = isset($_GET['ticket']) ? absint(wp_unslash($_GET['ticket'])) : 0;
+
+    if ($section === 'settings' || ($section === 'tickets' && $ticketId > 0)) {
+      wp_enqueue_editor();
+    }
+
+    if ($section === 'settings') {
+      wp_enqueue_media();
+    }
 
     $scriptPath = SBAY_PLUGIN_PATH . 'assets/dist/supportbay-admin.js';
     $stylePath = SBAY_PLUGIN_PATH . 'assets/dist/supportbay-admin.css';

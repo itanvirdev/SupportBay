@@ -695,3 +695,11 @@ supportbay/
 ├── supportbay.php
 └── uninstall.php
 ```
+
+## Completed: MVP End-to-End Flow Baseline
+
+- A guarded CLI runner executes the complete WordPress-backed business flow suite.
+- 38 active flows cover the MVP from ticket creation through portal/API access,
+  purchase verification, security authorization, migrations, and lifecycle.
+- Failures return a non-zero process status for repeatable local and future CI use.
+- Real external provider calls remain replaced by deterministic fake providers.

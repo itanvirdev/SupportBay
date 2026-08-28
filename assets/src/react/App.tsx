@@ -1,18 +1,19 @@
-import { StrictMode, useEffect, useState } from 'react';
+import { lazy, StrictMode, Suspense, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { portalApi } from './api/portal';
 import type { PortalOverview } from './api/types';
 import { PortalLayout, type PortalRoute } from './components/PortalLayout';
 import { PortalState } from './components/PortalState';
-import { DashboardPage } from './modules/dashboard/DashboardPage';
-import { PurchasesPage } from './modules/purchases/PurchasesPage';
-import { ProfilePage } from './modules/profile/ProfilePage';
-import { TicketDetailPage } from './modules/tickets/TicketDetailPage';
-import { NewTicketPage } from './modules/tickets/NewTicketPage';
-import { TicketsPage } from './modules/tickets/TicketsPage';
-import { AuthPage } from './modules/auth/AuthPage';
 import { getConfig } from './core/config';
 import './styles/portal.scss';
+
+const AuthPage = lazy(() => import('./modules/auth/AuthPage').then((module) => ({ default: module.AuthPage })));
+const DashboardPage = lazy(() => import('./modules/dashboard/DashboardPage').then((module) => ({ default: module.DashboardPage })));
+const PurchasesPage = lazy(() => import('./modules/purchases/PurchasesPage').then((module) => ({ default: module.PurchasesPage })));
+const ProfilePage = lazy(() => import('./modules/profile/ProfilePage').then((module) => ({ default: module.ProfilePage })));
+const TicketDetailPage = lazy(() => import('./modules/tickets/TicketDetailPage').then((module) => ({ default: module.TicketDetailPage })));
+const NewTicketPage = lazy(() => import('./modules/tickets/NewTicketPage').then((module) => ({ default: module.NewTicketPage })));
+const TicketsPage = lazy(() => import('./modules/tickets/TicketsPage').then((module) => ({ default: module.TicketsPage })));
 
 interface RouteMatch {
   active: PortalRoute;
@@ -91,7 +92,7 @@ function App() {
     if (!authRoute) {
       window.history.replaceState({}, '', `${portalPath}/login/`);
     }
-    return <AuthPage mode={authMode} navigate={navigate}/>;
+    return <Suspense fallback={<PortalState loading message="Loading authentication…" />}><AuthPage mode={authMode} navigate={navigate}/></Suspense>;
   }
 
   if (authRoute) {
@@ -143,7 +144,7 @@ function App() {
 
   return (
     <PortalLayout overview={overview} active={route.active} navigate={navigate}>
-      {page}
+      <Suspense fallback={<PortalState loading message="Loading page…" />}>{page}</Suspense>
     </PortalLayout>
   );
 }

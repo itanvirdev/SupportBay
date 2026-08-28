@@ -22,6 +22,7 @@ final class Deactivator {
     wp_clear_scheduled_hook('sbay_notification_retry');
     wp_clear_scheduled_hook('sbay_notification_cleanup');
     wp_clear_scheduled_hook('sbay_ticket_sla_breach_detection');
+    wp_clear_scheduled_hook('sbay_ticket_lifecycle_cleanup');
   }
 
   /**

@@ -7,11 +7,15 @@ namespace SupportBay\Core\Testing;
 use Throwable;
 
 abstract class FlowTest {
+  private static int $failureCount = 0;
+
   /**
    * Entry point.
    */
-  final public static function run(...$services): void {
+  final public static function run(...$services): bool {
     echo '<pre>';
+
+    $passed = true;
 
     try {
       static::execute(...$services);
@@ -19,6 +23,8 @@ abstract class FlowTest {
       echo PHP_EOL;
       echo "🎯 " . static::title() . " Passed." . PHP_EOL;
     } catch (Throwable $e) {
+      $passed = false;
+      self::$failureCount++;
 
       echo PHP_EOL;
       echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" . PHP_EOL;
@@ -29,6 +35,12 @@ abstract class FlowTest {
     }
 
     echo '</pre>';
+
+    return $passed;
+  }
+
+  public static function failureCount(): int {
+    return self::$failureCount;
   }
 
   /**

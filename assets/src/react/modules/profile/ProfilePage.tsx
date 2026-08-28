@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
 import type { PortalProfile, PortalProviderConnection, UpdateProfileInput } from '../../api/types';
 import { Preloader } from '../../../shared/components/Preloader';
+import { RequestState } from '../../../shared/components/RequestState';
 
 interface ProfilePageProps {
   onUpdated: (profile: PortalProfile) => void;
@@ -21,26 +22,31 @@ export function ProfilePage({ onUpdated }: ProfilePageProps) {
   const [form, setForm] = useState<UpdateProfileInput>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
+  const load = useCallback(async () => {
+    setLoadError(null);
+    try {
+      const [data, connections] = await Promise.all([
       portalApi.profile(),
       portalApi.providerConnections(),
-    ])
-      .then(([data, connections]) => {
-        setProfile(data);
-        setProviders(connections);
-        setForm({
-          company: data.company ?? '',
-          phone: data.phone ?? '',
-          country: data.country ?? '',
-          timezone: data.timezone ?? '',
-          language: data.language ?? '',
-        });
-      })
-      .catch(() => setError('Your profile could not be loaded.'));
+      ]);
+      setProfile(data);
+      setProviders(connections);
+      setForm({
+        company: data.company ?? '',
+        phone: data.phone ?? '',
+        country: data.country ?? '',
+        timezone: data.timezone ?? '',
+        language: data.language ?? '',
+      });
+    } catch (reason) {
+      setLoadError(reason instanceof Error ? reason.message : 'Your profile could not be loaded.');
+    }
   }, []);
+
+  useEffect(() => { void load(); }, [load]);
 
   const field = (name: keyof UpdateProfileInput, value: string) => {
     setForm({ ...form, [name]: value });
@@ -65,7 +71,11 @@ export function ProfilePage({ onUpdated }: ProfilePageProps) {
     }
   };
 
-  if (!profile && !error) {
+  if (!profile && loadError) {
+    return <RequestState title="Profile unavailable" message={loadError} retry={()=>void load()} />;
+  }
+
+  if (!profile) {
     return <Preloader label="Loading your profile…" />;
   }
 
@@ -134,7 +144,7 @@ export function ProfilePage({ onUpdated }: ProfilePageProps) {
             </button>
           </form>
         </div>
-      ) : <p className="sbay-form-error" role="alert">{error}</p>}
+      ) : null}
     </section>
   );
 }

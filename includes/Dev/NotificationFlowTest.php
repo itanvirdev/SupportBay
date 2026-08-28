@@ -20,6 +20,7 @@ use SupportBay\Modules\Notifications\Repositories\NotificationLogRepository;
 use SupportBay\Modules\Notifications\Services\NotificationService;
 use SupportBay\Modules\Activities\Services\ActivityService;
 use SupportBay\Modules\Activities\Enums\ActivityType;
+use SupportBay\Modules\AssignRules\Services\AssignRuleService;
 
 final class NotificationFlowTest extends FlowTest {
   protected static function title(): string {
@@ -34,7 +35,8 @@ final class NotificationFlowTest extends FlowTest {
     /** @var NotificationService $notifications */
     /** @var NotificationLogRepository $logs */
     /** @var ActivityService $activities */
-    [$tickets, $messages, $customers, $departments, $notifications, $logs, $activities] = $services;
+    /** @var AssignRuleService $assignRules */
+    [$tickets, $messages, $customers, $departments, $notifications, $logs, $activities, $assignRules] = $services;
 
     echo "🚀 Starting SupportBay Notification Flow Test...\n\n";
 
@@ -50,6 +52,16 @@ final class NotificationFlowTest extends FlowTest {
     };
 
     add_filter('pre_wp_mail', $capture, 10, 2);
+
+    $activeRuleIds = array_map(
+      static fn($rule): int => $rule->id(),
+      array_values(array_filter($assignRules->all(), static fn($rule): bool => $rule->isActive())),
+    );
+    if ($activeRuleIds !== []) {
+      $assignRules->bulk($activeRuleIds, 'deactivate');
+    }
+
+    try {
 
     $suffix = strtolower(wp_generate_password(8, false, false));
     $userId = wp_insert_user([
@@ -397,5 +409,11 @@ final class NotificationFlowTest extends FlowTest {
       require_once ABSPATH . 'wp-admin/includes/user.php';
     }
     wp_delete_user((int) $agentId);
+    } finally {
+      remove_filter('pre_wp_mail', $capture, 10);
+      if ($activeRuleIds !== []) {
+        $assignRules->bulk($activeRuleIds, 'activate');
+      }
+    }
   }
 }

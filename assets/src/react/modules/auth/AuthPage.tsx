@@ -4,6 +4,7 @@ import { getConfig } from "../../core/config";
 import { PortalCopyright } from "../../components/PortalCopyright";
 import { FilePicker } from "../../components/FilePicker";
 import { RichTextEditor } from "../../../shared/editor/RichTextEditor";
+import { recaptchaToken } from "../../core/recaptcha";
 
 interface AuthPageProps {
 	mode: "login" | "register" | "guest";
@@ -38,12 +39,14 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 		setError(null);
 		try {
 			if (mode === "guest") {
+				const token=await recaptchaToken("guest_ticket");
 				const body = new FormData();
 				body.append("first_name", firstName);
 				body.append("last_name", lastName);
 				body.append("email", email);
 				body.append("subject", subject);
 				body.append("content", description);
+				body.append("recaptcha_token", token);
 				if (files[0]) body.append("file", files[0]);
 				const response = await apiPostForm<{ticket:{track_id:string};account_created:boolean}>("portal/guest-tickets", body);
 				setGuestTicket({track_id:response.ticket.track_id,account_created:response.account_created});
@@ -51,14 +54,16 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 				return;
 			}
 
+			const token=await recaptchaToken(mode === "login" ? "login" : "registration");
 			const response = mode === "login"
-					? await apiPost<{ redirect: string }>("auth/login", { login, password, remember })
+					? await apiPost<{ redirect: string }>("auth/login", { login, password, remember, recaptcha_token:token })
 					: await apiPost<{ redirect: string }>("auth/register", {
 							first_name: firstName,
 							last_name: lastName,
 							email,
 							password,
 							password_confirmation: confirmPassword,
+							recaptcha_token: token,
 						});
 			window.location.assign(response.redirect);
 		} catch (reason) {

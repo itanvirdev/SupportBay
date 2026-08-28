@@ -34,8 +34,11 @@ final class ReactPortalFlowTest extends FlowTest {
     }
 
     Assert::true(
-      isset($wp_rewrite->extra_rules_top['^support(?:/.*)?$']),
-      'Customer portal rewrite is registered.'
+      count(array_filter(
+        $wp_rewrite->extra_rules_top,
+        static fn(string $target): bool => str_contains($target, 'sbay_customer_portal=1'),
+      )) > 0,
+      'The selected customer portal page rewrite is registered.'
     );
 
     $previousValue = $wp_query->query_vars['sbay_customer_portal'] ?? null;
@@ -79,6 +82,8 @@ final class ReactPortalFlowTest extends FlowTest {
       str_contains(implode('', $bootstrap), 'ticketStatusLabels') &&
       str_contains(implode('', $bootstrap), 'resetPasswordUrl') &&
       str_contains(implode('', $bootstrap), 'guestTicketCreationEnabled') &&
+      str_contains(implode('', $bootstrap), 'recaptchaSiteKey') &&
+      str_contains(implode('', $bootstrap), 'recaptchaLoginEnabled') &&
       str_contains(implode('', $bootstrap), 'purchaseProviderFieldLabel') &&
       str_contains(implode('', $bootstrap), 'oauthLoginProviders') &&
       str_contains(implode('', $bootstrap), 'availabilityNotices'),
@@ -130,8 +135,11 @@ final class ReactPortalFlowTest extends FlowTest {
       is_string($portalApp)
       && str_contains($portalApp, 'config.wordpressAuthEnabled')
       && str_contains($portalApp, 'config.wordpressRegistrationUrl')
-      && str_contains($portalApp, 'config.wordpressLoginUrl'),
-      'Portal authentication can redirect to native or custom WordPress authentication pages.',
+      && str_contains($portalApp, 'config.wordpressLoginUrl')
+      && str_contains($portalApp, "lazy(() => import('./modules/auth/AuthPage')")
+      && str_contains($portalApp, "lazy(() => import('./modules/tickets/TicketDetailPage')")
+      && str_contains($portalApp, 'Suspense'),
+      'Portal authentication can redirect to native or custom WordPress authentication pages and route components load on demand.',
     );
     Assert::true(
       is_string($portalLayout)
@@ -190,8 +198,10 @@ final class ReactPortalFlowTest extends FlowTest {
       && str_contains($ticketDetailPage, 'loadDetail(true)')
       && str_contains($ticketDetailPage, 'mutationPending.current')
       && str_contains($ticketDetailPage, "field.type === 'checkbox'")
-      && str_contains($ticketDetailPage, "field.type === 'url'"),
-      'Customer ticket detail is reopenable, auto-refreshes safely, and renders read-only custom-field values.'
+      && str_contains($ticketDetailPage, "field.type === 'url'")
+      && str_contains($ticketDetailPage, 'Ticket unavailable')
+      && str_contains($ticketDetailPage, 'retry={()=>void loadDetail(false)}'),
+      'Customer ticket detail is reopenable, auto-refreshes safely, renders read-only custom-field values, and exposes a retryable failure state.'
     );
 
     $profilePage = file_get_contents(
@@ -202,8 +212,10 @@ final class ReactPortalFlowTest extends FlowTest {
       is_string($profilePage)
       && str_contains($profilePage, 'portalApi.providerConnections()')
       && str_contains($profilePage, 'Connected providers')
-      && str_contains($profilePage, "provider.connected ? 'Reconnect' : 'Connect'"),
-      'Customer profile exposes connected-provider management.'
+      && str_contains($profilePage, "provider.connected ? 'Reconnect' : 'Connect'")
+      && str_contains($profilePage, 'Profile unavailable')
+      && str_contains($profilePage, 'retry={()=>void load()}'),
+      'Customer profile exposes connected-provider management and a retryable initial-load failure state.'
     );
 
     if ($previousValue === null) {

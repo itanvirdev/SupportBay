@@ -57,10 +57,11 @@ final class Application {
     add_action(
       'init',
       [CapabilityManager::class, 'register'],
-      1,
+      2,
     );
 
-    add_action('init', [Activator::class, 'ensurePortalPage'], 2);
+    add_action('init', [UpgradeManager::class, 'maybeUpgrade'], 1);
+    add_action('init', [Activator::class, 'ensurePortalPage'], 3);
 
     ServiceProviderRegistry::register($this->container);
 

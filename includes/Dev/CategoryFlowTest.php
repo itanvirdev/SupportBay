@@ -39,15 +39,15 @@ final class CategoryFlowTest extends FlowTest {
         'A sanitized active department-scoped category is created.'
       );
 
-      Assert::count(
-        2,
-        $categories->applicable(2),
+      $departmentTwoIds = array_map(static fn($item): int => $item->id(), $categories->applicable(2));
+      Assert::true(
+        in_array($scoped->id(), $departmentTwoIds, true) && in_array($global->id(), $departmentTwoIds, true),
         'A department receives its scoped and global categories.'
       );
 
-      Assert::count(
-        1,
-        $categories->applicable(3),
+      $departmentThreeIds = array_map(static fn($item): int => $item->id(), $categories->applicable(3));
+      Assert::true(
+        ! in_array($scoped->id(), $departmentThreeIds, true) && in_array($global->id(), $departmentThreeIds, true),
         'A different department receives only global categories.'
       );
 

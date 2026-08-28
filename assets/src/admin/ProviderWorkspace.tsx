@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminGet, adminPost, adminPut } from './api';
 import { Preloader } from '../shared/components/Preloader';
+import { RequestState } from '../shared/components/RequestState';
 
 export interface ProviderItem {
   id: number;
@@ -154,10 +155,10 @@ export function ProviderWorkspace() {
           <div><small>Installed integrations</small><h2>Providers</h2><p>Manage the integrations registered with this SupportBay installation.</p></div>
           <button type="button" onClick={() => void load()} disabled={loading}>Refresh</button>
         </header>
-        {error ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
+        {error && providers.length>0 ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
         {notice ? <div className="sbay-admin-notice" role="status">{notice}</div> : null}
-        {loading ? <Preloader label="Loading integrations…" /> : null}
-        {!loading && providers.length === 0 ? <p className="sbay-provider-empty">No providers are installed.</p> : null}
+        {loading ? <Preloader label="Loading integrations…" /> : error&&providers.length===0?<RequestState title="Providers could not be loaded" message={error} retry={()=>void load()}/>:null}
+        {!loading && !error && providers.length === 0 ? <RequestState title="No providers installed" message="Registered marketplace integrations will appear here when they are available." /> : null}
         <div className="sbay-provider-grid">
           {providers.map((provider) => {
             const enabled = provider.status === 'enabled';

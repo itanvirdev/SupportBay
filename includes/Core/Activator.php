@@ -12,11 +12,18 @@ final class Activator {
   /**
    * Plugin activation handler
    */
-  public static function activate(): void {
+  public static function activate(bool $networkWide = false): void {
+    if (is_multisite()) {
+      wp_die(
+        esc_html__('SupportBay v1 supports single-site WordPress installations only. Multisite activation is not supported.', 'supportbay'),
+        esc_html__('SupportBay multisite activation unavailable', 'supportbay'),
+        ['back_link' => true],
+      );
+    }
     DatabaseInstaller::install();
 
     self::storeVersion();
-    self::createDefaultOptions();
+    self::mergeDefaultOptions();
     self::ensurePortalPage();
     CapabilityManager::register();
     self::logActivation();
@@ -39,8 +46,8 @@ final class Activator {
   /**
    * Create default plugin options
    */
-  private static function createDefaultOptions(): void {
-    $defaults = [
+  public static function defaultSettings(): array {
+    return [
       'ticket_reopen_days' => 30,
       'default_department' => 'support',
       'file_upload_enabled' => true,
@@ -79,11 +86,15 @@ final class Activator {
       'smart_need_reply_sorting_enabled' => true,
       'dashboard_logo_attachment_id' => 0,
       'portal_logo_attachment_id' => 0,
+      'delete_data_on_uninstall' => false,
     ];
+  }
 
-    if (! get_option('sbay_settings')) {
-      add_option('sbay_settings', $defaults);
-    }
+  public static function mergeDefaultOptions(): void {
+    $stored=get_option('sbay_settings',[]);
+    $stored=is_array($stored)?$stored:[];
+    $merged=array_merge(self::defaultSettings(),$stored);
+    if($merged!==$stored){update_option('sbay_settings',$merged,false);}
   }
 
   public static function ensurePortalPage(): void {
@@ -91,15 +102,20 @@ final class Activator {
     $settings=is_array($settings)?$settings:[];
     $pageId=absint($settings['support_portal_page_id']??0);
     if ($pageId>0&&get_post_status($pageId)==='publish') { return; }
-    $page=get_page_by_path('support',OBJECT,'page');
+    $page=self::ownedPortalPage();
     if (! $page) {
-      $created=wp_insert_post(['post_title'=>'Support','post_name'=>'support','post_content'=>'[supportbay]','post_status'=>'publish','post_type'=>'page']);
+      $created=wp_insert_post(['post_title'=>'Support','post_name'=>'support','post_content'=>'[supportbay]','post_status'=>'publish','post_type'=>'page','meta_input'=>['_sbay_portal_page'=>'1']]);
       $pageId=is_wp_error($created)?0:(int)$created;
     } else { $pageId=(int)$page->ID; }
     if ($pageId>0) {
       $settings['support_portal_page_id']=$pageId;
       update_option('sbay_settings',$settings,false);
     }
+  }
+
+  private static function ownedPortalPage(): ?\WP_Post {
+    $pages=get_posts(['post_type'=>'page','post_status'=>'publish','numberposts'=>1,'meta_key'=>'_sbay_portal_page','meta_value'=>'1']);
+    return isset($pages[0])&&$pages[0] instanceof \WP_Post?$pages[0]:null;
   }
 
   /**

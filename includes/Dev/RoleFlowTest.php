@@ -36,12 +36,13 @@ final class RoleFlowTest extends FlowTest {
     ]);
     $userId = 0;
     try {
+      Assert::equals('sbay_escalation-specialist-' . $suffix, $created->slug(), 'Role slugs are generated from names.');
+      Assert::true(in_array('sbay_view_tickets', $created->capabilities(), true), 'Roles persist catalogued SupportBay capabilities.');
+      Assert::true(! in_array('manage_options', $created->capabilities(), true), 'Roles reject uncatalogued WordPress capabilities.');
+      $runtimeRole = get_role($created->slug());
       Assert::true(
-        $created->slug() === 'sbay_escalation-specialist-' . $suffix
-        && in_array('sbay_view_tickets', $created->capabilities(), true)
-        && ! in_array('manage_options', $created->capabilities(), true)
-        && get_role($created->slug())?->has_cap('sbay_access_dashboard') === true,
-        'Role slugs are generated from names and roles persist only catalogued SupportBay capabilities with required dashboard access.',
+        $runtimeRole?->has_cap('sbay_access_dashboard') === true,
+        'Support roles receive required dashboard access.',
       );
       $inactive = $roles->update($created->slug(), ['status' => 'inactive']);
       Assert::true(! $inactive->isActive() && get_role($created->slug())?->has_cap('sbay_view_tickets') === false, 'Inactive roles preserve definitions while removing support access.');

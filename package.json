@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "webpack --mode production",
+    "release": "npm run build && php tools/build-release.php",
     "dev": "webpack --mode development --watch",
     "typecheck": "tsc --noEmit"
   },

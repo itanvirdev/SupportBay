@@ -16,16 +16,82 @@ main
 
 ---
 
+### Performance and Packaging
+
+- Administrator Reports and Settings load as content-hashed asynchronous chunks.
+- Customer authentication, dashboard, ticket, purchase, and profile routes load
+  their React components on demand.
+- The initial administrator JavaScript decreased from 341 KB to 241 KB, and the
+  customer entry decreased from 237 KB to 197 KB.
+- WordPress editor/media dependencies are limited to the SupportBay screens that
+  use them.
+- Added a deterministic production release builder with optimized, production-only
+  Composer autoloading and a single installable plugin root.
+- Production packages exclude development dependencies, React source, flow tests,
+  AI instructions, internal documentation, tools, and local metadata.
+- The audited ZIP decreased from 9.3 MB compressed / 46 MB unpacked to about
+  525 KB compressed / 1.7 MB unpacked before the final Core Testing exclusion.
+
+---
+
+### Error and Empty-State Audit
+
+- Added a reusable request-state component with accessible messaging, retry, and
+  optional recovery actions.
+- Initial request failures no longer leave ticket details, customer profiles,
+  directories, reports, integrations, or audited settings on endless preloaders.
+- Ticket, customer, and verification lists distinguish an empty installation
+  from a filtered query with no matches.
+- Filtered empty states provide a direct reset action, while customer ticket
+  queues can lead directly to ticket creation.
+- Background ticket refresh failures preserve already-loaded conversations and
+  remain non-disruptive to active work.
+- React administrator and portal flow tests now enforce the recoverable error
+  and actionable empty-state contracts.
+- The production React build and all 38 database-backed flow tests pass.
+
+---
+
+### Complete End-to-End Flow Testing
+
+- Added a CLI-only WordPress flow runner with reliable process exit codes.
+- The complete MVP suite now executes all 38 active flow-test workflows.
+- Existing flows were isolated from persistent local data and corrected to use
+  valid domain fixtures, ownership state, timestamps, and integration setup.
+- Added dedicated security-authorization and installation-lifecycle flows.
+- Fixed role activation defaults and explicit ticket timestamp persistence found
+  by the end-to-end suite.
+- The full database-backed suite, PHP syntax validation, distribution build, and
+  whitespace validation pass cleanly.
+- Notification delivery-log retention and Ticket SLA flows remain outside the
+  MVP suite because those features were intentionally removed from MVP scope.
+
+---
+
 # Current Sprint
 
-Assign Rules Settings
+Security and REST Authorization Audit
 
 Current Objective
 
-Automate ticket assignment and staff notification from ticket categories.
+Harden public authentication, ticket authorization, customer privacy, abuse
+protection, and attachment storage for MVP production readiness.
 
-Default routing provisions active Support Agent and Support Manager fallback
-rules for All Categories, including uncategorized tickets.
+Completed
+
+- Public registration is locked to the WordPress Subscriber role.
+- Anonymous guest submissions no longer mutate existing WordPress profiles.
+- A centralized ticket access policy limits agents to owned and permitted
+  unassigned tickets while managers and administrators retain full queue access.
+- Customer email visibility requires a dedicated SupportBay capability.
+- reCAPTCHA v3 runs in React login, registration, and guest-ticket forms and is
+  verified server-side for action, score, and hostname.
+- New attachments are stored outside the public WordPress document root and
+  remain available only through authorized REST streaming.
+- Installation lifecycle hardening restricts development tests, merges new
+  defaults safely, supports ordered upgrades, prevents portal-page takeover,
+  clears every scheduled worker, and provides explicit opt-in uninstall cleanup.
+- SupportBay v1 is explicitly single-site only; multisite activation is blocked.
 
 ---
 

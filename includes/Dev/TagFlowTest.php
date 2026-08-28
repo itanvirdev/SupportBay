@@ -48,7 +48,7 @@ final class TagFlowTest extends FlowTest {
     $suffix = strtolower(wp_generate_password(8, false, false));
     $tag = $tags->create(['name' => 'Urgent Customer ' . $suffix, 'color' => '#b32d2e']);
     $ticketId = $tickets->create([
-      'customer_id' => null,
+      'customer_id' => 1,
       'department_id' => 1,
       'subject' => 'Tag foundation flow ' . $suffix,
     ]);

@@ -33,6 +33,20 @@ final class MessageFlowTest extends FlowTest {
 
     echo "🚀 Starting SupportBay Message Flow Test...\n\n";
 
+    $suffix = strtolower(wp_generate_password(8, false, false));
+    $agentId = wp_create_user(
+      'sbay-message-agent-' . $suffix,
+      wp_generate_password(24),
+      'message-agent-' . $suffix . '@example.test',
+    );
+    $managerId = wp_create_user(
+      'sbay-message-manager-' . $suffix,
+      wp_generate_password(24),
+      'message-manager-' . $suffix . '@example.test',
+    );
+    (new \WP_User($agentId))->set_role('sbay_agent');
+    (new \WP_User($managerId))->set_role('sbay_manager');
+
     // -------------------------------------------------
     // Create Ticket
     // -------------------------------------------------
@@ -47,6 +61,8 @@ final class MessageFlowTest extends FlowTest {
       $ticketId > 0,
       'Ticket created.'
     );
+
+    $ticketService->changeAssignment($ticketId, null, $managerId);
 
     // -------------------------------------------------
     // Create Message
@@ -109,7 +125,7 @@ final class MessageFlowTest extends FlowTest {
 
     $note = $messageService->create([
       'ticket_id' => $ticketId,
-      'author_id' => 2,
+      'author_id' => $agentId,
       'author_type' => AuthorType::AGENT->value,
       'type' => MessageType::INTERNAL_NOTE->value,
       'content' => 'Internal context only.',
@@ -121,26 +137,26 @@ final class MessageFlowTest extends FlowTest {
 
     $firstReply = $messageService->create([
       'ticket_id' => $ticketId,
-      'author_id' => 2,
+      'author_id' => $agentId,
       'author_type' => AuthorType::AGENT->value,
       'type' => MessageType::REPLY->value,
       'content' => 'First staff reply.',
     ]);
     Assert::equals(
-      2,
+      $agentId,
       $ticketService->find($ticketId)->assignedAgentId(),
       'First public staff reply assigns the responder.'
     );
 
     $laterReply = $messageService->create([
       'ticket_id' => $ticketId,
-      'author_id' => 3,
+      'author_id' => $managerId,
       'author_type' => AuthorType::MANAGER->value,
       'type' => MessageType::REPLY->value,
       'content' => 'Later staff reply.',
     ]);
     Assert::equals(
-      2,
+      $agentId,
       $ticketService->find($ticketId)->assignedAgentId(),
       'Later replies do not replace the assigned responder.'
     );
@@ -149,5 +165,7 @@ final class MessageFlowTest extends FlowTest {
       $messageService->delete($createdMessage->id());
     }
     $ticketService->delete($ticketId);
+    wp_delete_user($agentId);
+    wp_delete_user($managerId);
   }
 }

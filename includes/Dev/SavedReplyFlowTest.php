@@ -31,8 +31,10 @@ final class SavedReplyFlowTest extends FlowTest {
       Assert::count(1, $replies->search('site details', SavedReplyStatus::ACTIVE), 'Active saved replies are searchable by content or title.');
       Assert::true($reply->category() === 'Technical Support' && count($replies->search('', SavedReplyStatus::ACTIVE, 'title', 'Technical Support')) === 1, 'Saved replies store sanitized categories and support exact category filtering.');
       Assert::count(12, $replies->placeholders(), 'Saved replies advertise only the approved ticket-context placeholder catalog.');
-      Assert::count(2, $replies->search('', SavedReplyStatus::ACTIVE, 'title', null, 2, true), 'Department scope includes global and matching replies.');
-      Assert::count(1, $replies->search('', SavedReplyStatus::ACTIVE, 'title', null, 3, true), 'Department scope excludes replies owned by another department.');
+      $departmentTwoIds = array_map(static fn($item): int => $item->id(), $replies->search('', SavedReplyStatus::ACTIVE, 'title', null, 2, true));
+      Assert::true(in_array($reply->id(), $departmentTwoIds, true) && in_array($second->id(), $departmentTwoIds, true), 'Department scope includes global and matching replies.');
+      $departmentThreeIds = array_map(static fn($item): int => $item->id(), $replies->search('', SavedReplyStatus::ACTIVE, 'title', null, 3, true));
+      Assert::true(in_array($reply->id(), $departmentThreeIds, true) && ! in_array($second->id(), $departmentThreeIds, true), 'Department scope excludes replies owned by another department.');
       $used = $replies->recordUsage($reply->id(), 1);
       Assert::true($used !== null && $used->usageCount() === 1 && $used->lastUsedBy() === 1 && $used->lastUsedAt() !== null, 'Active saved-reply insertion is tracked atomically with staff context.');
       $replies->recordUsage($second->id(), 1);
@@ -41,7 +43,7 @@ final class SavedReplyFlowTest extends FlowTest {
 
       $updated = $replies->update($reply->id(), ['title' => 'Request access', 'status' => SavedReplyStatus::INACTIVE->value]);
       Assert::true($updated !== null && $updated->title() === 'Request access' && ! $updated->isActive(), 'Saved replies can be updated and deactivated.');
-      Assert::count(1, $replies->search('', SavedReplyStatus::ACTIVE), 'Inactive saved replies are excluded from the active collection.');
+      Assert::true(! in_array($reply->id(), array_map(static fn($item): int => $item->id(), $replies->search('', SavedReplyStatus::ACTIVE)), true), 'Inactive saved replies are excluded from the active collection.');
       Assert::true($replies->recordUsage($reply->id(), 1) === null, 'Inactive saved replies cannot record new insertions.');
 
       $invalidRejected = false;

@@ -14,6 +14,8 @@ final class TicketQuery {
     public readonly ?string $priority = null,
     public readonly ?int $assignedAgentId = null,
     public readonly bool $unassigned = false,
+    public readonly ?int $accessAgentId = null,
+    public readonly bool $accessUnassigned = false,
     public readonly ?int $customerId = null,
     public readonly ?int $departmentId = null,
     public readonly ?int $categoryId = null,

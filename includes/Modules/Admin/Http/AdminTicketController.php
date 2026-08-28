@@ -19,6 +19,7 @@ use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Services\TicketMergeService;
 use SupportBay\Modules\Tickets\Services\TicketSplitService;
+use SupportBay\Modules\Tickets\Services\TicketAccessPolicy;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
@@ -42,6 +43,7 @@ final class AdminTicketController {
     private readonly AttachmentService $attachments,
     private readonly TicketMergeService $ticketMerger,
     private readonly TicketSplitService $ticketSplitter,
+    private readonly TicketAccessPolicy $access,
   ) {
   }
 
@@ -80,8 +82,7 @@ final class AdminTicketController {
     register_rest_route('sbay/v1', '/admin/tickets/(?P<ticket_id>\d+)/messages/(?P<message_id>\d+)/attachments', [
       'methods' => 'POST',
       'callback' => [$this, 'uploadAttachment'],
-      'permission_callback' => static fn(): bool|WP_Error => current_user_can(CapabilityManager::REPLY_TICKET)
-        ? true : new WP_Error('sbay_permission_denied', 'You are not allowed to upload attachments.', ['status' => 403]),
+      'permission_callback' => [$this, 'canUploadAttachment'],
       'args' => [
         'ticket_id' => ['sanitize_callback' => 'absint'],
         'message_id' => ['sanitize_callback' => 'absint'],
@@ -90,8 +91,7 @@ final class AdminTicketController {
     register_rest_route('sbay/v1', '/admin/attachments/(?P<id>\d+)/download', [
       'methods' => 'GET',
       'callback' => [$this, 'downloadAttachment'],
-      'permission_callback' => static fn(): bool|WP_Error => current_user_can(CapabilityManager::VIEW_TICKETS)
-        ? true : new WP_Error('sbay_permission_denied', 'You are not allowed to download attachments.', ['status' => 403]),
+      'permission_callback' => [$this, 'canDownloadAttachment'],
       'args' => ['id' => ['sanitize_callback' => 'absint']],
     ]);
     register_rest_route('sbay/v1', '/admin/tickets/(?P<id>\d+)/actions', [
@@ -101,14 +101,38 @@ final class AdminTicketController {
     ]);
   }
 
-  public function permissions(): bool|WP_Error {
+  public function permissions(?WP_REST_Request $request = null): bool|WP_Error {
     if (! is_user_logged_in()) {
       return new WP_Error('sbay_authentication_required', 'Authentication is required.', ['status' => 401]);
     }
 
-    return current_user_can(CapabilityManager::VIEW_TICKETS)
+    if (! current_user_can(CapabilityManager::VIEW_TICKETS)) {
+      return new WP_Error('sbay_permission_denied', 'You are not allowed to view tickets.', ['status' => 403]);
+    }
+    $ticketId = $request ? absint($request->get_param('id') ?: $request->get_param('ticket_id')) : 0;
+    if ($ticketId > 0) {
+      $ticket = $this->tickets->find($ticketId);
+      if (! $ticket || ! $this->access->canView($ticket)) {
+        return new WP_Error('sbay_ticket_access_denied', 'You are not allowed to access this ticket.', ['status' => 403]);
+      }
+    }
+    return true;
+  }
+
+  public function canUploadAttachment(WP_REST_Request $request): bool|WP_Error {
+    if (! current_user_can(CapabilityManager::REPLY_TICKET)) {
+      return new WP_Error('sbay_permission_denied', 'You are not allowed to upload attachments.', ['status' => 403]);
+    }
+    return $this->permissions($request);
+  }
+
+  public function canDownloadAttachment(WP_REST_Request $request): bool|WP_Error {
+    $attachment = $this->attachments->find(absint($request->get_param('id')));
+    if (! $attachment) { return new WP_Error('sbay_attachment_not_found', 'Attachment was not found.', ['status' => 404]); }
+    $ticket = $this->tickets->find($attachment->ticketId());
+    return $ticket && $this->access->canView($ticket)
       ? true
-      : new WP_Error('sbay_permission_denied', 'You are not allowed to view tickets.', ['status' => 403]);
+      : new WP_Error('sbay_ticket_access_denied', 'You are not allowed to access this attachment.', ['status' => 403]);
   }
 
   public function show(WP_REST_Request $request): WP_REST_Response {
@@ -125,7 +149,7 @@ final class AdminTicketController {
         $customer = [
           'id' => $profile->customer()->id(),
           'name' => $profile->displayName(),
-          'email' => $profile->email(),
+          'email' => current_user_can(CapabilityManager::SHOW_TICKET_USER_EMAIL) ? $profile->email() : null,
           'avatar_url' => $profile->customer()->avatarUrl(),
           'state' => $profile->customer()->state()->value,
         ];
@@ -229,6 +253,10 @@ final class AdminTicketController {
 
   public function changeTicket(WP_REST_Request $request): WP_REST_Response {
     $id = (int) $request->get_param('id');
+    $existing=$this->tickets->find($id);
+    if (! $existing || ! $this->access->canView($existing)) {
+      return RestResponse::error('You are not allowed to access this ticket.','TICKET_ACCESS_DENIED',[],403);
+    }
     $action = sanitize_key((string) $request->get_param('action'));
     $value = $request->get_param('value');
     $capability = match ($action) {
@@ -285,6 +313,11 @@ final class AdminTicketController {
       return RestResponse::error('You are not allowed to perform this bulk action.', 'TICKET_BULK_ACTION_DENIED', [], 403);
     }
 
+    $denied=array_filter($ids,fn(int $id):bool=>($ticket=$this->tickets->find($id))===null||!$this->access->canView($ticket));
+    if ($denied!==[]) {
+      return RestResponse::error('One or more tickets are outside your permitted queue.','TICKET_ACCESS_DENIED',['ticket_ids'=>array_values($denied)],403);
+    }
+
     if ($action === TicketBulkAction::CUSTOM_FIELD) {
       $fieldValue = (array) $value;
       $fieldId = absint($fieldValue['field_id'] ?? 0);
@@ -334,6 +367,11 @@ final class AdminTicketController {
   }
 
   public function mergeTicket(WP_REST_Request $request): WP_REST_Response {
+    $source=$this->tickets->find((int)$request->get_param('id'));
+    $target=$this->tickets->find(absint($request->get_param('target_id')));
+    if(!$source||!$target||!$this->access->canView($source)||!$this->access->canView($target)){
+      return RestResponse::error('You are not allowed to merge one or more of these tickets.','TICKET_ACCESS_DENIED',[],403);
+    }
     try {
       $target = $this->ticketMerger->merge(
         (int) $request->get_param('id'),
@@ -348,6 +386,10 @@ final class AdminTicketController {
   }
 
   public function splitTicket(WP_REST_Request $request): WP_REST_Response {
+    $source=$this->tickets->find((int)$request->get_param('id'));
+    if(!$source||!$this->access->canView($source)){
+      return RestResponse::error('You are not allowed to split this ticket.','TICKET_ACCESS_DENIED',[],403);
+    }
     try {
       $created = $this->ticketSplitter->split(
         (int) $request->get_param('id'),

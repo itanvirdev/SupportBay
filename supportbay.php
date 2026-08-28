@@ -70,7 +70,11 @@ register_deactivation_hook(
 /**
  * DEV ONLY: Flow Test
  */
-if (defined('WP_DEBUG') && WP_DEBUG) {
+if (
+  defined('WP_DEBUG') && WP_DEBUG
+  && defined('SBAY_ENABLE_FLOW_TESTS') && SBAY_ENABLE_FLOW_TESTS
+  && in_array(wp_get_environment_type(), ['local', 'development'], true)
+) {
 
   add_action('init', function () {
 
@@ -78,7 +82,26 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
       return;
     }
 
+    $nonce = isset($_GET['sbay_test_nonce'])
+      ? sanitize_text_field(wp_unslash((string) $_GET['sbay_test_nonce']))
+      : '';
+    $isCli = PHP_SAPI === 'cli';
+    if (! $isCli && (! is_user_logged_in() || ! current_user_can('manage_options') || ! wp_verify_nonce($nonce, 'sbay_run_flow_test'))) {
+      wp_die(
+        esc_html__('SupportBay flow tests require an authenticated administrator and a valid test nonce.', 'supportbay'),
+        esc_html__('SupportBay flow test denied', 'supportbay'),
+        ['response' => 403],
+      );
+    }
+
     $container = \SupportBay\Core\Application::container();
+
+    if ($isCli && ! function_exists('wp_delete_user')) {
+      require_once ABSPATH . 'wp-admin/includes/user.php';
+    }
+    if ($isCli && ! function_exists('wp_tempnam')) {
+      require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
 
     $test = sanitize_key((string) $_GET['sbay_test']);
 
@@ -88,6 +111,17 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         \SupportBay\Dev\TicketFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
         );
+        break;
+
+      case 'security-authorization':
+        \SupportBay\Dev\SecurityAuthorizationFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketAccessPolicy::class),
+        );
+        break;
+
+      case 'installation-lifecycle':
+        \SupportBay\Dev\InstallationLifecycleFlowTest::run();
         break;
 
       case 'message':
@@ -223,7 +257,6 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Providers\Services\ProviderConfiguration::class),
           $container->get(\SupportBay\Core\Security\SecretCipher::class),
           $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
-          $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderConnectionService::class),
         );
         break;
@@ -327,6 +360,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
           $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
           $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
+          $container->get(\SupportBay\Modules\AssignRules\Services\AssignRuleService::class),
         );
         break;
 
@@ -435,6 +469,45 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
         );
 
+        \SupportBay\Dev\SavedReplyFlowTest::run(
+          $container->get(\SupportBay\Modules\SavedReplies\Services\SavedReplyService::class),
+        );
+
+        \SupportBay\Dev\CategoryFlowTest::run(
+          $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
+        );
+
+        \SupportBay\Dev\AssignRuleFlowTest::run(
+          $container->get(\SupportBay\Modules\AssignRules\Services\AssignRuleService::class),
+          $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
+          $container->get(\SupportBay\Modules\AssignRules\Http\Controllers\AssignRuleController::class),
+        );
+
+        \SupportBay\Dev\TagFlowTest::run(
+          $container->get(\SupportBay\Modules\Tags\Services\TagService::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Tags\Http\Controllers\TagController::class),
+          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
+        );
+
+        \SupportBay\Dev\CustomFieldFlowTest::run(
+          $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\CustomFields\Http\Controllers\CustomFieldController::class),
+          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
+        );
+
+        \SupportBay\Dev\RoleFlowTest::run(
+          $container->get(\SupportBay\Modules\Roles\Services\SupportRoleService::class),
+          $container->get(\SupportBay\Modules\Roles\Http\Controllers\SupportRoleController::class),
+        );
+
+        \SupportBay\Dev\CustomerAuthenticationFlowTest::run(
+          $container->get(\SupportBay\Modules\Auth\Http\CustomerAuthController::class),
+          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
+          $container->get(\SupportBay\Modules\Settings\Services\GeneralSettingsService::class),
+        );
+
         \SupportBay\Dev\CustomerFlowTest::run(
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class)
         );
@@ -447,6 +520,21 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Settings\Services\GeneralSettingsService::class),
         );
 
+        \SupportBay\Dev\GeneralSettingsFlowTest::run(
+          $container->get(\SupportBay\Modules\Settings\Services\GeneralSettingsService::class),
+        );
+
+        \SupportBay\Dev\WeekendHolidayFlowTest::run(
+          $container->get(\SupportBay\Modules\Settings\Services\WeekendHolidaySettingsService::class),
+        );
+
+        \SupportBay\Dev\AutoCloseFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketRepository::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketLifecycleWorker::class),
+          $container->get(\SupportBay\Modules\Settings\Services\AutoCloseSettingsService::class),
+        );
+
         \SupportBay\Dev\AuthFlowTest::run(
           $container->get(\SupportBay\Modules\Auth\Services\AuthService::class),
           $container->get(\SupportBay\Modules\Auth\Services\MagicLoginService::class)
@@ -457,6 +545,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Providers\Services\ProviderConfiguration::class),
           $container->get(\SupportBay\Core\Security\SecretCipher::class),
           $container->get(\SupportBay\Core\Integrations\IntegrationManager::class),
+          $container->get(\SupportBay\Modules\Providers\Services\ProviderConnectionService::class),
         );
 
         \SupportBay\Dev\VerificationFlowTest::run(
@@ -545,6 +634,7 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
           $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
           $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
+          $container->get(\SupportBay\Modules\AssignRules\Services\AssignRuleService::class),
         );
 
         \SupportBay\Dev\DatabaseMigrationFlowTest::run();
@@ -572,6 +662,17 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
           $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationPreferenceController::class),
         );
 
+        \SupportBay\Dev\TicketMetricFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketMetricService::class),
+          $container->get(\SupportBay\Modules\Tickets\Http\Controllers\TicketMetricController::class),
+          $container->get(\SupportBay\Modules\Tickets\Repositories\TicketRepository::class),
+          $container->get(\SupportBay\Modules\Messages\Repositories\MessageRepository::class),
+          $container->get(\SupportBay\Common\Utilities\CsvExporter::class),
+          $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
+          $container->get(\SupportBay\Modules\Tags\Services\TagService::class),
+          $container->get(\SupportBay\Modules\CustomFields\Services\CustomFieldService::class),
+        );
+
         \SupportBay\Dev\ApiWebhookFlowTest::run(
           $container->get(\SupportBay\Modules\Tickets\Http\Controllers\TicketController::class),
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
@@ -588,6 +689,13 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         \SupportBay\Dev\ReactAdminFlowTest::run(
           $container->get(\SupportBay\Modules\Admin\AdminPage::class),
         );
+
+        \SupportBay\Dev\SecurityAuthorizationFlowTest::run(
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
+          $container->get(\SupportBay\Modules\Tickets\Services\TicketAccessPolicy::class),
+        );
+
+        \SupportBay\Dev\InstallationLifecycleFlowTest::run();
         break;
 
       default:
@@ -623,6 +731,6 @@ if (defined('WP_DEBUG') && WP_DEBUG) {
         echo '</pre>';
     }
 
-    exit;
+    exit($isCli && \SupportBay\Core\Testing\FlowTest::failureCount() > 0 ? 1 : 0);
   });
 }

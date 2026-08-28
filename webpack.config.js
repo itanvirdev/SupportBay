@@ -9,6 +9,8 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'assets/dist'),
     filename: '[name].js',
+    chunkFilename: '[name].[contenthash:8].js',
+    publicPath: 'auto',
     clean: true,
   },
   resolve: {
@@ -35,5 +37,7 @@ module.exports = {
   optimization: {
     splitChunks: false,
     runtimeChunk: false,
+    moduleIds: 'deterministic',
+    chunkIds: 'deterministic',
   },
 };

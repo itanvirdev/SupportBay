@@ -3,6 +3,7 @@ import { portalApi } from '../../api/portal';
 import type { PortalAttachment, PortalTicketDetail } from '../../api/types';
 import { formatDate, formatDateTime } from '../../core/date';
 import { Preloader } from '../../../shared/components/Preloader';
+import { RequestState } from '../../../shared/components/RequestState';
 import { FilePicker } from '../../components/FilePicker';
 import { getConfig } from '../../core/config';
 
@@ -14,7 +15,7 @@ interface TicketDetailPageProps {
 export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) {
   const config=getConfig();
   const [detail, setDetail] = useState<PortalTicketDetail | null>(null);
-  const [missing, setMissing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [reply, setReply] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,11 +30,12 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
 
   const loadDetail=useCallback(async(background=false)=>{
     const currentRequest=++requestId.current;
+    if(!background)setLoadError(null);
     try{
       const response=await portalApi.ticket(ticketId);
-      if(currentRequest===requestId.current){setDetail(response);setMissing(false);}
-    }catch{
-      if(!background&&currentRequest===requestId.current)setMissing(true);
+      if(currentRequest===requestId.current)setDetail(response);
+    }catch(reason){
+      if(!background&&currentRequest===requestId.current)setLoadError(reason instanceof Error?reason.message:'The ticket conversation could not be loaded.');
     }
   },[ticketId]);
 
@@ -47,8 +49,8 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
     return()=>window.clearInterval(interval);
   },[config.ticketListAutoRefreshEnabled,config.ticketListAutoRefreshInterval,loadDetail,submitting,transitioning]);
 
-  if (missing) {
-    return <p className="sbay-empty">This ticket could not be found.</p>;
+  if (!detail && loadError) {
+    return <RequestState title="Ticket unavailable" message={loadError} retry={()=>void loadDetail(false)} />;
   }
 
   if (!detail) {

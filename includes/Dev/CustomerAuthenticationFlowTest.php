@@ -24,7 +24,7 @@ final class CustomerAuthenticationFlowTest extends FlowTest {
     $previousRegistration = get_option('users_can_register');
     $previousSettings = $settings->get();
     update_option('users_can_register', 1);
-    $settings->update(['disable_registration_form'=>false]);
+    $settings->update(['disable_registration_form'=>false,'client_user_default_role'=>'administrator','recaptcha_v3_enabled'=>false]);
     wp_set_current_user(0);
     $suffix = strtolower(wp_generate_password(8, false, false));
     $username = 'sbay-auth-' . $suffix;
@@ -40,7 +40,7 @@ final class CustomerAuthenticationFlowTest extends FlowTest {
       $response = $auth->register($register);
       $user = get_user_by('email', $email);
       $userId = $user ? (int)$user->ID : 0;
-      Assert::true($response->get_status() === 201 && $userId > 0 && in_array($settings->clientUserDefaultRole(), $user->roles, true), 'Registration assigns the administrator-selected WordPress client role.');
+      Assert::true($response->get_status() === 201 && $userId > 0 && $user->roles === ['subscriber'], 'Registration cannot elevate an anonymous account beyond Subscriber.');
       $customerId = $customers->findByUser($userId)?->id() ?? 0;
       Assert::true($customerId > 0, 'Registration links the Subscriber to a SupportBay customer record.');
       $auth->logout();
@@ -53,7 +53,7 @@ final class CustomerAuthenticationFlowTest extends FlowTest {
       wp_set_current_user(1);
       if ($customerId > 0) { $customers->deleteWithUser($customerId); }
       update_option('users_can_register', $previousRegistration);
-      $settings->update(['disable_registration_form'=>$previousSettings['disable_registration_form']]);
+      $settings->update(['disable_registration_form'=>$previousSettings['disable_registration_form'],'recaptcha_v3_enabled'=>$previousSettings['recaptcha_v3_enabled']]);
       wp_set_current_user(0);
     }
   }

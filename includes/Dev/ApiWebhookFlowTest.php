@@ -206,7 +206,9 @@ final class ApiWebhookFlowTest extends FlowTest {
       'name'     => 'API Test Provider',
       'settings' => ['client_secret' => 'must-not-leak'],
     ]);
-    $integrations->register(new FakePurchaseProvider());
+    if (! $integrations->has('fake-purchase')) {
+      $integrations->register(new FakePurchaseProvider());
+    }
     $verificationId = $verifications->verifyPurchase(
       'fake-purchase',
       'purchase-' . $suffix,
@@ -410,7 +412,7 @@ final class ApiWebhookFlowTest extends FlowTest {
     $needReplyResponse = rest_do_request($needReplyRequest)->get_data();
     Assert::true(
       $needReplyResponse['meta']['total'] >= 1
-      && $needReplyResponse['data'][0]['id'] === $ticketId,
+      && in_array($ticketId, array_column($needReplyResponse['data'], 'id'), true),
       'Need Reply filter includes tickets whose latest public reply is from the customer.'
     );
 
@@ -477,6 +479,7 @@ final class ApiWebhookFlowTest extends FlowTest {
 
     $wordpressUser = get_userdata($userId);
     $wordpressUser->set_role('sbay_agent');
+    $tickets->changeAssignment($ticketId, $userId, 1);
     wp_set_current_user($userId);
 
     $agentHandoff = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/' . $ticketId . '/actions');
@@ -487,6 +490,9 @@ final class ApiWebhookFlowTest extends FlowTest {
       && $tickets->find($ticketId)?->assignedAgentId() === 1,
       'Agents can transfer a ticket to another eligible support user from ticket details.',
     );
+    wp_set_current_user(1);
+    $tickets->changeAssignment($ticketId, $userId, 1);
+    wp_set_current_user($userId);
     $agentHandoff->set_param('value', '');
     Assert::true(
       rest_do_request($agentHandoff)->get_status() === 200

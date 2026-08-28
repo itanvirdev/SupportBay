@@ -19,6 +19,8 @@ final class SupportRoleService {
     return [
       'Tickets' => [
         'sbay_view_tickets' => 'View staff ticket workspace',
+        'sbay_view_all_tickets' => 'View every agent ticket',
+        'sbay_view_unassigned_tickets' => 'View unassigned tickets',
         'sbay_reply_ticket' => 'Reply to tickets',
         'sbay_create_internal_note' => 'Create internal notes',
         'sbay_upload_attachment' => 'Upload attachments',
@@ -37,6 +39,7 @@ final class SupportRoleService {
         'sbay_change_ticket_custom_fields' => 'Edit ticket custom fields',
       ],
       'Customers & Verification' => [
+        'sbay_show_ticket_user_email' => 'Show ticket user email',
         'sbay_manage_customers' => 'Manage customers',
         'sbay_view_purchase_verification' => 'View purchase verification',
         'sbay_refresh_verification' => 'Refresh purchase verification',
@@ -137,7 +140,7 @@ final class SupportRoleService {
   private function persist(string $slug, array $data, ?SupportRole $existing = null): SupportRole {
     $name = sanitize_text_field((string) ($data['name'] ?? $existing?->name() ?? ''));
     if ($name === '') { throw new InvalidArgumentException('Role name is required.'); }
-    $status = sanitize_key((string) ($data['status'] ?? ($existing?->isActive() ? 'active' : 'inactive')));
+    $status = sanitize_key((string) ($data['status'] ?? ($existing ? ($existing->isActive() ? 'active' : 'inactive') : 'active')));
     if (! in_array($status, ['active', 'inactive'], true)) { throw new InvalidArgumentException('Role status is invalid.'); }
     $supportRole = filter_var($data['support_role'] ?? $existing?->isSupportRole() ?? true, FILTER_VALIDATE_BOOL);
     $requested = (array) ($data['capabilities'] ?? $existing?->capabilities() ?? []);

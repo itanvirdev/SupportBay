@@ -232,6 +232,12 @@ final class TicketRepository extends Repository {
     }
     if ($query->unassigned) { $clauses[] = 't.assigned_agent_id IS NULL'; }
     elseif ($query->assignedAgentId !== null) { $clauses[] = 't.assigned_agent_id = %d'; $values[] = $query->assignedAgentId; }
+    if ($query->accessAgentId !== null) {
+      $clauses[] = $query->accessUnassigned
+        ? '(t.assigned_agent_id = %d OR t.assigned_agent_id IS NULL)'
+        : 't.assigned_agent_id = %d';
+      $values[] = $query->accessAgentId;
+    }
     if ($query->search) {
       $like = '%' . $this->db->esc_like($query->search) . '%';
       $clauses[] = '(t.subject LIKE %s OR t.track_id LIKE %s OR cu.display_name LIKE %s)';
@@ -404,7 +410,7 @@ final class TicketRepository extends Repository {
    * Update ticket
    */
   public function update(int $id, array $data): bool {
-    $data['updated_at'] = $this->now();
+    $data['updated_at'] ??= $this->now();
 
     return $this->updateById($id, $data);
   }

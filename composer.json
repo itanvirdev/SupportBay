@@ -56,7 +56,8 @@
 		"lint": "phpcs",
 		"lint:fix": "phpcbf",
 		"analyse": "phpstan analyse",
-		"test": "phpunit"
+		"test": "phpunit",
+		"release": "npm run release"
 	},
 	"config": {
 		"sort-packages": true,
@@ -67,6 +68,14 @@
 	"archive": {
 		"exclude": [
 			"/docs",
+			"/tools",
+			"/includes/Dev",
+			"/AGENTS.md",
+			"/CODEX.md",
+			"/CURRENT_STATUS.md",
+			"/MASTER_PLAN.md",
+			"/NEXT_TASK.md",
+			"/ROADMAP.md",
 			"/tests",
 			"/.github",
 			"/node_modules",

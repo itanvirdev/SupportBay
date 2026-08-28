@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Preloader } from '../shared/components/Preloader';
+import { RequestState } from '../shared/components/RequestState';
 import { adminGet, adminPost, adminPut } from './api';
 
 interface ProviderItem { id:number; slug:string; name:string; status:'enabled'|'disabled'; }
@@ -65,7 +66,7 @@ export function EnvatoLoginWorkspace({tab,onTabChange}:EnvatoLoginWorkspaceProps
   return <section className="sbay-integration-settings">
     <header><small>Authentication and purchase integration</small><h2>Envato</h2><p>Configure Envato purchase verification, login, and registration.</p></header>
     {error?<p className="sbay-admin-error" role="alert">{error}</p>:null}{notice?<p className="sbay-admin-success" role="status">{notice}</p>:null}
-    <div className="sbay-envato-settings-card">{!provider?<p>Envato integration is not installed.</p>:!configuration?<Preloader label="Loading Envato settings…" compact/>:<form onSubmit={save}>
+    <div className="sbay-envato-settings-card">{error&&!configuration?<RequestState compact title="Envato settings unavailable" message={error} retry={()=>void load()}/>:!provider?<RequestState compact title="Envato integration unavailable" message="The Envato integration is not registered on this installation."/>:!configuration?<Preloader label="Loading Envato settings…" compact/>:<form onSubmit={save}>
       <nav><button type="button" className={tab==='main'?'is-active':''} onClick={()=>onTabChange('main')}>Main</button><button type="button" className={tab==='oauth'?'is-active':''} onClick={()=>onTabChange('oauth')}>Login with Envato</button></nav>
       <div className="sbay-envato-login-settings">
         {enableField?toggle(enableField):null}

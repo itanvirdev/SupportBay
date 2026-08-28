@@ -62,25 +62,11 @@ final class WordPressUserRepository {
     string $role,
   ): array {
     $existingId = $this->findByEmail($email);
-    $displayName = trim($firstName . ' ' . $lastName);
-
     if ($existingId !== null) {
-      // Public submissions must never mutate staff or administrator profiles.
-      if (! user_can($existingId, 'edit_posts')) {
-        $result = wp_update_user([
-          'ID' => $existingId,
-          'first_name' => $firstName,
-          'last_name' => $lastName,
-          'display_name' => $displayName,
-        ]);
-
-        if ($result instanceof WP_Error) {
-          throw new RuntimeException($result->get_error_message());
-        }
-      }
-
       return ['user_id' => $existingId, 'created' => false];
     }
+
+    $displayName = trim($firstName . ' ' . $lastName);
 
     $userId = wp_insert_user([
       'user_login' => $this->uniqueLogin((string) strstr($email, '@', true)),

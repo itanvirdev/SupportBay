@@ -110,6 +110,9 @@ final class ReactAdminFlowTest extends FlowTest {
     $adminApp = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/app.tsx'
     );
+    $adminPageSource = file_get_contents(
+      dirname(__DIR__) . '/Modules/Admin/AdminPage.php'
+    );
     $departmentWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/DepartmentWorkspace.tsx'
     );
@@ -152,13 +155,52 @@ final class ReactAdminFlowTest extends FlowTest {
     $roleWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/RoleWorkspace.tsx'
     );
+    $requestState = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/shared/components/RequestState.tsx'
+    );
+    $ticketWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketWorkspace.tsx'
+    );
+    $customerDirectory = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/CustomerDirectory.tsx'
+    );
+    $verificationDirectory = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/admin/VerificationDirectory.tsx'
+    );
+
+    Assert::true(
+      is_string($requestState)
+      && str_contains($requestState, 'Try again')
+      && str_contains($requestState, 'sbay-request-state')
+      && is_string($ticketWorkspace)
+      && str_contains($ticketWorkspace, 'Tickets could not be loaded')
+      && str_contains($ticketWorkspace, 'No matching tickets')
+      && str_contains($ticketWorkspace, 'No tickets yet')
+      && str_contains($ticketWorkspace, 'Reset filters')
+      && is_string($adminApp)
+      && str_contains($adminApp, 'Customer profile could not be loaded')
+      && str_contains($adminApp, 'Ticket could not be loaded')
+      && is_string($customerDirectory)
+      && str_contains($customerDirectory, 'Customers could not be loaded')
+      && str_contains($customerDirectory, 'No matching customers')
+      && is_string($verificationDirectory)
+      && str_contains($verificationDirectory, 'Verifications could not be loaded')
+      && str_contains($verificationDirectory, 'No purchase verifications yet')
+      && is_string($ticketReportWorkspace)
+      && str_contains($ticketReportWorkspace, 'Ticket report could not be loaded')
+      && is_string($generalWorkspace)
+      && str_contains($generalWorkspace, 'General settings unavailable')
+      && is_string($securityWorkspace)
+      && str_contains($securityWorkspace, 'Security settings unavailable'),
+      'Administrator request failures and empty ticket queues provide recoverable, actionable states.'
+    );
 
     Assert::true(
       is_string($reportsWorkspace)
       && str_contains($reportsWorkspace, '<TicketReportWorkspace/>')
       && ! str_contains($reportsWorkspace, 'Notification Delivery')
       && is_string($ticketReportWorkspace)
-      && str_contains($ticketReportWorkspace, 'reports/tickets?${query}')
+      && str_contains($ticketReportWorkspace, 'reports/tickets?${query()}')
       && str_contains($ticketReportWorkspace, 'reports/tickets/export?${query()}')
       && str_contains($ticketReportWorkspace, 'admin/tickets/options')
       && str_contains($ticketReportWorkspace, 'Daily support activity')
@@ -237,8 +279,13 @@ final class ReactAdminFlowTest extends FlowTest {
       is_string($adminApp)
       && str_contains($adminApp, 'loadTicketDetail(true)')
       && str_contains($adminApp, 'detailMutationPending.current')
-      && str_contains($adminApp, 'config.ticketListAutoRefreshInterval'),
-      'Agent ticket details silently refresh messages and metadata without replacing composer state.',
+      && str_contains($adminApp, 'config.ticketListAutoRefreshInterval')
+      && str_contains($adminApp, "lazy(() => import('./ReportsWorkspace')")
+      && str_contains($adminApp, "lazy(() => import('./SettingsWorkspace')")
+      && is_string($adminPageSource)
+      && str_contains($adminPageSource, "\$section === 'settings' || (\$section === 'tickets' && \$ticketId > 0)")
+      && str_contains($adminPageSource, "if (\$section === 'settings')"),
+      'Agent detail refreshes safely while large workspaces and WordPress editor dependencies load only when required.',
     );
 
     Assert::true(
@@ -397,7 +444,7 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($generalWorkspace, 'Disable registration form.')
       && str_contains($generalWorkspace, 'Disable guest ticket creation.')
       && str_contains($generalWorkspace, 'Client User Default Role')
-      && str_contains($generalWorkspace, 'settings.role_options.map')
+      && str_contains($generalWorkspace, 'value="subscriber"')
       && str_contains($generalWorkspace, 'Support Portal Page')
       && str_contains($generalWorkspace, 'shortcode on other pages')
       && str_contains($generalWorkspace, '[supportbay]')
@@ -563,9 +610,10 @@ final class ReactAdminFlowTest extends FlowTest {
       'Email Notifications uses protected template, preview, reset, and WordPress test-email APIs without SMTP configuration.'
     );
 
-    $adminBundle = file_get_contents(
-      dirname(__DIR__, 2) . '/assets/dist/supportbay-admin.js'
-    );
+    $adminBundle = '';
+    foreach (glob(dirname(__DIR__, 2) . '/assets/dist/*.js') ?: [] as $bundlePath) {
+      $adminBundle .= (string) file_get_contents($bundlePath);
+    }
 
     Assert::true(
       is_string($adminBundle)
@@ -584,7 +632,7 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($adminBundle, 'Export CSV')
       && ! str_contains($adminBundle, 'First-response SLA')
       && ! str_contains($adminBundle, 'Save SLA policy'),
-      'Compiled administrator bundle contains the notification template workspace.'
+      'Compiled administrator chunks contain the complete lazy-loaded settings and report workspaces.'
     );
 
     $verificationDirectory = file_get_contents(

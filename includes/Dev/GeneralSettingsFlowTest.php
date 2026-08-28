@@ -24,9 +24,11 @@ final class GeneralSettingsFlowTest extends FlowTest {
       Assert::true($settings->get()['registration_enabled']===true,'Native WordPress registration remains effective without the override.');
       Assert::true($settings->update(['disable_registration_form'=>true])['registration_enabled']===false,'The registration-form switch disables registration regardless of other settings.');
       $updated=$settings->update(['disable_registration_form'=>false,'disable_guest_ticket_creation'=>false,'client_user_default_role'=>'contributor']);
-      Assert::true($updated['disable_guest_ticket_creation']===false&&$updated['client_user_default_role']==='contributor','Guest policy and the administrator-selected registration role persist.');
+      Assert::true($updated['disable_guest_ticket_creation']===false&&$updated['client_user_default_role']==='subscriber','Guest policy persists while public registration remains locked to Subscriber.');
       $branding=$settings->update(['footer_copyright_text'=>'© {year} {site_name}. All rights reserved.','remove_powered_by_branding'=>true]);
       Assert::true($branding['footer_copyright_text']==='© {year} {site_name}. All rights reserved.'&&$branding['remove_powered_by_branding']===true,'Portal copyright text and powered-by visibility persist.');
+      $retention=$settings->update(['delete_data_on_uninstall'=>true]);
+      Assert::true($retention['delete_data_on_uninstall']===true,'Explicit uninstall data-removal consent persists.');
       $wordpressAuth=$settings->update(['wordpress_auth_enabled'=>true,'wordpress_login_url'=>'https://example.com/customer-login','wordpress_registration_url'=>'https://example.com/customer-register']);
       Assert::true($wordpressAuth['wordpress_auth_enabled']===true&&$wordpressAuth['wordpress_login_url']==='https://example.com/customer-login'&&$wordpressAuth['wordpress_registration_url']==='https://example.com/customer-register','WordPress authentication mode and optional custom links persist.');
       Assert::true($settings->wordpressLoginUrl('https://example.com/support')==='https://example.com/customer-login'&&$settings->wordpressRegistrationUrl()==='https://example.com/customer-register','Custom WordPress authentication links take precedence over native URLs.');
@@ -68,6 +70,7 @@ final class GeneralSettingsFlowTest extends FlowTest {
         'shortcode_mode'=>$previous['shortcode_mode'],
         'footer_copyright_text'=>$previous['footer_copyright_text'],
         'remove_powered_by_branding'=>$previous['remove_powered_by_branding'],
+        'delete_data_on_uninstall'=>$previous['delete_data_on_uninstall']??false,
         'wordpress_auth_enabled'=>$previous['wordpress_auth_enabled'],
         'wordpress_login_url'=>$previous['wordpress_login_url'],
         'wordpress_registration_url'=>$previous['wordpress_registration_url'],

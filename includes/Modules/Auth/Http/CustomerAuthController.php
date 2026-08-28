@@ -8,6 +8,7 @@ use SupportBay\Core\Http\RestResponse;
 use SupportBay\Modules\Customers\Enums\CustomerSource;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Settings\Services\GeneralSettingsService;
+use SupportBay\Modules\Settings\Services\RecaptchaService;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -16,6 +17,7 @@ final class CustomerAuthController {
   public function __construct(
     private readonly CustomerService $customers,
     private readonly GeneralSettingsService $settings,
+    private readonly RecaptchaService $recaptcha,
   ) {}
 
   public function registerRoutes(): void {
@@ -46,6 +48,8 @@ final class CustomerAuthController {
   }
 
   public function login(WP_REST_Request $request): WP_REST_Response {
+    try { $this->recaptcha->verify((string)$request->get_param('recaptcha_token'),'login',isset($_SERVER['REMOTE_ADDR'])?sanitize_text_field((string)$_SERVER['REMOTE_ADDR']):null); }
+    catch (\RuntimeException $exception) { return RestResponse::error($exception->getMessage(),'RECAPTCHA_FAILED',[],403); }
     $login = sanitize_text_field(wp_unslash((string) $request->get_param('login')));
     $password = (string) $request->get_param('password');
     if ($login === '' || $password === '') { return RestResponse::error('Username/email and password are required.', 'LOGIN_REQUIRED', [], 422); }
@@ -58,6 +62,8 @@ final class CustomerAuthController {
 
   public function register(WP_REST_Request $request): WP_REST_Response {
     if (! $this->settings->registrationEnabled()) { return RestResponse::error('Registration is currently disabled.', 'REGISTRATION_DISABLED', [], 403); }
+    try { $this->recaptcha->verify((string)$request->get_param('recaptcha_token'),'registration',isset($_SERVER['REMOTE_ADDR'])?sanitize_text_field((string)$_SERVER['REMOTE_ADDR']):null); }
+    catch (\RuntimeException $exception) { return RestResponse::error($exception->getMessage(),'RECAPTCHA_FAILED',[],403); }
     $email = sanitize_email(wp_unslash((string)$request->get_param('email')));
     $password = (string)$request->get_param('password');
     $confirmation = (string)$request->get_param('password_confirmation');
