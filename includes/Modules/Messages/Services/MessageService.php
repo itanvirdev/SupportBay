@@ -56,6 +56,40 @@ final class MessageService {
   }
 
   /**
+   * Return normalized latest-reply authors for a set of tickets.
+   *
+   * @param int[] $ticketIds
+   * @return array<int, AuthorType>
+   */
+  public function latestReplyAuthorTypes(array $ticketIds): array {
+    $authors = [];
+    foreach ($this->repository->latestReplyAuthorTypes($ticketIds) as $ticketId => $authorType) {
+      $authors[$ticketId] = AuthorType::from($authorType);
+    }
+
+    return $authors;
+  }
+
+  /**
+   * Return latest public reply summaries for ticket-list presentation.
+   *
+   * @param int[] $ticketIds
+   * @return array<int, array{author_type: AuthorType, content: string, reply_count: int}>
+   */
+  public function latestReplySummaries(array $ticketIds): array {
+    $summaries = [];
+    foreach ($this->repository->latestReplySummaries($ticketIds) as $ticketId => $summary) {
+      $summaries[$ticketId] = [
+        'author_type' => AuthorType::from($summary['author_type']),
+        'content' => $summary['content'],
+        'reply_count' => $summary['reply_count'],
+      ];
+    }
+
+    return $summaries;
+  }
+
+  /**
    * Find a message by ID.
    */
   public function find(int $id): ?Message {

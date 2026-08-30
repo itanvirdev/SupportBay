@@ -11,6 +11,7 @@ use SupportBay\Providers\Envato\Api\EnvatoApiClient;
 use SupportBay\Providers\Envato\Services\EnvatoCustomerService;
 use SupportBay\Providers\Envato\Services\EnvatoOAuthService;
 use SupportBay\Providers\Envato\Services\EnvatoPurchaseService;
+use SupportBay\Providers\Envato\Services\EnvatoProvisioningService;
 
 final class EnvatoServiceProvider extends ServiceProvider {
   /**
@@ -27,6 +28,8 @@ final class EnvatoServiceProvider extends ServiceProvider {
 
     $container->singleton(EnvatoProvider::class);
 
+    $container->singleton(EnvatoProvisioningService::class);
+
   }
 
   /**
@@ -38,6 +41,12 @@ final class EnvatoServiceProvider extends ServiceProvider {
       ->register(
         $container->get(EnvatoProvider::class)
       );
+
+    add_action(
+      'init',
+      [$container->get(EnvatoProvisioningService::class), 'provision'],
+      1,
+    );
 
   }
 }

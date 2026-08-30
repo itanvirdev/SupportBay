@@ -65,6 +65,12 @@ export interface PortalTicket {
   purchase_verification_id: number | null;
   created_at: string;
   updated_at: string | null;
+  department_name?: string | null;
+  category_name?: string | null;
+}
+
+export interface CreatedPortalTicket extends PortalTicket {
+  opening_message_id: number;
 }
 
 export interface PortalMessage {

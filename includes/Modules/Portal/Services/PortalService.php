@@ -67,15 +67,7 @@ final class PortalService {
       );
     }
 
-    $customer = $this->customers->findByUser($userId);
-
-    if (! $customer) {
-      throw new RuntimeException(
-        'The authenticated user is not a SupportBay customer.'
-      );
-    }
-
-    return $customer;
+    return $this->customers->ensureWordPressCustomer($userId);
   }
 
   /**
@@ -123,6 +115,26 @@ final class PortalService {
       orderBy: $query->orderBy,
       direction: $query->direction,
     ));
+  }
+
+  /**
+   * Return latest public reply authors for customer queue presentation.
+   *
+   * @param int[] $ticketIds
+   * @return array<int, AuthorType>
+   */
+  public function latestReplyAuthorTypes(array $ticketIds): array {
+    return $this->messages->latestReplyAuthorTypes($ticketIds);
+  }
+
+  /**
+   * Return latest public reply summaries for the customer queue.
+   *
+   * @param int[] $ticketIds
+   * @return array<int, array{author_type: AuthorType, content: string, reply_count: int}>
+   */
+  public function latestReplySummaries(array $ticketIds): array {
+    return $this->messages->latestReplySummaries($ticketIds);
   }
 
   /**

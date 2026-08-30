@@ -41,6 +41,34 @@ final class ReactPortalFlowTest extends FlowTest {
       'The selected customer portal page rewrite is registered.'
     );
 
+    if ($portalPost instanceof \WP_Post) {
+      $portalUrl = get_permalink($portalPost);
+      $pagePath = '/' . trim((string)wp_parse_url($portalUrl, PHP_URL_PATH), '/');
+      $homePath = '/' . trim((string)wp_parse_url(home_url('/'), PHP_URL_PATH), '/');
+      if ($homePath !== '/' && ($pagePath === $homePath || str_starts_with($pagePath, $homePath . '/'))) {
+        $pagePath = substr($pagePath, strlen($homePath));
+      }
+      $rewriteBase = trim($pagePath, '/');
+      $reloadPaths = array_map(
+        static fn(string $route): string => trim($rewriteBase . '/' . $route, '/'),
+        ['login', 'register', 'guest-ticket'],
+      );
+      $portalPatterns = array_keys(array_filter(
+        $wp_rewrite->extra_rules_top,
+        static fn(string $target): bool => str_contains($target, 'sbay_customer_portal=1'),
+      ));
+
+      foreach ($reloadPaths as $reloadPath) {
+        Assert::true(
+          count(array_filter(
+            $portalPatterns,
+            static fn(string $pattern): bool => preg_match('#' . $pattern . '#', $reloadPath) === 1,
+          )) > 0,
+          sprintf('Direct reload route "%s" resolves to the portal.', $reloadPath),
+        );
+      }
+    }
+
     $previousValue = $wp_query->query_vars['sbay_customer_portal'] ?? null;
     $wp_query->query_vars['sbay_customer_portal'] = '1';
     wp_set_current_user(1);
@@ -88,6 +116,15 @@ final class ReactPortalFlowTest extends FlowTest {
       str_contains(implode('', $bootstrap), 'oauthLoginProviders') &&
       str_contains(implode('', $bootstrap), 'availabilityNotices'),
       'React bootstrap includes REST authentication configuration.'
+    );
+
+    $bootstrapSource = is_array($bootstrap) ? implode('', $bootstrap) : '';
+    Assert::true(
+      str_contains($bootstrapSource, 'action=logout')
+      && str_contains($bootstrapSource, '_wpnonce=')
+      && ! str_contains($bootstrapSource, 'amp%3B_wpnonce')
+      && ! str_contains($bootstrapSource, 'amp;_wpnonce'),
+      'Sign out uses a directly executable WordPress nonce URL without a confirmation step.',
     );
 
     $authPage = file_get_contents(
@@ -172,6 +209,8 @@ final class ReactPortalFlowTest extends FlowTest {
     Assert::true(
       is_string($newTicketPage)
       && str_contains($newTicketPage, 'portalApi.purchaseProviders()')
+      && str_contains($newTicketPage, 'Promise.allSettled')
+      && str_contains($newTicketPage, 'ticket.opening_message_id')
       && str_contains($newTicketPage, 'purchase_reference: purchaseReference.trim()')
       && str_contains($newTicketPage, 'portalApi.customFields(departmentId)')
       && str_contains($newTicketPage, 'custom_fields: customFieldValues')
@@ -188,6 +227,15 @@ final class ReactPortalFlowTest extends FlowTest {
     $ticketDetailPage = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/react/modules/tickets/TicketDetailPage.tsx'
     );
+    $ticketsPage = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/react/modules/tickets/TicketsPage.tsx'
+    );
+    $ticketWorkspace = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketWorkspace.tsx'
+    );
+    $portalStyles = file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/react/styles/portal.scss'
+    );
     Assert::true(
       is_string($ticketDetailPage)
       && str_contains($ticketDetailPage, "['resolved', 'closed'].includes(detail.ticket.status)")
@@ -200,8 +248,29 @@ final class ReactPortalFlowTest extends FlowTest {
       && str_contains($ticketDetailPage, "field.type === 'checkbox'")
       && str_contains($ticketDetailPage, "field.type === 'url'")
       && str_contains($ticketDetailPage, 'Ticket unavailable')
+      && str_contains($ticketDetailPage, "message.author_type === 'agent' ? 'is-support' : 'is-customer'")
+      && str_contains($ticketDetailPage, "message.author_type === 'agent' ? 'Support team' : 'You'")
       && str_contains($ticketDetailPage, 'retry={()=>void loadDetail(false)}'),
       'Customer ticket detail is reopenable, auto-refreshes safely, renders read-only custom-field values, and exposes a retryable failure state.'
+    );
+
+    Assert::true(
+      is_string($ticketsPage)
+      && str_contains($ticketsPage, 'show_departments')
+      && str_contains($ticketsPage, 'show_categories')
+      && is_string($ticketWorkspace)
+      && str_contains($ticketWorkspace, 'result?.showDepartments')
+      && str_contains($ticketWorkspace, 'result?.showCategories')
+      && str_contains($ticketWorkspace, 'ticket.has_support_reply')
+      && str_contains($ticketWorkspace, 'ticket.reply_count')
+      && str_contains($ticketWorkspace, 'ticket.latest_reply_excerpt')
+      && str_contains($ticketWorkspace, 'Agent Replied')
+      && ! str_contains($ticketWorkspace, ': <span className="sbay-ticket-avatar">{ticket.subject.charAt(0)}</span>')
+      && is_string($portalStyles)
+      && str_contains($portalStyles, 'article.is-support')
+      && str_contains($portalStyles, 'border-left: 4px solid var(--sbay-green)')
+      && str_contains($portalStyles, 'background: #f1f8f4'),
+      'Customer queues hide redundant default taxonomy metadata and support replies are visually distinguished.',
     );
 
     $profilePage = file_get_contents(

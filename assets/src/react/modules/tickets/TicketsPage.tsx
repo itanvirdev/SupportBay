@@ -17,6 +17,8 @@ export function TicketsPage({ navigate }: TicketsPageProps) {
       page: Number(response.meta.page) || 1,
       total: Number(response.meta.total) || 0,
       totalPages: Number(response.meta.total_pages) || 1,
+      showDepartments: Boolean(response.meta.show_departments),
+      showCategories: Boolean(response.meta.show_categories),
     };
   }, []);
 

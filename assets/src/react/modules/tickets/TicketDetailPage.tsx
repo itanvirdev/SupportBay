@@ -25,6 +25,12 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [preview,setPreview]=useState<{url:string;name:string;mime:string}|null>(null);
+  const [creationWarning] = useState<string | null>(() => {
+    const key = `sbay-ticket-attachment-warning:${ticketId}`;
+    const warning = window.sessionStorage.getItem(key);
+    window.sessionStorage.removeItem(key);
+    return warning;
+  });
   const requestId=useRef(0);
   const mutationPending=useRef(false);
 
@@ -126,7 +132,8 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
     try {
       const blob = await portalApi.downloadAttachment(attachment.id);
       const url = URL.createObjectURL(blob);
-      if(config.attachmentPopupPreviewEnabled&&attachment.is_previewable&&(attachment.mime_type.startsWith('image/')||attachment.mime_type==='application/pdf')){
+      const previewableMime = attachment.mime_type.startsWith('image/') || attachment.mime_type === 'application/pdf';
+      if(config.attachmentPopupPreviewEnabled&&previewableMime){
         setPreview({url,name:attachment.original_name,mime:attachment.mime_type});
         return;
       }
@@ -175,6 +182,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
       </header>
 
       {transitionError ? <p className="sbay-form-error" role="alert">{transitionError}</p> : null}
+      {creationWarning ? <p className="sbay-form-error" role="alert">{creationWarning}</p> : null}
 
       <div className="sbay-detail-grid">
         <section className="sbay-thread" aria-label="Ticket conversation">
@@ -182,11 +190,11 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
             <p className="sbay-empty">No messages have been added yet.</p>
           ) : detail.messages.map((message) => (
             <article
-              className={message.author_type === 'customer' ? 'is-customer' : 'is-support'}
+              className={message.author_type === 'agent' ? 'is-support' : 'is-customer'}
               key={message.id}
             >
               <div className="sbay-message__meta">
-                <strong>{message.author_type === 'customer' ? 'You' : 'Support team'}</strong>
+                <strong>{message.author_type === 'agent' ? 'Support team' : 'You'}</strong>
                 <time>{formatDateTime(message.created_at)}</time>
               </div>
               <div className="sbay-rich-content" dangerouslySetInnerHTML={{ __html: message.content }} />
@@ -203,7 +211,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
                         disabled={downloadingId === attachment.id}
                         onClick={() => downloadAttachment(attachment)}
                       >
-                        {downloadingId === attachment.id ? 'Loading…' : config.attachmentPopupPreviewEnabled&&attachment.is_previewable?'View':'Download'}
+                        {downloadingId === attachment.id ? 'Loading…' : config.attachmentPopupPreviewEnabled&&(attachment.mime_type.startsWith('image/')||attachment.mime_type==='application/pdf')?'View':'Download'}
                       </button>
                     </li>
                   ))}

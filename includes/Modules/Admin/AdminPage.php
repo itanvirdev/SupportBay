@@ -120,6 +120,7 @@ final class AdminPage {
         'canManageDepartments' => current_user_can(CapabilityManager::MANAGE_DEPARTMENTS),
         'ticketListAutoRefreshEnabled' => $this->settings->ticketListAutoRefreshEnabled(),
         'ticketListAutoRefreshInterval' => $this->settings->ticketListAutoRefreshInterval(),
+        'attachmentPopupPreviewEnabled' => $this->settings->attachmentPopupPreviewEnabled(),
         'needReplyFilterEnabled' => $this->settings->smartNeedReplySortingEnabled(),
         'ticketStatusLabels' => $this->settings->ticketStatusLabels(),
         'section'   => $section,

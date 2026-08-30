@@ -86,6 +86,57 @@ final class MessageRepository extends Repository {
   }
 
   /**
+   * Return the author type of the latest public reply for each ticket.
+   *
+   * @param int[] $ticketIds
+   * @return array<int, string>
+   */
+  public function latestReplyAuthorTypes(array $ticketIds): array {
+    return array_map(
+      static fn(array $summary): string => $summary['author_type'],
+      $this->latestReplySummaries($ticketIds),
+    );
+  }
+
+  /**
+   * Return latest public reply data and total reply count by ticket.
+   *
+   * @param int[] $ticketIds
+   * @return array<int, array{author_type: string, content: string, reply_count: int}>
+   */
+  public function latestReplySummaries(array $ticketIds): array {
+    $ticketIds = array_values(array_unique(array_filter(array_map('absint', $ticketIds))));
+    if ($ticketIds === []) {
+      return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ticketIds), '%d'));
+    $table = $this->table();
+    $rows = $this->db->get_results($this->db->prepare(
+      "SELECT messages.ticket_id, messages.author_type, messages.content, latest.reply_count
+       FROM {$table} messages
+       INNER JOIN (
+         SELECT ticket_id, MAX(id) latest_reply_id, COUNT(*) reply_count
+         FROM {$table}
+         WHERE ticket_id IN ({$placeholders}) AND type = %s
+         GROUP BY ticket_id
+       ) latest ON latest.latest_reply_id = messages.id",
+      ...[...$ticketIds, MessageType::REPLY->value],
+    ), ARRAY_A);
+
+    $summaries = [];
+    foreach ($rows as $row) {
+      $summaries[(int) $row['ticket_id']] = [
+        'author_type' => (string) $row['author_type'],
+        'content' => (string) $row['content'],
+        'reply_count' => (int) $row['reply_count'],
+      ];
+    }
+
+    return $summaries;
+  }
+
+  /**
    * Update message
    */
   public function update(int $id, array $data): bool {
@@ -131,31 +182,6 @@ final class MessageRepository extends Repository {
 
     if ($result === false) {
       throw new \RuntimeException('Ticket messages could not be moved.');
-    }
-
-    return $result;
-  }
-
-  /** @param int[] $messageIds */
-  public function moveSelectedToTicket(array $messageIds, int $sourceTicketId, int $targetTicketId): int {
-    $ids = array_values(array_unique(array_filter(array_map('absint', $messageIds))));
-
-    if ($ids === []) {
-      return 0;
-    }
-
-    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-    $sql = "UPDATE {$this->table()} SET ticket_id = %d, updated_at = %s WHERE ticket_id = %d AND id IN ({$placeholders})";
-    $result = $this->db->query($this->db->prepare(
-      $sql,
-      $targetTicketId,
-      $this->now(),
-      $sourceTicketId,
-      ...$ids,
-    ));
-
-    if ($result === false) {
-      throw new \RuntimeException('Selected ticket messages could not be moved.');
     }
 
     return $result;

@@ -6,9 +6,19 @@ Last Updated
 
 August 2026
 
+### Conditional Ticket Taxonomy UI
+
+- Customer ticket conversations visually distinguish replies from the support team.
+- Customer and staff ticket lists omit the default Support department and uncategorized metadata when no additional taxonomy has been configured.
+- Staff department, category, tag, and custom-field filters and bulk groups appear only when meaningful options exist.
+- Customer ticket lists show reply counts and an Agent Replied badge while the latest public reply is from an agent or manager; a customer follow-up clears the state.
+- Staff ticket lists and details show the ticket customer's actual WordPress avatar while customer list rows omit avatars; both queues show a sanitized latest-reply excerpt.
+
 Current Version
 
-v1.0 Development
+v0.2.6 Prerelease
+
+Prerelease policy: increment the patch version for every completed change set.
 
 Current Branch
 
@@ -709,7 +719,7 @@ The administrator UI is functional and intentionally uses foundation styling pen
 
 13. ✅ Add same-customer ticket merging with transactional message and attachment re-parenting, recoverable source retirement, target queue repair, and audit activities.
 
-14. ✅ Add manager-controlled ticket splitting with selective conversation and attachment transfer, transactional queue repair, related-ticket metadata, and audit activities.
+14. Ticket splitting was removed from the MVP runtime and role model.
 
 15. ✅ Add Customer 360 profiles with safe identity data, masked provider connections, purchase and ticket history, recent ticket activity, and capability-gated lifecycle controls.
 
@@ -1080,6 +1090,25 @@ Department Settings Foundation
   the production bootstrap.
 - The CLI flow runner now exits nonzero when WordPress cannot bootstrap instead
   of reporting a false successful test run.
+- Fresh authenticated WordPress users are linked to a Customer entity on first
+  portal access, preventing a valid new administrator/customer session from
+  receiving a portal bootstrap 403.
+- The built-in Envato adapter idempotently provisions its disabled provider
+  record after database installation, so fresh installations expose Envato
+  settings without enabling or configuring the integration automatically.
+- Portal rewrites normalize selected and shortcode page paths relative to the
+  WordPress home path. Versioned rewrite refresh covers direct reloads for login,
+  registration, guest tickets, and the remaining client-side portal routes.
+- Customer sign-out uses an unescaped nonce-valid WordPress logout URL and
+  redirects directly to the active portal page's login route without displaying
+  WordPress's logout confirmation screen.
+- Customer ticket creation returns its opening message identifier, separates
+  post-creation attachment failures from ticket failures, and always opens the
+  already-created ticket so retrying cannot create a duplicate from that state.
+- Enabled photo/PDF popup preview uses the safe response MIME type on customer
+  and staff ticket details, including historical JPEG rows without a preview flag.
+- Ticket split services, routes, controls, capabilities, selective-move helpers,
+  events, activities, and flow expectations are removed from the MVP.
 
 - The protected active Support department is provisioned automatically and used as the server-side ticket fallback.
 - Department settings now provide list, create, edit, lifecycle, priority, and ordering controls.

@@ -18,7 +18,6 @@ use SupportBay\Modules\Tags\Services\TagService;
 use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Services\TicketMergeService;
-use SupportBay\Modules\Tickets\Services\TicketSplitService;
 use SupportBay\Modules\Tickets\Services\TicketAccessPolicy;
 use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
@@ -42,7 +41,6 @@ final class AdminTicketController {
     private readonly MessageService $messages,
     private readonly AttachmentService $attachments,
     private readonly TicketMergeService $ticketMerger,
-    private readonly TicketSplitService $ticketSplitter,
     private readonly TicketAccessPolicy $access,
   ) {
   }
@@ -63,14 +61,6 @@ final class AdminTicketController {
       'permission_callback' => static fn(): bool|WP_Error => current_user_can('sbay_merge_ticket')
         ? true
         : new WP_Error('sbay_permission_denied', 'You are not allowed to merge tickets.', ['status' => 403]),
-      'args' => ['id' => ['sanitize_callback' => 'absint']],
-    ]);
-    register_rest_route('sbay/v1', '/admin/tickets/(?P<id>\d+)/split', [
-      'methods' => 'POST',
-      'callback' => [$this, 'splitTicket'],
-      'permission_callback' => static fn(): bool|WP_Error => current_user_can('sbay_split_ticket')
-        ? true
-        : new WP_Error('sbay_permission_denied', 'You are not allowed to split tickets.', ['status' => 403]),
       'args' => ['id' => ['sanitize_callback' => 'absint']],
     ]);
     register_rest_route('sbay/v1', '/admin/tickets/(?P<id>\d+)/context', [
@@ -150,7 +140,10 @@ final class AdminTicketController {
           'id' => $profile->customer()->id(),
           'name' => $profile->displayName(),
           'email' => current_user_can(CapabilityManager::SHOW_TICKET_USER_EMAIL) ? $profile->email() : null,
-          'avatar_url' => $profile->customer()->avatarUrl(),
+          'avatar_url' => get_avatar_url(
+            $profile->customer()->userId(),
+            ['size' => 96],
+          ),
           'state' => $profile->customer()->state()->value,
         ];
       } catch (RuntimeException) {
@@ -383,25 +376,6 @@ final class AdminTicketController {
     }
 
     return RestResponse::success($target->toArray(), 'Tickets merged.');
-  }
-
-  public function splitTicket(WP_REST_Request $request): WP_REST_Response {
-    $source=$this->tickets->find((int)$request->get_param('id'));
-    if(!$source||!$this->access->canView($source)){
-      return RestResponse::error('You are not allowed to split this ticket.','TICKET_ACCESS_DENIED',[],403);
-    }
-    try {
-      $created = $this->ticketSplitter->split(
-        (int) $request->get_param('id'),
-        (array) $request->get_param('message_ids'),
-        sanitize_text_field(wp_unslash((string) $request->get_param('subject'))),
-        get_current_user_id(),
-      );
-    } catch (\InvalidArgumentException|RuntimeException $exception) {
-      return RestResponse::error($exception->getMessage(), 'TICKET_SPLIT_FAILED', [], 422);
-    }
-
-    return RestResponse::success($created->toArray(), 'Ticket split.', [], 201);
   }
 
   public function uploadAttachment(WP_REST_Request $request): WP_REST_Response {

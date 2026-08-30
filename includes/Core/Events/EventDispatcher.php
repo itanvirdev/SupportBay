@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Events;
 
 use RuntimeException;
+use Throwable;
 use SupportBay\Core\Container\Container;
 use SupportBay\Core\Events\Contracts\Event;
 use SupportBay\Core\Events\Contracts\Listener;
@@ -25,7 +26,20 @@ final class EventDispatcher {
     foreach (ListenerRegistry::listeners($event::class) as $listenerClass) {
       $listener = $this->resolve($listenerClass);
 
-      $listener->handle($event);
+      try {
+        $listener->handle($event);
+      } catch (Throwable $exception) {
+        do_action('sbay_listener_failed', $event, $listenerClass, $exception);
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+          error_log(sprintf(
+            '[SupportBay] Listener %s failed for %s: %s',
+            $listenerClass,
+            $event::class,
+            $exception->getMessage(),
+          ));
+        }
+      }
     }
   }
 

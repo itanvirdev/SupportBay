@@ -1,6 +1,7 @@
 import { apiDownload, apiGet, apiGetResponse, apiPost, apiUpload } from './client';
 import type {
   CreateTicketInput,
+  CreatedPortalTicket,
   PortalDepartment,
   PortalCategory,
   PortalCustomField,
@@ -25,7 +26,7 @@ export const portalApi = {
     apiGet<PortalProviderConnection[]>('portal/providers'),
   tickets: (query = '') => apiGetResponse<PortalTicket[]>(`portal/tickets${query ? `?${query}` : ''}`),
   createTicket: (input: CreateTicketInput) =>
-    apiPost<PortalTicket>('portal/tickets', input),
+    apiPost<CreatedPortalTicket>('portal/tickets', input),
   ticket: (ticketId: number) =>
     apiGet<PortalTicketDetail>(`portal/tickets/${ticketId}`),
   reply: (ticketId: number, content: string) =>

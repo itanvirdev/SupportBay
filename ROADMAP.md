@@ -1013,7 +1013,7 @@ Features
 - Bulk Actions ✅
 - Assign Agent ✅
 - Merge Tickets ✅
-- Split Ticket ✅
+- Split Ticket — removed from MVP scope
 - Internal Notes ✅
 
 ---

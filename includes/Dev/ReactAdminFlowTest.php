@@ -57,6 +57,7 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains(implode('', $bootstrap), 'canManageDepartments')
       && str_contains(implode('', $bootstrap), 'ticketListAutoRefreshEnabled')
       && str_contains(implode('', $bootstrap), 'ticketListAutoRefreshInterval')
+      && str_contains(implode('', $bootstrap), 'attachmentPopupPreviewEnabled')
       && str_contains(implode('', $bootstrap), 'needReplyFilterEnabled'),
       'Each administrator page receives authenticated API configuration and its active section.'
     );
@@ -331,6 +332,37 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($ticketWorkspace, "field_id: Number(value)")
       && str_contains($ticketWorkspace, 'Leave empty to clear'),
       'Shared ticket workspace exposes staff-only, type-aware custom-field filters and bulk mutations.',
+    );
+
+    Assert::true(
+      str_contains($ticketWorkspace, "(options?.departments.length ?? 0) > 1")
+      && str_contains($ticketWorkspace, "(options?.categories.length ?? 0) > 0")
+      && str_contains($ticketWorkspace, "(options?.tags.length ?? 0) > 0")
+      && str_contains($ticketWorkspace, "(options?.custom_fields.length ?? 0) > 0")
+      && str_contains($ticketWorkspace, 'showDepartments&&ticket.department_name')
+      && str_contains($ticketWorkspace, "showCategories?` · \${ticket.category_name||'Uncategorized'}`:''"),
+      'Staff queues hide taxonomy metadata, filters, and bulk groups until meaningful configuration exists.',
+    );
+
+    Assert::true(
+      str_contains($ticketWorkspace, 'ticket.customer_avatar_url?<img')
+      && str_contains($ticketWorkspace, 'sbay-ticket-excerpt')
+      && str_contains($ticketWorkspace, 'ticket.latest_reply_excerpt')
+      && str_contains($ticketWorkspace, 'sbay-ticket-replies'),
+      'Staff ticket rows render WordPress customer avatars, latest reply excerpts, and reply counts.',
+    );
+
+    $queueItem = file_get_contents(
+      dirname(__DIR__, 2) . '/includes/Modules/Tickets/Data/TicketQueueItem.php'
+    );
+    Assert::true(
+      is_string($queueItem)
+      && str_contains($queueItem, "isset(\$this->row['latest_reply_excerpt'])")
+      && str_contains($queueItem, "! empty(\$this->row['customer_avatar_url'])")
+      && str_contains($queueItem, 'get_avatar_url')
+      && ! str_contains($queueItem, "'force_default' => true")
+      && str_contains($ticketConversation, 'context.customer.avatar_url?<img'),
+      'Staff queue tag decoration preserves normalized reply excerpts and WordPress avatar URLs.',
     );
 
     Assert::true(

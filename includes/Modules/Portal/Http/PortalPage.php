@@ -13,7 +13,7 @@ use SupportBay\Modules\Settings\Services\RecaptchaService;
 final class PortalPage {
   private const QUERY_VAR = 'sbay_customer_portal';
   private const SHORTCODE_PAGE_QUERY_VAR = 'sbay_shortcode_portal_page';
-  private const REWRITE_VERSION = '4';
+  private const REWRITE_VERSION = '5';
 
   public function __construct(
     private readonly MagicLoginService $magicLogin,
@@ -127,7 +127,7 @@ final class PortalPage {
         'restUrl'   => esc_url_raw(rest_url('sbay/v1/')),
         'restNonce' => wp_create_nonce('wp_rest'),
         'portalUrl' => esc_url_raw($portalUrl),
-        'logoutUrl' => esc_url_raw(wp_logout_url($portalUrl)),
+        'logoutUrl' => $this->logoutUrl($portalUrl),
         'siteName'  => sanitize_text_field(get_bloginfo('name')),
         'portalLogoUrl' => esc_url_raw($this->settings->portalLogoUrl()),
         'homeUrl' => esc_url_raw(home_url('/')),
@@ -237,6 +237,21 @@ final class PortalPage {
     return $this->settings->portalUrl();
   }
 
+  /**
+   * Build a nonce-valid logout URL that returns directly to portal login.
+   */
+  private function logoutUrl(string $portalUrl): string {
+    $loginUrl = trailingslashit($portalUrl) . 'login/';
+
+    return esc_url_raw(
+      html_entity_decode(
+        wp_logout_url($loginUrl),
+        ENT_QUOTES,
+        'UTF-8',
+      )
+    );
+  }
+
   public function shortcode(): string {
     if (! $this->settings->shortcodeMode()) {
       return '';
@@ -293,7 +308,7 @@ final class PortalPage {
       return;
     }
 
-    $path = trim((string) wp_parse_url($url, PHP_URL_PATH), '/');
+    $path = self::relativeRewritePath($url);
     $pattern = $path === ''
       ? '^(?:login|register|guest-ticket|tickets(?:/.*)?|purchases|profile)/?$'
       : '^' . preg_quote($path, '#') . '(?:/.*)?$';
@@ -304,6 +319,20 @@ final class PortalPage {
     }
 
     add_rewrite_rule($pattern, $target, 'top');
+  }
+
+  /**
+   * Convert an absolute page URL to the request path consumed by WP_Rewrite.
+   */
+  private static function relativeRewritePath(string $url): string {
+    $pagePath = '/' . trim((string) wp_parse_url($url, PHP_URL_PATH), '/');
+    $homePath = '/' . trim((string) wp_parse_url(home_url('/'), PHP_URL_PATH), '/');
+
+    if ($homePath !== '/' && ($pagePath === $homePath || str_starts_with($pagePath, $homePath . '/'))) {
+      $pagePath = substr($pagePath, strlen($homePath));
+    }
+
+    return trim($pagePath, '/');
   }
 
 }

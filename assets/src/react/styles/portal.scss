@@ -108,7 +108,9 @@ body.supportbay-portal { padding-top: 0 !important; }
 .sbay-thread { padding: 8px 24px; }
 .sbay-thread article { padding: 22px 0; border-top: 1px solid var(--sbay-line); }
 .sbay-thread article:first-child { border-top: 0; }
-.sbay-thread article.is-support { margin-left: 34px; }
+.sbay-thread article.is-support { margin: 10px 0 10px 34px; padding: 20px; border: 1px solid #b9d8c7; border-left: 4px solid var(--sbay-green); border-radius: 12px; background: #f1f8f4; }
+.sbay-thread article.is-support + article { border-top: 0; }
+.sbay-thread article.is-support .sbay-message__meta strong { color: var(--sbay-green); }
 .sbay-thread article.is-customer { margin-right: 34px; }
 .sbay-thread article p { margin: 12px 0 0; line-height: 1.7; white-space: pre-wrap; }
 .sbay-message__meta { display: flex; justify-content: space-between; gap: 16px; }

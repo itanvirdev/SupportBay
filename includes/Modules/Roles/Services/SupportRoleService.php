@@ -31,7 +31,6 @@ final class SupportRoleService {
         'sbay_assign_ticket' => 'Assign or transfer individual tickets',
         'sbay_reassign_ticket' => 'Bulk reassign tickets',
         'sbay_merge_ticket' => 'Merge tickets',
-        'sbay_split_ticket' => 'Split tickets',
       ],
       'Classification' => [
         'sbay_change_ticket_category' => 'Change ticket categories',

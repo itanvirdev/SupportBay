@@ -15,6 +15,7 @@ export interface AdminConfig {
   canManageDepartments: boolean;
   ticketListAutoRefreshEnabled: boolean;
   ticketListAutoRefreshInterval: number;
+  attachmentPopupPreviewEnabled: boolean;
   needReplyFilterEnabled: boolean;
   ticketStatusLabels: Record<string,string>;
   section: 'tickets' | 'reports' | 'settings';

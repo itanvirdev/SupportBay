@@ -83,17 +83,23 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
         purchase_reference: purchaseReference.trim(),
         custom_fields: customFieldValues,
       });
-      const detail = await portalApi.ticket(ticket.id);
-      const openingMessage = detail.messages[0];
-
-      if (openingMessage) {
-        await Promise.all(
+      if (files.length > 0) {
+        const uploads = await Promise.allSettled(
           files.map((file) => portalApi.uploadAttachment(
             ticket.id,
-            openingMessage.id,
+            ticket.opening_message_id,
             file,
           )),
         );
+        const failedUploads = uploads.filter((result) => result.status === 'rejected').length;
+        if (failedUploads > 0) {
+          window.sessionStorage.setItem(
+            `sbay-ticket-attachment-warning:${ticket.id}`,
+            failedUploads === files.length
+              ? 'Your ticket was created, but its attachments could not be uploaded. You can attach them in a reply.'
+              : `Your ticket was created, but ${failedUploads} attachment${failedUploads === 1 ? '' : 's'} could not be uploaded.`,
+          );
+        }
       }
       navigate(`/support/tickets/${ticket.id}/`);
     } catch (exception) {

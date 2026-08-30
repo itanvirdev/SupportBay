@@ -111,10 +111,6 @@ final class ApiWebhookFlowTest extends FlowTest {
       'Manager ticket merge route is registered.'
     );
     Assert::true(
-      isset($routes['/sbay/v1/admin/tickets/(?P<id>\d+)/split']),
-      'Manager ticket split route is registered.'
-    );
-    Assert::true(
       isset($routes['/sbay/v1/tickets/(?P<id>\d+)/resolve']),
       'Capability-protected ticket resolution route is registered.'
     );
@@ -543,11 +539,6 @@ final class ApiWebhookFlowTest extends FlowTest {
       rest_do_request($agentCustomFieldBulk)->get_status(),
       'Agents can bulk-edit custom fields through their dedicated capability.',
     );
-    $deniedSplit = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/' . $ticketId . '/split');
-    $deniedSplit->set_param('message_ids', [$message->id()]);
-    $deniedSplit->set_param('subject', 'Denied split');
-    Assert::equals(403, rest_do_request($deniedSplit)->get_status(), 'Agents cannot use manager-only ticket splitting.');
-
     wp_set_current_user(1);
 
     $customerState = new WP_REST_Request('POST', '/sbay/v1/customers/' . $customerId . '/state');
@@ -667,29 +658,6 @@ final class ApiWebhookFlowTest extends FlowTest {
       'Administrator bulk action updates selected tickets through the ticket service.'
     );
 
-    $splitMessage = $messages->create([
-      'ticket_id' => $ticketId,
-      'author_id' => 1,
-      'author_type' => AuthorType::AGENT->value,
-      'content' => 'This conversation belongs in a separate ticket.',
-    ]);
-    $splitRequest = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/' . $ticketId . '/split');
-    $splitRequest->set_param('message_ids', [$splitMessage->id()]);
-    $splitRequest->set_param('subject', 'API split ticket');
-    $splitResponse = rest_do_request($splitRequest);
-    $splitTicketId = (int) $splitResponse->get_data()['data']['id'];
-    $splitContext = rest_do_request(
-      new WP_REST_Request('GET', '/sbay/v1/admin/tickets/' . $splitTicketId . '/context')
-    )->get_data()['data'];
-    Assert::true(
-      $splitResponse->get_status() === 201
-      && count($messages->findByTicket($ticketId)) === 1
-      && count($messages->findByTicket($splitTicketId)) === 1
-      && $messages->find($splitMessage->id())?->ticketId() === $splitTicketId
-      && array_filter($splitContext['activities'], static fn(array $activity): bool => $activity['label'] === 'Ticket Split') !== [],
-      'Ticket split creates a related ticket, moves selected entries, repairs both queues, and records audit activity.'
-    );
-
     $targetTicketId = $tickets->create([
       'customer_id' => $customerId,
       'department_id' => $departmentId,
@@ -720,11 +688,9 @@ final class ApiWebhookFlowTest extends FlowTest {
     $verifications->delete($verificationId);
     $providers->delete($providerId);
     $messages->delete($message->id());
-    $messages->delete($splitMessage->id());
     $messages->delete($targetMessage->id());
     $customFields->removeValue($ticketId, $customField->id());
     $tickets->delete($ticketId);
-    $tickets->delete($splitTicketId);
     $tickets->delete($targetTicketId);
     $tickets->delete($otherTicketId);
     $categories->delete($category->id());

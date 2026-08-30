@@ -199,31 +199,6 @@ final class AttachmentRepository extends Repository {
     return $result;
   }
 
-  /** @param int[] $messageIds */
-  public function moveByMessagesToTicket(array $messageIds, int $sourceTicketId, int $targetTicketId): int {
-    $ids = array_values(array_unique(array_filter(array_map('absint', $messageIds))));
-
-    if ($ids === []) {
-      return 0;
-    }
-
-    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-    $sql = "UPDATE {$this->table()} SET ticket_id = %d, updated_at = %s WHERE ticket_id = %d AND message_id IN ({$placeholders})";
-    $result = $this->db->query($this->db->prepare(
-      $sql,
-      $targetTicketId,
-      $this->now(),
-      $sourceTicketId,
-      ...$ids,
-    ));
-
-    if ($result === false) {
-      throw new \RuntimeException('Selected message attachments could not be moved.');
-    }
-
-    return $result;
-  }
-
   /**
    * Increment download counter.
    */

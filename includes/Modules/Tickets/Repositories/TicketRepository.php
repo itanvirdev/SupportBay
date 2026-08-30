@@ -260,7 +260,7 @@ final class TicketRepository extends Repository {
       $orderBy = 'COALESCE(lm.created_at,t.last_reply_at,t.updated_at,t.created_at)';
       $order = 'ASC';
     }
-    $sql = "SELECT t.*, COALESCE(replies.reply_count,0) reply_count, {$needExpression} needs_reply, au.display_name agent_name, cu.display_name customer_name, c.avatar_url customer_avatar_url, d.name department_name, tc.name category_name
+    $sql = "SELECT t.*, COALESCE(replies.reply_count,0) reply_count, {$needExpression} needs_reply, lm.content latest_reply_content, au.display_name agent_name, cu.ID customer_user_id, cu.display_name customer_name, d.name department_name, tc.name category_name
       FROM {$ticketTable} t {$joins} {$where} ORDER BY {$orderBy} {$order}, t.id DESC LIMIT %d OFFSET %d";
     $rows = $this->db->get_results($this->db->prepare($sql, ...[...$values, $query->perPage, ($query->page - 1) * $query->perPage]), ARRAY_A);
     return ['items' => array_map(static fn(array $row): TicketQueueItem => new TicketQueueItem($row), $rows), 'total' => $total];

@@ -35,6 +35,17 @@ final class ProviderFlowTest extends FlowTest {
 
     echo "🚀 Starting SupportBay Provider Flow Test...\n\n";
 
+    $envato = $providerService->findBySlug('envato');
+    Assert::notNull(
+      $envato,
+      'The built-in Envato integration has a persistent provider record.'
+    );
+    Assert::equals(
+      ProviderStatus::DISABLED,
+      $envato->status(),
+      'Envato remains disabled until an administrator enables it.'
+    );
+
     $providerSlug = 'fake-configurable';
     $existing = $providerService->findBySlug($providerSlug);
 

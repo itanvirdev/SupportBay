@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Authorization;
 
 final class CapabilityManager {
-  private const ROLE_DEFAULTS_VERSION = '1.2.0';
+  private const ROLE_DEFAULTS_VERSION = '1.3.0';
   public const MANAGE_CUSTOMERS = 'sbay_manage_customers';
   public const VIEW_TICKETS = 'sbay_view_tickets';
   public const VIEW_ALL_TICKETS = 'sbay_view_all_tickets';
@@ -51,7 +51,6 @@ final class CapabilityManager {
       self::VIEW_ALL_TICKETS, self::SHOW_TICKET_USER_EMAIL,
       'sbay_reassign_ticket', 'sbay_escalate_ticket',
       'sbay_merge_ticket',
-      'sbay_split_ticket',
       self::MANAGE_DEPARTMENTS, self::CREATE_DEPARTMENT,
       self::EDIT_DEPARTMENT, 'sbay_disable_department',
       self::VIEW_REPORTS, self::REFRESH_VERIFICATION,
@@ -78,6 +77,16 @@ final class CapabilityManager {
       update_option('sbay_role_defaults_version', self::ROLE_DEFAULTS_VERSION, false);
     }
     self::grant('administrator', $administrator);
+    self::removeDeprecatedCapability('sbay_split_ticket');
+  }
+
+  private static function removeDeprecatedCapability(string $capability): void {
+    foreach (wp_roles()->roles as $roleName => $details) {
+      $role = get_role((string)$roleName);
+      if ($role && $role->has_cap($capability)) {
+        $role->remove_cap($capability);
+      }
+    }
   }
 
   private static function migrateCustomersToSubscriber(): void {

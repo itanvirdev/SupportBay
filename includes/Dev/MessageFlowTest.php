@@ -161,7 +161,26 @@ final class MessageFlowTest extends FlowTest {
       'Later replies do not replace the assigned responder.'
     );
 
-    foreach ([$laterReply, $firstReply, $note, $message] as $createdMessage) {
+    Assert::equals(
+      AuthorType::MANAGER,
+      $messageService->latestReplyAuthorTypes([$ticketId])[$ticketId] ?? null,
+      'Latest public reply author identifies a support response for the customer queue.',
+    );
+
+    $customerReply = $messageService->create([
+      'ticket_id' => $ticketId,
+      'author_id' => 1,
+      'author_type' => AuthorType::CUSTOMER->value,
+      'type' => MessageType::REPLY->value,
+      'content' => 'Customer follow-up.',
+    ]);
+    Assert::equals(
+      AuthorType::CUSTOMER,
+      $messageService->latestReplyAuthorTypes([$ticketId])[$ticketId] ?? null,
+      'Customer follow-up clears the support-replied queue state.',
+    );
+
+    foreach ([$customerReply, $laterReply, $firstReply, $note, $message] as $createdMessage) {
       $messageService->delete($createdMessage->id());
     }
     $ticketService->delete($ticketId);

@@ -134,10 +134,7 @@ function AdminApp() {
   };
 
   const downloadAttachment = async (file: TicketAttachment) => {
-    const blob = await adminDownload(`admin/attachments/${file.id}/download`);
-    const url = URL.createObjectURL(blob); const link = document.createElement('a');
-    link.href = url; link.download = file.original_name; link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    return adminDownload(`admin/attachments/${file.id}/download`);
   };
 
   const mutateTicket = async (action: string, value: unknown) => {
@@ -177,15 +174,6 @@ function AdminApp() {
     window.location.href = `${config.adminUrl}&ticket=${targetId}`;
   };
 
-  const splitTicket = async (messageIds: number[], subject: string) => {
-    if (!ticketId) return;
-    const response = await adminPost<ConversationTicket>(`admin/tickets/${ticketId}/split`, {
-      message_ids: messageIds,
-      subject,
-    });
-    window.location.href = `${config.adminUrl}&ticket=${response.data.id}`;
-  };
-
   const changeCustomerState = async (state: 'registered'|'suspended') => {
     if (!customerId) return;
     await adminPost(`customers/${customerId}/state`, { state });
@@ -202,7 +190,7 @@ function AdminApp() {
       {error && !ticketId && !customerId ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
 
       {config.section === 'tickets' ? (
-        verificationDirectory ? <VerificationDirectory back={()=>{window.location.href=config.adminUrl;}}/> : customerDirectory ? <CustomerDirectory back={()=>{window.location.href=config.adminUrl;}} openCustomer={id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_customers=1`;}}/> : customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:returnCustomers?`${config.adminUrl}&customers=1`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : error ? <RequestState title="Customer profile could not be loaded" message={error} retry={()=>void loadCustomerProfile(customerId).catch((reason:unknown)=>setError(reason instanceof Error?reason.message:'Customer profile could not be loaded.'))}/> : <Preloader label="Loading customer profile…" />) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} split={splitTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : error ? <RequestState title="Ticket could not be loaded" message={error} retry={()=>void loadTicketDetail(false)}/> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
+        verificationDirectory ? <VerificationDirectory back={()=>{window.location.href=config.adminUrl;}}/> : customerDirectory ? <CustomerDirectory back={()=>{window.location.href=config.adminUrl;}} openCustomer={id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_customers=1`;}}/> : customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:returnCustomers?`${config.adminUrl}&customers=1`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : error ? <RequestState title="Customer profile could not be loaded" message={error} retry={()=>void loadCustomerProfile(customerId).catch((reason:unknown)=>setError(reason instanceof Error?reason.message:'Customer profile could not be loaded.'))}/> : <Preloader label="Loading customer profile…" />) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} previewAttachments={config.attachmentPopupPreviewEnabled} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : error ? <RequestState title="Ticket could not be loaded" message={error} retry={()=>void loadTicketDetail(false)}/> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
           mode="staff"
           load={loadTickets}
           options={queueOptions}

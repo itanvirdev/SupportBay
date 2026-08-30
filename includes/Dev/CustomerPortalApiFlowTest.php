@@ -8,8 +8,6 @@ use SupportBay\Core\Testing\Assert;
 use SupportBay\Core\Testing\FlowTest;
 use SupportBay\Common\Enums\AuthorType;
 use SupportBay\Modules\Attachments\Services\AttachmentService;
-use SupportBay\Modules\Customers\Enums\CustomerSource;
-use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\CustomFields\Services\CustomFieldService;
@@ -104,11 +102,23 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Temporary portal user created.'
     );
 
-    $customerId = $customers->create([
-      'user_id' => $userId,
-      'state'   => CustomerState::REGISTERED->value,
-      'source'  => CustomerSource::REGISTRATION->value,
-    ]);
+    wp_set_current_user($userId);
+    $firstOverview = rest_do_request(
+      new WP_REST_Request('GET', '/sbay/v1/portal')
+    );
+    $customer = $customers->findByUser($userId);
+
+    Assert::equals(
+      200,
+      $firstOverview->get_status(),
+      'An authenticated WordPress user is linked on first portal access.'
+    );
+    Assert::notNull(
+      $customer,
+      'First portal access creates the missing customer entity.'
+    );
+
+    $customerId = $customer->id();
 
     $verificationId = $verifications->create([
       'provider'            => 'fake-purchase',
@@ -530,8 +540,9 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     );
 
     Assert::true(
-      $createdTicketId > 0,
-      'Portal returns the created ticket.'
+      $createdTicketId > 0
+      && (int)($createData['data']['opening_message_id'] ?? 0) > 0,
+      'Portal returns the created ticket and its opening message for attachment uploads.'
     );
 
     Assert::equals(

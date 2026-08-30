@@ -364,8 +364,34 @@ final class PortalController {
       orderBy: sanitize_key((string) $request->get_param('orderby')),
       direction: sanitize_key((string) $request->get_param('order')),
     ));
+    $departments = $this->portal->departments();
+    $departmentNames = [];
+    $categoryNames = [];
+    foreach ($departments as $department) {
+      $departmentNames[$department->id()] = $department->name();
+      foreach ($this->portal->categories($department->id()) as $category) {
+        $categoryNames[$category->id()] = $category->name();
+      }
+    }
+    $replySummaries = $this->portal->latestReplySummaries(array_map(
+      static fn(Ticket $ticket): int => $ticket->id(),
+      $result['items'],
+    ));
     $tickets = array_map(
-      fn(Ticket $ticket): array => $this->ticketData($ticket),
+      function (Ticket $ticket) use ($departmentNames, $categoryNames, $replySummaries): array {
+        $reply = $replySummaries[$ticket->id()] ?? null;
+        return array_merge($this->ticketData($ticket), [
+          'department_name' => $departmentNames[$ticket->departmentId()] ?? null,
+          'category_name' => $ticket->categoryId() !== null
+            ? ($categoryNames[$ticket->categoryId()] ?? null)
+            : null,
+          'reply_count' => $reply['reply_count'] ?? 0,
+          'latest_reply_excerpt' => $reply !== null
+            ? wp_trim_words(wp_strip_all_tags($reply['content']), 22, '…')
+            : '',
+          'has_support_reply' => $reply !== null && $reply['author_type']->isStaff(),
+        ]);
+      },
       $result['items'],
     );
 
@@ -377,6 +403,8 @@ final class PortalController {
         'per_page' => $perPage,
         'total' => $result['total'],
         'total_pages' => (int) ceil($result['total'] / $perPage),
+        'show_departments' => count($departments) > 1,
+        'show_categories' => $categoryNames !== [],
       ]
     );
   }
@@ -414,8 +442,12 @@ final class PortalController {
       );
     }
 
+    $openingMessage = $this->portal->ticketMessages($ticket->id())[0] ?? null;
+
     return RestResponse::success(
-      $this->ticketData($ticket),
+      array_merge($this->ticketData($ticket), [
+        'opening_message_id' => $openingMessage?->id(),
+      ]),
       'Ticket created.',
       [],
       201,
