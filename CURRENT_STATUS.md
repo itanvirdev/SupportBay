@@ -16,7 +16,7 @@ August 2026
 
 Current Version
 
-v0.2.32 Prerelease
+v0.2.33 Prerelease
 
 Prerelease policy: increment the patch version for every completed change set.
 
@@ -35,6 +35,7 @@ Prerelease policy: increment the patch version for every completed change set.
 - Envato authorization now matches Support Genix's exact public parameter set: no unsupported `scope` or `state` query parameter, no internal `/interaction` redirect, and callback protection retained through a short-lived HttpOnly verifier cookie.
 - Removed the obsolete Envato interaction-route recovery path; provider API failures are now preserved safely instead of being misclassified and redirected to an invalid internal Envato endpoint.
 - Administrators can select any available WordPress role as the Client User Default Role, and authenticated Support Managers/Agents now enter their capability-controlled SupportBay staff workspace instead of the customer-only portal.
+- Support Agents, Support Managers, and Administrators can now use the SupportBay front-end staff ticket workspace with the shared queue, filters, bulk actions, rich reply/internal-note composer, and staff ticket-details sidebar used by the dashboard.
 
 Current Branch
 

@@ -28,6 +28,16 @@ export async function apiPost<T>(
   });
 }
 
+export async function apiPostResponse<T>(
+  path: string,
+  body: object,
+): Promise<ApiResponse<T>> {
+  return apiRequestEnvelope<T>(path, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
 export async function apiPostForm<T>(
   path: string,
   body: FormData,

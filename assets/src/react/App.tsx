@@ -14,6 +14,7 @@ const ProfilePage = lazy(() => import('./modules/profile/ProfilePage').then((mod
 const TicketDetailPage = lazy(() => import('./modules/tickets/TicketDetailPage').then((module) => ({ default: module.TicketDetailPage })));
 const NewTicketPage = lazy(() => import('./modules/tickets/NewTicketPage').then((module) => ({ default: module.NewTicketPage })));
 const TicketsPage = lazy(() => import('./modules/tickets/TicketsPage').then((module) => ({ default: module.TicketsPage })));
+const StaffPortalWorkspace = lazy(() => import('./modules/tickets/StaffPortalWorkspace').then((module) => ({ default: module.StaffPortalWorkspace })));
 
 interface RouteMatch {
   active: PortalRoute;
@@ -55,8 +56,8 @@ function App() {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (config.authenticated) portalApi.overview().then(setOverview).catch(() => setFailed(true));
-  }, [config.authenticated]);
+    if (config.authenticated && !config.staffDashboardAccess) portalApi.overview().then(setOverview).catch(() => setFailed(true));
+  }, [config.authenticated, config.staffDashboardAccess]);
 
   useEffect(() => {
     const onPopState = () => setPathname(window.location.pathname);
@@ -95,10 +96,7 @@ function App() {
     return <Suspense fallback={<PortalState loading message="Loading authentication…" />}><AuthPage mode={authMode} navigate={navigate}/></Suspense>;
   }
 
-  if (config.staffDashboardAccess) {
-    window.location.replace(config.staffDashboardUrl);
-    return <PortalState loading message="Opening your SupportBay staff workspace…" />;
-  }
+  if (config.staffDashboardAccess) return <Suspense fallback={<PortalState loading message="Loading your staff workspace…" />}><StaffPortalWorkspace navigate={navigate}/></Suspense>;
 
   if (authRoute) {
     window.history.replaceState({}, '', `${portalPath}/`);

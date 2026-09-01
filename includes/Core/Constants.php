@@ -20,7 +20,7 @@ final class Constants {
    */
   private static function defineVersion(): void {
     if (! defined('SBAY_VERSION')) {
-      define('SBAY_VERSION', '0.2.32');
+      define('SBAY_VERSION', '0.2.33');
     }
 
     if (! defined('SBAY_DB_VERSION')) {

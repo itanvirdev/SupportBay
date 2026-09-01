@@ -31,6 +31,7 @@ export interface SupportBayConfig {
   oauthLoginProviders: Array<{slug:string;name:string;url:string}>;
   availabilityNotices: Array<{type:'weekend'|'holiday';message:string}>;
   authenticated: boolean;
+  currentUserName: string;
   staffDashboardUrl: string;
   staffDashboardAccess: boolean;
 }

@@ -156,6 +156,7 @@ final class PortalPage {
         'oauthLoginProviders' => $this->portal->oauthLoginProviders(),
         'availabilityNotices' => $this->availability->activeNotices(),
         'authenticated' => is_user_logged_in(),
+        'currentUserName' => is_user_logged_in() ? sanitize_text_field(wp_get_current_user()->display_name) : '',
         'staffDashboardUrl' => esc_url_raw(admin_url('admin.php?page=supportbay')),
         'staffDashboardAccess' => current_user_can('sbay_access_dashboard'),
       ]) . ';',
