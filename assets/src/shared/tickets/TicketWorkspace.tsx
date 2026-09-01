@@ -1,64 +1,18 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Preloader } from '../components/Preloader';
 import { RequestState } from '../components/RequestState';
-
-export interface WorkspaceTicket {
-  id: number;
-  track_id: string;
-  subject: string;
-  status: string;
-  state?: string;
-  priority: string;
-  assigned_agent_id?: number | null;
-  agent_name?: string | null;
-  customer_name?: string | null;
-  customer_avatar_url?: string | null;
-  department_name?: string | null;
-  category_id?: number | null;
-  category_name?: string | null;
-  tags?: Array<{id:number;name:string;color:string|null}>;
-  reply_count?: number;
-  latest_reply_excerpt?: string;
-  needs_reply?: boolean;
-  has_support_reply?: boolean;
-  updated_at: string | null;
-  created_at: string;
-}
-
-export interface TicketPage {
-  items: WorkspaceTicket[];
-  page: number;
-  total: number;
-  totalPages: number;
-  showDepartments?: boolean;
-  showCategories?: boolean;
-}
-
-export interface TicketQueryParams {
-  page: number;
-  perPage: number;
-  search: string;
-  status: string;
-  state: string;
-  priority: string;
-  assignment: string;
-  agentId: string;
-  departmentId: string;
-  categoryId: string;
-  tagId: string;
-  customFieldId: string;
-  customFieldValue: string;
-  needReply: boolean;
-  orderby: string;
-  order: string;
-}
+import { TicketQueueTabs } from './workspace/TicketQueueTabs';
+import { TicketRow, TicketTableHeader } from './workspace/TicketRow';
+import { TicketPagination } from './workspace/TicketPagination';
+import type { TicketPage, TicketQueryParams, TicketWorkspaceOptions, WorkspaceTicket } from './workspace/types';
+export type { TicketPage, TicketQueryParams, WorkspaceTicket } from './workspace/types';
 
 interface TicketWorkspaceProps {
   mode: 'staff' | 'customer';
   load: (query: TicketQueryParams) => Promise<TicketPage>;
   openTicket: (ticket: WorkspaceTicket) => void;
   createTicket?: () => void;
-  options?: {agents:Array<{id:number;name:string}>;departments:Array<{id:number;name:string}>;categories:Array<{id:number;name:string;department_id:number|null}>;tags:Array<{id:number;name:string;color:string|null}>;custom_fields:Array<{id:number;name:string;type:string;options:string[];department_id:number|null}>};
+  options?: TicketWorkspaceOptions;
   bulk?: (ticketIds: number[], action: string, value: unknown) => Promise<{updated:number;failed:number}>;
   openCustomers?: () => void;
   openVerifications?: () => void;
@@ -191,7 +145,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
       setBulkPending(false);
     }
   };
-  const allSelected = Boolean(result?.items.length) && result?.items.every((ticket) => selected.includes(ticket.id));
+  const allSelected = Boolean(result?.items.length && result.items.every((ticket) => selected.includes(ticket.id)));
   const first = result && result.total ? ((result.page - 1) * query.perPage) + 1 : 0;
   const last = result ? Math.min(result.page * query.perPage, result.total) : 0;
   const bulkCustomFieldControl = bulkCustomField?.type === 'select'
@@ -204,18 +158,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
 
   return (
     <section className={`sbay-ticket-workspace sbay-ticket-workspace--${mode}`}>
-      <div className="sbay-ticket-tabs" role="tablist" aria-label="Ticket queues">
-        <button className={!query.assignment && query.state !== 'trash' ? 'is-active' : ''} onClick={() => update({ assignment: '', agentId: '', state: 'active', status: '' })}>▤ All Tickets</button>
-        {mode === 'staff' ? <button className={query.assignment === 'mine' ? 'is-active' : ''} onClick={() => update({ assignment: 'mine', agentId: '', state: 'active', status: '' })}>♙ My Tickets</button> : null}
-        {mode === 'staff' ? <button className={query.assignment === 'unassigned' ? 'is-active' : ''} onClick={() => update({ assignment: 'unassigned', agentId: '', state: 'active', status: '' })}>◉ Unassigned</button> : null}
-        {mode === 'staff' ? <button className={query.state === 'trash' ? 'is-active' : ''} onClick={() => update({ assignment: '', state: 'trash', status: '' })}>♲ Trashed</button> : null}
-        <div className="sbay-ticket-tabs__actions">
-          <button aria-label="Refresh tickets" onClick={() => setRefresh((value) => value + 1)}>↻</button>
-          {openCustomers ? <button onClick={openCustomers}>Customers</button> : null}
-          {openVerifications ? <button onClick={openVerifications}>Verifications</button> : null}
-          {createTicket ? <button className="is-primary" onClick={createTicket}>＋ Add Ticket</button> : null}
-        </div>
-      </div>
+      <TicketQueueTabs mode={mode} query={query} update={update} refresh={()=>setRefresh(value=>value+1)} createTicket={createTicket} openCustomers={openCustomers} openVerifications={openVerifications}/>
       {bulkNotice?<p className="sbay-ticket-bulk-notice" role="status">{bulkNotice}</p>:null}
 
       <div className="sbay-ticket-filters">
@@ -241,25 +184,16 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
 
       {error && result ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
       <div className="sbay-ticket-table">
-        <div className="sbay-ticket-row sbay-ticket-row--header">
-          {mode === 'staff' ? <><input aria-label="Select all tickets" checked={allSelected} onChange={() => setSelected(allSelected ? [] : result?.items.map((ticket) => ticket.id) ?? [])} type="checkbox" /><span /></> : null}
-          <span>Title</span><span>Reply</span>{mode === 'staff' ? <span>Agent</span> : null}<span>Date</span>
-        </div>
+        <TicketTableHeader mode={mode} allSelected={allSelected} toggleAll={()=>setSelected(allSelected?[]:result?.items.map(ticket=>ticket.id)??[])}/>
         {loading ? <Preloader label="Loading tickets…" /> : error && !result ? <RequestState compact title="Tickets could not be loaded" message={error} retry={() => reload(false)} /> : !result || result.items.length === 0 ? <RequestState compact title={query.search || query.priority || query.status || query.assignment || query.agentId || query.departmentId || query.categoryId || query.tagId || query.customFieldId || query.needReply ? 'No matching tickets' : 'No tickets yet'} message={query.search || query.priority || query.status || query.assignment || query.agentId || query.departmentId || query.categoryId || query.tagId || query.customFieldId || query.needReply ? 'Adjust or reset the filters to see other conversations.' : mode === 'customer' ? 'Your support conversations will appear here after you create a ticket.' : 'New customer conversations will appear here.'} action={query.search || query.priority || query.status || query.assignment || query.agentId || query.departmentId || query.categoryId || query.tagId || query.customFieldId || query.needReply ? () => { setDraftSearch(''); setQuery(defaults); } : createTicket} actionLabel={query.search || query.priority || query.status || query.assignment || query.agentId || query.departmentId || query.categoryId || query.tagId || query.customFieldId || query.needReply ? 'Reset filters' : createTicket ? 'Create ticket' : undefined} /> : result.items.map((ticket) => (
-          <div className="sbay-ticket-row" key={ticket.id}>
-            {mode === 'staff' ? <><input aria-label={`Select ${ticket.subject}`} checked={selected.includes(ticket.id)} onChange={() => setSelected((current) => current.includes(ticket.id) ? current.filter((id) => id !== ticket.id) : [...current, ticket.id])} type="checkbox" /><span className="sbay-ticket-avatar">{ticket.customer_avatar_url?<img src={ticket.customer_avatar_url} alt=""/>:'◉'}</span></> : null}
-            <button className="sbay-ticket-title" onClick={() => openTicket(ticket)}><strong>{ticket.subject} {ticket.customer_name?<small>by {ticket.customer_name}</small>:null}</strong>{ticket.latest_reply_excerpt?<small className="sbay-ticket-excerpt">{ticket.latest_reply_excerpt}</small>:null}<span><i>{statusLabels[ticket.status]??ticket.status}</i> #{ticket.track_id}{showDepartments&&ticket.department_name?` · ${ticket.department_name}`:''}{showCategories?` · ${ticket.category_name||'Uncategorized'}`:''} · {ticket.priority}{mode==='staff'&&ticket.tags?.map(tag=><em className="sbay-ticket-tag" style={{borderColor:tag.color??undefined}} key={tag.id}>{tag.name}</em>)}</span></button>
-            <span className="sbay-ticket-replies">{ticket.reply_count??0}{mode==='staff'&&ticket.needs_reply?<i className="sbay-need-reply">Need Reply</i>:null}{mode==='customer'&&ticket.has_support_reply?<i className="sbay-support-replied">Agent Replied</i>:null}</span>
-            {mode === 'staff' ? <span>{ticket.agent_name||'Unassigned'}</span> : null}
-            <span>{new Date(ticket.updated_at || ticket.created_at).toLocaleDateString()}</span>
-          </div>
+          <TicketRow key={ticket.id} mode={mode} ticket={ticket} selected={selected.includes(ticket.id)} toggle={()=>setSelected(current=>current.includes(ticket.id)?current.filter(id=>id!==ticket.id):[...current,ticket.id])} open={()=>openTicket(ticket)} showDepartments={showDepartments} showCategories={showCategories} statusLabels={statusLabels}/>
         ))}
         <footer>
           {mode === 'staff' ? <div><select aria-label="Bulk actions" disabled={!selected.length || bulkPending} value={bulkAction} onChange={(event) => {setBulkAction(event.target.value);setBulkCustomFieldValue('');}}><option value="">Bulk Actions</option><optgroup label="Assignment"><option value="assignment:me">Assign to Me</option><option value="assignment:0">Unassign</option>{options?.agents.map((agent) => <option value={`assignment:${agent.id}`} key={`agent-${agent.id}`}>Assign to {agent.name}</option>)}</optgroup>{showDepartments?<optgroup label="Department">{options?.departments.map((department) => <option value={`department:${department.id}`} key={`department-${department.id}`}>Move to {department.name}</option>)}</optgroup>:null}{showCategories?<optgroup label="Category"><option value="category:0">Clear Category</option>{options?.categories.map((category) => <option value={`category:${category.id}`} key={`category-${category.id}`}>Category: {category.name}</option>)}</optgroup>:null}{showTags?<optgroup label="Tags">{options?.tags.flatMap(tag=>[<option value={`tag_add:${tag.id}`} key={`tag-add-${tag.id}`}>Add tag: {tag.name}</option>,<option value={`tag_remove:${tag.id}`} key={`tag-remove-${tag.id}`}>Remove tag: {tag.name}</option>])}</optgroup>:null}{showCustomFields?<optgroup label="Custom Fields">{options?.custom_fields.map(field=><option value={`custom_field:${field.id}`} key={`custom-field-${field.id}`}>Set field: {field.name}</option>)}</optgroup>:null}<optgroup label="Priority"><option value="priority:normal">Priority: Normal</option><option value="priority:medium">Priority: Medium</option><option value="priority:high">Priority: High</option><option value="priority:urgent">Priority: Urgent</option></optgroup><optgroup label="State"><option value="state:trash">Move to Trash</option><option value="state:active">Restore</option></optgroup></select>{bulkCustomFieldControl}<button disabled={!bulkAction || bulkPending} onClick={applyBulkAction}>{bulkPending ? 'Applying…' : 'Apply'}</button></div> : <span />}
           <span>Showing {first}–{last} of {result?.total ?? 0}</span>
         </footer>
       </div>
-      <nav className="sbay-ticket-pagination" aria-label="Ticket pagination"><button disabled={!result || result.page <= 1} onClick={() => update({ page: query.page - 1 })}>‹</button><span>{result?.page ?? 1}</span><button disabled={!result || result.page >= result.totalPages} onClick={() => update({ page: query.page + 1 })}>›</button></nav>
+      <TicketPagination page={result?.page??1} totalPages={result?.totalPages??1} previous={()=>update({page:query.page-1})} next={()=>update({page:query.page+1})}/>
     </section>
   );
 }

@@ -32,7 +32,7 @@ final class GeneralSettingsService {
     $override = (bool) ($settings['registration_override'] ?? false);
     $disabled = (bool) ($settings['disable_registration_form'] ?? false);
     $wordpress = (bool) get_option('users_can_register');
-    $role = 'subscriber';
+    $role = $this->clientUserDefaultRole();
     $pageId=absint($settings['support_portal_page_id']??0);
     if ($pageId>0&&get_post_status($pageId)!=='publish') { $pageId=0; }
     $dashboardLogoId=$this->normalizeLogoAttachmentId($settings['dashboard_logo_attachment_id']??0);
@@ -92,7 +92,9 @@ final class GeneralSettingsService {
     return !($settings['disable_registration_form']??false)&&((bool)($settings['registration_override']??false)||(bool)get_option('users_can_register'));
   }
   public function clientUserDefaultRole(): string {
-    return 'subscriber';
+    $role = sanitize_key((string) ($this->repository->all()['client_user_default_role'] ?? 'subscriber'));
+
+    return get_role($role) ? $role : 'subscriber';
   }
   public function guestTicketCreationEnabled(): bool { return !(bool)($this->repository->all()['disable_guest_ticket_creation']??true); }
   /** @return array{enabled:bool,site_key:string,secret_key:string,show_login:bool,show_registration:bool,show_guest_ticket:bool} */
@@ -171,7 +173,10 @@ final class GeneralSettingsService {
       $settings['disable_guest_ticket_creation'] = filter_var($data['disable_guest_ticket_creation'], FILTER_VALIDATE_BOOL);
     }
     if (array_key_exists('client_user_default_role',$data)) {
-      $settings['client_user_default_role']='subscriber';
+      $role = sanitize_key((string) $data['client_user_default_role']);
+      $settings['client_user_default_role'] = get_role($role)
+        ? $role
+        : 'subscriber';
     }
     if (array_key_exists('support_portal_page_id',$data)) {
       $pageId=absint($data['support_portal_page_id']);
@@ -245,7 +250,22 @@ final class GeneralSettingsService {
 
   /** @return array<int, array{slug:string,name:string}> */
   private function roleOptions(): array {
-    return [['slug'=>'subscriber','name'=>translate_user_role('Subscriber')]];
+    $roles = wp_roles()->roles;
+    $options = [];
+
+    foreach ($roles as $slug => $role) {
+      $options[] = [
+        'slug' => sanitize_key((string) $slug),
+        'name' => translate_user_role((string) ($role['name'] ?? $slug)),
+      ];
+    }
+
+    usort($options, static fn(array $left, array $right): int => strcasecmp(
+      $left['name'],
+      $right['name'],
+    ));
+
+    return $options;
   }
 
   /** @return array<int, array{id:int,title:string,url:string}> */

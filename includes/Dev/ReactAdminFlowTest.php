@@ -159,9 +159,10 @@ final class ReactAdminFlowTest extends FlowTest {
     $requestState = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/shared/components/RequestState.tsx'
     );
-    $ticketWorkspace = file_get_contents(
-      dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketWorkspace.tsx'
-    );
+    $ticketWorkspace = implode('', array_map(
+      static fn(string $file): string => (string) file_get_contents(dirname(__DIR__, 2) . $file),
+      ['/assets/src/shared/tickets/TicketWorkspace.tsx', '/assets/src/shared/tickets/workspace/TicketQueueTabs.tsx', '/assets/src/shared/tickets/workspace/TicketRow.tsx', '/assets/src/shared/tickets/workspace/TicketPagination.tsx'],
+    ));
     $customerDirectory = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/CustomerDirectory.tsx'
     );
@@ -298,9 +299,10 @@ final class ReactAdminFlowTest extends FlowTest {
       'Agent ticket detail renders typed custom fields and protected value mutations.'
     );
 
-    $ticketWorkspace = file_get_contents(
-      dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketWorkspace.tsx'
-    );
+    $ticketWorkspace = implode('', array_map(
+      static fn(string $file): string => (string) file_get_contents(dirname(__DIR__, 2) . $file),
+      ['/assets/src/shared/tickets/TicketWorkspace.tsx', '/assets/src/shared/tickets/workspace/TicketQueueTabs.tsx', '/assets/src/shared/tickets/workspace/TicketRow.tsx', '/assets/src/shared/tickets/workspace/TicketPagination.tsx'],
+    ));
     Assert::true(
       is_string($ticketWorkspace)
       && ! str_contains($ticketWorkspace, 'sla_state: query.slaState')
@@ -439,6 +441,8 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($envatoLoginWorkspace, 'Save Changes')
       && str_contains($envatoLoginWorkspace, 'Discard')
       && str_contains($envatoLoginWorkspace, 'providers/${provider.id}/configuration')
+      && str_contains($envatoLoginWorkspace, 'configuredSecretMask')
+      && str_contains($envatoLoginWorkspace, "value===configuredSecretMask?'':value")
       && is_string($envatoProvider)
       && str_contains($envatoProvider, "label: 'Click to enable'")
       && str_contains($envatoProvider, "key: 'access_token'")
@@ -451,8 +455,8 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($envatoProvider, "'sbayenvato'")
       && str_contains($envatoProvider, "label: 'Envato Username'")
       && str_contains($envatoProvider, "label: 'OAuth Client ID'")
-      && str_contains($envatoProvider, "label: 'Client Secret Key'"),
-      'Envato settings provides a schema-driven OAuth login form with copy and save controls.'
+      && str_contains($envatoProvider, "label: 'Secret Application Key'"),
+      'Envato settings provides a schema-driven OAuth login form with safe configured-secret masking, copy, and save controls.'
     );
 
     Assert::true(

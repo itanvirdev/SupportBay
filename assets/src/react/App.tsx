@@ -95,6 +95,11 @@ function App() {
     return <Suspense fallback={<PortalState loading message="Loading authentication…" />}><AuthPage mode={authMode} navigate={navigate}/></Suspense>;
   }
 
+  if (config.staffDashboardAccess) {
+    window.location.replace(config.staffDashboardUrl);
+    return <PortalState loading message="Opening your SupportBay staff workspace…" />;
+  }
+
   if (authRoute) {
     window.history.replaceState({}, '', `${portalPath}/`);
     setTimeout(()=>setPathname(`${portalPath}/`),0);

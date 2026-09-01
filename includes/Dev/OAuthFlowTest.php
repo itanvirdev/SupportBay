@@ -52,6 +52,17 @@ final class OAuthFlowTest extends FlowTest {
       'Customer provider connection uses the generic OAuth entry route.'
     );
 
+    $oauthRoutesSource = (string) file_get_contents(
+      dirname(__DIR__) . '/Modules/Auth/Http/OAuthRoutes.php'
+    );
+
+    Assert::true(
+      str_contains($oauthRoutesSource, "\$action === 'callback' && isset(\$_GET['error'])")
+      && str_contains($oauthRoutesSource, 'redirectAfterCancellation')
+      && str_contains($oauthRoutesSource, 'wp_safe_redirect($this->settings->portalUrl())'),
+      'Cancelled provider authorization returns safely to the SupportBay portal.'
+    );
+
     $customer = $oauth->login(
       $provider->slug(),
       'test-code',

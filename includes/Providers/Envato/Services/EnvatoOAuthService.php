@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SupportBay\Providers\Envato\Services;
 
+use RuntimeException;
 use SupportBay\Providers\Envato\Api\EnvatoApiClient;
 
 final class EnvatoOAuthService {
@@ -26,19 +27,36 @@ final class EnvatoOAuthService {
 
   /**
    * Build the OAuth authorization URL.
+   *
    */
   public function authorizationUrl(
     string $clientId,
     string $redirectUri,
-    string $state,
+    string $state = '',
   ): string {
+    $clientId = trim($clientId);
+    $redirectUri = trim($redirectUri);
 
-    return self::AUTHORIZE_URL . '?' . http_build_query([
+    if ($clientId === '' || $redirectUri === '') {
+      throw new RuntimeException(
+        'Envato OAuth Client ID and Confirmation URL are required.'
+      );
+    }
+
+    // Keep the Envato authorization request compatible with Support Genix:
+    // Envato expects only the standard authorization parameters. In particular,
+    // do not send a scope parameter because Envato does not support it here.
+    $parameters = [
       'response_type' => 'code',
       'client_id'     => $clientId,
       'redirect_uri'  => $redirectUri,
-      'state'         => $state,
-    ]);
+    ];
+
+    if ($state !== '') {
+      $parameters['state'] = $state;
+    }
+
+    return add_query_arg($parameters, self::AUTHORIZE_URL);
   }
 
   /**
@@ -49,18 +67,15 @@ final class EnvatoOAuthService {
   public function exchangeCode(
     string $clientId,
     string $clientSecret,
-    string $redirectUri,
     string $code,
   ): array {
 
-    return $this->client->post(
+    return $this->client->postForm(
       self::TOKEN_ENDPOINT,
-      '',
       [
         'grant_type'    => 'authorization_code',
         'client_id'     => $clientId,
         'client_secret' => $clientSecret,
-        'redirect_uri'  => $redirectUri,
         'code'          => $code,
       ]
     );
@@ -77,9 +92,8 @@ final class EnvatoOAuthService {
     string $refreshToken,
   ): array {
 
-    return $this->client->post(
+    return $this->client->postForm(
       self::TOKEN_ENDPOINT,
-      '',
       [
         'grant_type'    => 'refresh_token',
         'client_id'     => $clientId,

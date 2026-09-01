@@ -16,9 +16,25 @@ August 2026
 
 Current Version
 
-v0.2.6 Prerelease
+v0.2.32 Prerelease
 
 Prerelease policy: increment the patch version for every completed change set.
+
+- Ticket workspace queue tabs, table rows, pagination, and shared view types are isolated as reusable partial components while the parent retains request and filter orchestration.
+- Envato OAuth code and refresh exchanges use form-encoded client credentials without an empty bearer header, preventing duplicate client-authentication failures.
+- Envato response handling accepts JSON or form-encoded OAuth responses and reports bounded, credential-safe HTTP diagnostics for unexpected provider responses.
+- Envato token exchanges POST form-encoded parameters on the documented `/token` query string with an empty body, while bearer authentication remains omitted.
+- Envato OAuth settings now distinguish the Secret Application Key from Personal Tokens, rejected client credentials return actionable recovery guidance, and a mocked request contract verifies that every token-exchange credential is transmitted once and unchanged.
+- Configured Envato secrets now display a non-sensitive password mask, safely preserve the encrypted value during unrelated saves, and clearly distinguish a fresh login from retrying a single-use OAuth callback.
+- Envato OAuth now follows the proven WordPress integration flow: credentials are sent once in a native form-body POST without `redirect_uri`, and the normalized customer identity is assembled from Envato's dedicated account, email, and username endpoints.
+- Envato Marketplace-only account responses now receive a clear activation instruction while the portal keeps Support Genix's shared OAuth behavior: Login with Envato and Register with Envato use the same provider authorization URL with context-specific labels.
+- Envato OAuth now follows Support Genix's email-first login behavior: a verified Envato email can authenticate or create the WordPress customer even when optional Marketplace account and username enrichment are unavailable.
+- Envato OAuth profile lookups now use Support Genix's Authorization-only, 120-second WordPress request profile, with an endpoint-specific safe error if Envato cannot return the required email identity.
+- Envato email-identity failures take precedence over generic Marketplace messaging, preserving the exact safe diagnostic required for live troubleshooting.
+- Envato authorization cancellation now mirrors the expected portal behavior by returning the customer safely to the SupportBay portal instead of rendering an OAuth error.
+- Envato authorization now matches Support Genix's exact public parameter set: no unsupported `scope` or `state` query parameter, no internal `/interaction` redirect, and callback protection retained through a short-lived HttpOnly verifier cookie.
+- Removed the obsolete Envato interaction-route recovery path; provider API failures are now preserved safely instead of being misclassified and redirected to an invalid internal Envato endpoint.
+- Administrators can select any available WordPress role as the Client User Default Role, and authenticated Support Managers/Agents now enter their capability-controlled SupportBay staff workspace instead of the customer-only portal.
 
 Current Branch
 

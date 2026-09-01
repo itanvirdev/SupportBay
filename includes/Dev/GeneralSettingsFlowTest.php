@@ -24,7 +24,7 @@ final class GeneralSettingsFlowTest extends FlowTest {
       Assert::true($settings->get()['registration_enabled']===true,'Native WordPress registration remains effective without the override.');
       Assert::true($settings->update(['disable_registration_form'=>true])['registration_enabled']===false,'The registration-form switch disables registration regardless of other settings.');
       $updated=$settings->update(['disable_registration_form'=>false,'disable_guest_ticket_creation'=>false,'client_user_default_role'=>'contributor']);
-      Assert::true($updated['disable_guest_ticket_creation']===false&&$updated['client_user_default_role']==='subscriber','Guest policy persists while public registration remains locked to Subscriber.');
+      Assert::true($updated['disable_guest_ticket_creation']===false&&$updated['client_user_default_role']==='contributor'&&$settings->clientUserDefaultRole()==='contributor','Guest policy and the administrator-selected client role persist.');
       $branding=$settings->update(['footer_copyright_text'=>'© {year} {site_name}. All rights reserved.','remove_powered_by_branding'=>true]);
       Assert::true($branding['footer_copyright_text']==='© {year} {site_name}. All rights reserved.'&&$branding['remove_powered_by_branding']===true,'Portal copyright text and powered-by visibility persist.');
       $retention=$settings->update(['delete_data_on_uninstall'=>true]);

@@ -31,6 +31,8 @@ export interface SupportBayConfig {
   oauthLoginProviders: Array<{slug:string;name:string;url:string}>;
   availabilityNotices: Array<{type:'weekend'|'holiday';message:string}>;
   authenticated: boolean;
+  staffDashboardUrl: string;
+  staffDashboardAccess: boolean;
 }
 
 declare global {

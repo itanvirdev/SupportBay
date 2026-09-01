@@ -10,6 +10,17 @@ interface ConfigurationField {
 }
 interface ConfigurationForm { provider:string; configured:boolean; fields:ConfigurationField[]; }
 
+const configuredSecretMask = '••••••••••••';
+
+const formValues = (form:ConfigurationForm) => Object.fromEntries(
+  form.fields.map(field=>[
+    field.key,
+    field.type==='secret'&&field.configured
+      ? configuredSecretMask
+      : String(field.value??''),
+  ]),
+);
+
 const permissions = [
   'View and search Envato sites', 'View the user’s Envato Account username', 'View the user’s email address',
   'View the user’s account profile details', 'View the user’s account financial history',
@@ -33,18 +44,22 @@ export function EnvatoLoginWorkspace({tab,onTabChange}:EnvatoLoginWorkspaceProps
     const providers=await adminGet<ProviderItem[]>('providers');
     const envato=providers.data.find(item=>item.slug==='envato')??null;setProvider(envato);if(!envato)return;
     const response=await adminGet<ConfigurationForm>(`providers/${envato.id}/configuration`);
-    const next=Object.fromEntries(response.data.fields.map(field=>[field.key,String(field.value??'')]));
+    const next=formValues(response.data);
     setConfiguration(response.data);setValues(next);setSavedValues(next);
   }catch(reason){setError(reason instanceof Error?reason.message:'Envato settings could not be loaded.');}};
   useEffect(()=>{void load();},[]);
 
   const changed=useMemo(()=>JSON.stringify(values)!==JSON.stringify(savedValues),[values,savedValues]);
   const save=async(event:FormEvent)=>{event.preventDefault();if(!provider)return;setSaving(true);setError(null);setNotice(null);try{
-    const response=await adminPut<ConfigurationForm>(`providers/${provider.id}/configuration`,{settings:values});
+    const settings=Object.fromEntries(Object.entries(values).map(([key,value])=>[
+      key,
+      value===configuredSecretMask?'':value,
+    ]));
+    const response=await adminPut<ConfigurationForm>(`providers/${provider.id}/configuration`,{settings});
     if((values.oauth_login_enabled==='1'||values.purchase_verification_enabled==='1')&&provider.status!=='enabled'){
       await adminPost(`providers/${provider.id}/enable`,{});setProvider({...provider,status:'enabled'});
     }
-    const next=Object.fromEntries(response.data.fields.map(field=>[field.key,String(field.value??'')]));
+    const next=formValues(response.data);
     setConfiguration(response.data);setValues(next);setSavedValues(next);setNotice('Envato settings saved.');
   }catch(reason){setError(reason instanceof Error?reason.message:'Envato settings could not be saved.');}finally{setSaving(false);}};
   const copy=async(value:string)=>{try{
@@ -59,7 +74,7 @@ export function EnvatoLoginWorkspace({tab,onTabChange}:EnvatoLoginWorkspaceProps
   const enableKey=tab==='main'?'purchase_verification_enabled':'oauth_login_enabled';
   const enabled=values[enableKey]==='1';
   const toggle=(field:ConfigurationField)=><label className="sbay-general-toggle" key={field.key}><input type="checkbox" role="switch" disabled={saving} checked={values[field.key]==='1'} onChange={event=>setValues({...values,[field.key]:event.target.checked?'1':'0'})}/><span>{field.label}</span></label>;
-  const input=(field:ConfigurationField)=><label className="sbay-general-select" key={field.key}><span>{field.label}{field.required?' *':''}</span><span className={field.type==='readonly'?'sbay-copy-field':''}><input name={`sbay_envato_${field.key}`} autoComplete="off" spellCheck={false} type={field.type==='secret'?'password':field.type==='url'?'url':'text'} readOnly={field.type==='readonly'} disabled={saving} value={values[field.key]??''} placeholder={field.type==='secret'&&field.configured?'Saved — leave blank to keep':''} required={enabled&&field.required&&!(field.type==='secret'&&field.configured)} onChange={event=>setValues({...values,[field.key]:event.target.value})}/>{field.type==='readonly'?<button type="button" title="Copy confirmation URL" aria-label="Copy confirmation URL" onClick={()=>void copy(values[field.key]??'')}>⧉</button>:null}</span>{field.description?<small>{field.description}</small>:null}</label>;
+  const input=(field:ConfigurationField)=><label className="sbay-general-select" key={field.key}><span>{field.label}{field.required?' *':''}</span><span className={field.type==='readonly'?'sbay-copy-field':''}><input name={`sbay_envato_${field.key}`} autoComplete={field.type==='secret'?'new-password':'off'} spellCheck={false} type={field.type==='secret'?'password':field.type==='url'?'url':'text'} readOnly={field.type==='readonly'} disabled={saving} value={values[field.key]??''} placeholder={field.type==='secret'?'Enter the Secret Application Key':''} required={enabled&&field.required&&!(field.type==='secret'&&field.configured)} onFocus={()=>{if(field.type==='secret'&&values[field.key]===configuredSecretMask)setValues({...values,[field.key]:''});}} onBlur={()=>{if(field.type==='secret'&&field.configured&&values[field.key]==='')setValues({...values,[field.key]:configuredSecretMask});}} onChange={event=>setValues({...values,[field.key]:event.target.value})}/>{field.type==='readonly'?<button type="button" title="Copy confirmation URL" aria-label="Copy confirmation URL" onClick={()=>void copy(values[field.key]??'')}>⧉</button>:null}</span>{field.description?<small>{field.description}</small>:null}</label>;
   const enableField=fields.find(field=>field.key===enableKey);
   const detailFields=fields.filter(field=>field.key!==enableKey);
 

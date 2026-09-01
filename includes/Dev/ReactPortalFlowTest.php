@@ -230,9 +230,10 @@ final class ReactPortalFlowTest extends FlowTest {
     $ticketsPage = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/react/modules/tickets/TicketsPage.tsx'
     );
-    $ticketWorkspace = file_get_contents(
-      dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketWorkspace.tsx'
-    );
+    $ticketWorkspace = implode('', array_map(
+      static fn(string $file): string => (string) file_get_contents(dirname(__DIR__, 2) . $file),
+      ['/assets/src/shared/tickets/TicketWorkspace.tsx', '/assets/src/shared/tickets/workspace/TicketQueueTabs.tsx', '/assets/src/shared/tickets/workspace/TicketRow.tsx', '/assets/src/shared/tickets/workspace/TicketPagination.tsx'],
+    ));
     $portalStyles = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/react/styles/portal.scss'
     );

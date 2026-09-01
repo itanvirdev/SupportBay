@@ -63,7 +63,6 @@ final class EnvatoProvider implements
     $token = $this->oauth->exchangeCode(
       (string) ($context['client_id'] ?? ''),
       (string) ($context['client_secret'] ?? ''),
-      (string) ($context['redirect_uri'] ?? ''),
       $code,
     );
 
@@ -77,27 +76,33 @@ final class EnvatoProvider implements
       );
     }
 
-    $account = $this->customers->account($accessToken);
-    $accountId = $this->customers->id($account);
+    $account = $this->customers->profile($accessToken);
+    $email = $this->sanitizeEmail(
+      $this->customers->email($account)
+    );
     $username = $this->sanitizeNullable(
       $this->customers->username($account)
     );
 
-    if ($accountId === null || $username === null) {
+    if ($email === null) {
       throw new RuntimeException(
         'Envato did not return a valid customer identity.'
       );
     }
 
+    $username ??= $this->fallbackUsername($email);
+
     return new OAuthLoginData(
       identity: new OAuthIdentityData(
         provider: $this->slug(),
-        providerReference: (string) $accountId,
+        providerReference: $this->sanitizeNullable(
+          $this->customers->username($account)
+        ) ?? strtolower($email),
         username: $username,
-        email: $this->sanitizeEmail(
-          $this->customers->email($account)
-        ),
-        displayName: $username,
+        email: $email,
+        displayName: $this->sanitizeNullable(
+          $this->customers->displayName($account)
+        ) ?? $username,
         avatarUrl: $this->sanitizeUrl(
           $this->customers->avatar($account)
         ),
@@ -121,6 +126,15 @@ final class EnvatoProvider implements
           : null,
       ),
     );
+  }
+
+  private function fallbackUsername(string $email): string {
+    $localPart = (string) strstr($email, '@', true);
+    $username = sanitize_user($localPart, true);
+
+    return $username !== ''
+      ? $username
+      : 'envato-' . substr(hash('sha256', strtolower($email)), 0, 12);
   }
 
   /**
@@ -294,10 +308,10 @@ final class EnvatoProvider implements
       ),
       new ProviderConfigurationField(
         key: 'client_secret',
-        label: 'Client Secret Key',
+        label: 'Secret Application Key',
         type: 'secret',
         required: true,
-        description: 'Stored encrypted. Leave blank when editing to keep the existing secret.',
+        description: 'Use the Secret Application Key from Envato My Apps, not a Personal Token. It is stored encrypted; leave blank to keep the saved key.',
         group: 'oauth',
         requiredWhen: 'oauth_login_enabled',
       ),
