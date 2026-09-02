@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NotificationTemplateWorkspace } from './NotificationTemplateWorkspace';
 import { EnvatoLoginWorkspace } from './EnvatoLoginWorkspace';
+import { LemonSqueezyWorkspace } from './LemonSqueezyWorkspace';
 import { SavedReplyWorkspace } from './SavedReplyWorkspace';
 import { CategoryWorkspace } from './CategoryWorkspace';
 import { TagWorkspace } from './TagWorkspace';
@@ -14,12 +15,13 @@ import { WeekendHolidayWorkspace } from './WeekendHolidayWorkspace';
 import { AutoCloseWorkspace } from './AutoCloseWorkspace';
 import { AssignRuleWorkspace } from './AssignRuleWorkspace';
 
-type SettingsSection = 'general'|'security'|'roles'|'departments'|'categories'|'tags'|'custom-fields'|'assign-rules'|'saved-replies'|'notifications'|'weekend'|'auto-close'|'envato';
+type SettingsSection = 'general'|'security'|'roles'|'departments'|'categories'|'tags'|'custom-fields'|'assign-rules'|'saved-replies'|'notifications'|'weekend'|'auto-close'|'envato'|'lemonsqueezy';
 const sections:SettingsSection[]=['general','security','roles','departments','categories','tags','custom-fields','assign-rules','saved-replies','notifications','weekend','auto-close'];
 
 function route(){
   const params=new URLSearchParams(window.location.search);
   if(params.get('settings')==='integrations'&&params.get('integration')==='envato')return {section:'envato' as const,tab:params.get('tab')==='login-with-envato'?'oauth' as const:'main' as const};
+  if(params.get('settings')==='integrations'&&params.get('integration')==='lemonsqueezy')return {section:'lemonsqueezy' as const,tab:'main' as const};
   const requested=params.get('settings') as SettingsSection|null;
   return {section:requested&&sections.includes(requested)?requested:'general' as SettingsSection,tab:'main' as const};
 }
@@ -32,11 +34,11 @@ export function SettingsWorkspace(){
   const [integrationsOpen,setIntegrationsOpen]=useState(initial.section==='envato');
   const navigate=(next:SettingsSection,tab: 'main'|'oauth'=envatoTab,replace=false)=>{
     const url=new URL(window.location.href);
-    if(next==='envato'){url.searchParams.set('settings','integrations');url.searchParams.set('integration','envato');url.searchParams.set('tab',tab==='oauth'?'login-with-envato':'main');}
+    if(next==='envato'||next==='lemonsqueezy'){url.searchParams.set('settings','integrations');url.searchParams.set('integration',next);if(next==='envato')url.searchParams.set('tab',tab==='oauth'?'login-with-envato':'main');else url.searchParams.delete('tab');}
     else{url.searchParams.set('settings',next);url.searchParams.delete('integration');if(next==='weekend')url.searchParams.set('tab','weekend');else url.searchParams.delete('tab');}
-    window.history[replace?'replaceState':'pushState']({},'',url);setSection(next);setEnvatoTab(tab);if(next==='envato')setIntegrationsOpen(true);
+    window.history[replace?'replaceState':'pushState']({},'',url);setSection(next);setEnvatoTab(tab);if(next==='envato'||next==='lemonsqueezy')setIntegrationsOpen(true);
   };
-  useEffect(()=>{const pop=()=>{const next=route();setSection(next.section);setEnvatoTab(next.tab);setIntegrationsOpen(next.section==='envato');};window.addEventListener('popstate',pop);return()=>window.removeEventListener('popstate',pop);},[]);
+  useEffect(()=>{const pop=()=>{const next=route();setSection(next.section);setEnvatoTab(next.tab);setIntegrationsOpen(next.section==='envato'||next.section==='lemonsqueezy');};window.addEventListener('popstate',pop);return()=>window.removeEventListener('popstate',pop);},[]);
   useEffect(()=>{if(!new URLSearchParams(window.location.search).has('settings'))navigate(section,envatoTab,true);},[]);
   return <section className="sbay-settings-workspace"><nav aria-label="Settings sections">
     <button type="button" className={section==='general'?'is-active':''} onClick={()=>navigate('general')}>General</button><button type="button" className={section==='security'?'is-active':''} onClick={()=>navigate('security')}>Security</button>
@@ -47,6 +49,6 @@ export function SettingsWorkspace(){
     {config.canManageCustomFields?<button type="button" className={section==='custom-fields'?'is-active':''} onClick={()=>navigate('custom-fields')}>Custom Fields</button>:null}
     <button type="button" className={section==='assign-rules'?'is-active':''} onClick={()=>navigate('assign-rules')}>Assign Rules</button>
     {config.canManageSavedReplies?<button type="button" className={section==='saved-replies'?'is-active':''} onClick={()=>navigate('saved-replies')}>Saved Replies</button>:null}
-    <button type="button" className={section==='notifications'?'is-active':''} onClick={()=>navigate('notifications')}>Email Notifications</button><button type="button" className={section==='weekend'?'is-active':''} onClick={()=>navigate('weekend')}>Weekend &amp; Holiday</button><button type="button" className={section==='auto-close'?'is-active':''} onClick={()=>navigate('auto-close')}>Auto Close &amp; Delete</button><button type="button" className={section==='envato'?'is-active':''} aria-expanded={integrationsOpen} onClick={()=>setIntegrationsOpen(!integrationsOpen)}>Integrations <span>{integrationsOpen?'▾':'▸'}</span></button>{integrationsOpen?<button type="button" className={`sbay-settings-subnav ${section==='envato'?'is-active':''}`} onClick={()=>navigate('envato')}>Envato</button>:null}
-  </nav><div>{section==='general'?<GeneralWorkspace/>:section==='security'?<SecurityWorkspace/>:section==='roles'?<RoleWorkspace/>:section==='departments'?<DepartmentWorkspace/>:section==='categories'?<CategoryWorkspace/>:section==='tags'?<TagWorkspace/>:section==='custom-fields'?<CustomFieldWorkspace/>:section==='assign-rules'?<AssignRuleWorkspace/>:section==='saved-replies'?<SavedReplyWorkspace/>:section==='notifications'?<NotificationTemplateWorkspace/>:section==='weekend'?<WeekendHolidayWorkspace/>:section==='auto-close'?<AutoCloseWorkspace/>:<EnvatoLoginWorkspace tab={envatoTab} onTabChange={tab=>navigate('envato',tab)}/>}</div></section>;
+    <button type="button" className={section==='notifications'?'is-active':''} onClick={()=>navigate('notifications')}>Email Notifications</button><button type="button" className={section==='weekend'?'is-active':''} onClick={()=>navigate('weekend')}>Weekend &amp; Holiday</button><button type="button" className={section==='auto-close'?'is-active':''} onClick={()=>navigate('auto-close')}>Auto Close &amp; Delete</button><button type="button" className={section==='envato'||section==='lemonsqueezy'?'is-active':''} aria-expanded={integrationsOpen} onClick={()=>setIntegrationsOpen(!integrationsOpen)}>Integrations <span>{integrationsOpen?'▾':'▸'}</span></button>{integrationsOpen?<><button type="button" className={`sbay-settings-subnav ${section==='envato'?'is-active':''}`} onClick={()=>navigate('envato')}>Envato</button><button type="button" className={`sbay-settings-subnav ${section==='lemonsqueezy'?'is-active':''}`} onClick={()=>navigate('lemonsqueezy')}>Lemon Squeezy</button></>:null}
+  </nav><div>{section==='general'?<GeneralWorkspace/>:section==='security'?<SecurityWorkspace/>:section==='roles'?<RoleWorkspace/>:section==='departments'?<DepartmentWorkspace/>:section==='categories'?<CategoryWorkspace/>:section==='tags'?<TagWorkspace/>:section==='custom-fields'?<CustomFieldWorkspace/>:section==='assign-rules'?<AssignRuleWorkspace/>:section==='saved-replies'?<SavedReplyWorkspace/>:section==='notifications'?<NotificationTemplateWorkspace/>:section==='weekend'?<WeekendHolidayWorkspace/>:section==='auto-close'?<AutoCloseWorkspace/>:section==='lemonsqueezy'?<LemonSqueezyWorkspace/>:<EnvatoLoginWorkspace tab={envatoTab} onTabChange={tab=>navigate('envato',tab)}/>}</div></section>;
 }

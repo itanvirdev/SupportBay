@@ -15,6 +15,7 @@ use SupportBay\Modules\Customers\CustomerServiceProvider;
 use SupportBay\Modules\Auth\AuthServiceProvider;
 use SupportBay\Modules\Providers\ProviderServiceProvider;
 use SupportBay\Providers\Envato\EnvatoServiceProvider;
+use SupportBay\Providers\LemonSqueezy\LemonSqueezyServiceProvider;
 use SupportBay\Modules\Verifications\VerificationServiceProvider;
 use SupportBay\Modules\Portal\PortalServiceProvider;
 use SupportBay\Modules\Notifications\NotificationServiceProvider;
@@ -82,6 +83,7 @@ final class ServiceProviderRegistry {
    */
   private static function registerIntegrationProviders(Container $container): void {
     self::addProvider(new EnvatoServiceProvider());
+    self::addProvider(new LemonSqueezyServiceProvider());
   }
 
   /**

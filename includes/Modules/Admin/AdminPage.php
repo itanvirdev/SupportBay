@@ -70,9 +70,7 @@ final class AdminPage {
       return;
     }
 
-    $ticketId = isset($_GET['ticket']) ? absint(wp_unslash($_GET['ticket'])) : 0;
-
-    if ($section === 'settings' || ($section === 'tickets' && $ticketId > 0)) {
+    if ($section === 'settings' || $section === 'tickets') {
       wp_enqueue_editor();
     }
 

@@ -6,6 +6,7 @@ import { RequestState } from '../../../shared/components/RequestState';
 import { TicketWorkspace, ticketQueryString, type TicketPage, type TicketQueryParams, type WorkspaceTicket } from '../../../shared/tickets/TicketWorkspace';
 import { TicketConversation, type ConversationMessage, type ConversationTicket, type TicketAttachment, type TicketContext } from '../../../shared/tickets/TicketConversation';
 import type { SavedReply } from '../../../shared/tickets/SavedReplyPicker';
+import { StaffTicketCreateModal } from './StaffTicketCreateModal';
 import '../../../shared/tickets/workspace.scss';
 
 interface StaffDetail {
@@ -37,6 +38,7 @@ export function StaffPortalWorkspace({ navigate }: Props) {
   const [options, setOptions] = useState<TicketContext['options']>();
   const [detail, setDetail] = useState<StaffDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const requestId = useRef(0);
   const mutationPending = useRef(false);
 
@@ -178,5 +180,5 @@ export function StaffPortalWorkspace({ navigate }: Props) {
     return shell(<Preloader label="Loading ticket conversation…"/>);
   }
 
-  return shell(<section className="sbay-staff-portal"><header className="sbay-page__header"><div><small className="sbay-kicker">Support workspace</small><h1>Support Tickets</h1><p>Manage customer conversations from the same workspace available in SupportBay dashboard.</p></div></header>{error ? <RequestState title="Ticket filters could not be loaded" message={error} retry={() => window.location.reload()}/> : <TicketWorkspace mode="staff" load={loadTickets} options={options} bulk={bulk} openTicket={openTicket} autoRefresh={{ enabled: config.ticketListAutoRefreshEnabled, interval: config.ticketListAutoRefreshInterval }} statusLabels={config.ticketStatusLabels}/>}</section>);
+  return shell(<section className="sbay-staff-portal"><header className="sbay-page__header"><div><small className="sbay-kicker">Support workspace</small><h1>Support Tickets</h1><p>Manage customer conversations from the same workspace available in SupportBay dashboard.</p></div></header>{error ? <RequestState title="Ticket filters could not be loaded" message={error} retry={() => window.location.reload()}/> : <TicketWorkspace mode="staff" load={loadTickets} options={options} bulk={bulk} openTicket={openTicket} createTicket={()=>setCreating(true)} autoRefresh={{ enabled: config.ticketListAutoRefreshEnabled, interval: config.ticketListAutoRefreshInterval }} statusLabels={config.ticketStatusLabels}/>} {creating?<StaffTicketCreateModal close={()=>setCreating(false)} created={id=>{setCreating(false);navigate(`/support/tickets/${id}/`);setTicketId(id);setDetail(null);}}/>:null}</section>);
 }

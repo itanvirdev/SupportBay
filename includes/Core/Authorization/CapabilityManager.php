@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace SupportBay\Core\Authorization;
 
 final class CapabilityManager {
-  private const ROLE_DEFAULTS_VERSION = '1.3.0';
+  private const ROLE_DEFAULTS_VERSION = '1.4.0';
   public const MANAGE_CUSTOMERS = 'sbay_manage_customers';
   public const VIEW_TICKETS = 'sbay_view_tickets';
   public const VIEW_ALL_TICKETS = 'sbay_view_all_tickets';
   public const VIEW_UNASSIGNED_TICKETS = 'sbay_view_unassigned_tickets';
   public const SHOW_TICKET_USER_EMAIL = 'sbay_show_ticket_user_email';
   public const REPLY_TICKET = 'sbay_reply_ticket';
+  public const CREATE_TICKET_FOR_CUSTOMER = 'sbay_create_ticket_for_customer';
   public const CREATE_INTERNAL_NOTE = 'sbay_create_internal_note';
   public const CHANGE_TICKET_STATUS = 'sbay_change_ticket_status';
   public const MANAGE_DEPARTMENTS = 'sbay_manage_departments';
@@ -38,6 +39,7 @@ final class CapabilityManager {
     $agent = [
       'read', 'sbay_access_dashboard', 'sbay_access_agent_dashboard',
       self::VIEW_TICKETS, self::REPLY_TICKET, self::CREATE_INTERNAL_NOTE,
+      self::CREATE_TICKET_FOR_CUSTOMER,
       self::VIEW_UNASSIGNED_TICKETS,
       'sbay_upload_attachment', self::CHANGE_TICKET_STATUS,
       'sbay_change_ticket_priority', 'sbay_move_ticket_department',

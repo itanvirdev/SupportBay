@@ -4,7 +4,7 @@
  * Plugin Name:       SupportBay
  * Plugin URI:        https://supportbay.io
  * Description:       Modern WordPress support system with ticketing, Envato verification, live chat, AI chatbot, and provider integrations.
- * Version:           0.2.33
+ * Version:           0.2.34
  * Requires at least: 6.7
  * Requires PHP:      8.1
  * Author:            SupportBay Team

@@ -21,6 +21,7 @@ final class SupportRoleService {
         'sbay_view_tickets' => 'View staff ticket workspace',
         'sbay_view_all_tickets' => 'View every agent ticket',
         'sbay_view_unassigned_tickets' => 'View unassigned tickets',
+        'sbay_create_ticket_for_customer' => 'Create tickets for existing customers',
         'sbay_reply_ticket' => 'Reply to tickets',
         'sbay_create_internal_note' => 'Create internal notes',
         'sbay_upload_attachment' => 'Upload attachments',

@@ -257,6 +257,13 @@ final class EnvatoProvider implements
         group: 'main',
       ),
       new ProviderConfigurationField(
+        key: 'purchase_provider_option_label',
+        label: 'Purchase Provider Option Label',
+        defaultValue: 'Envato',
+        description: 'The label customers see for Envato in the Purchase Provider dropdown.',
+        group: 'main',
+      ),
+      new ProviderConfigurationField(
         key: 'license_required',
         label: 'Enable License Required',
         type: 'toggle',

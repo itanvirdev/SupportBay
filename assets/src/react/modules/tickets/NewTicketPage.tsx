@@ -3,6 +3,7 @@ import { portalApi } from '../../api/portal';
 import type { PortalCategory, PortalCustomField, PortalDepartment, PortalPurchaseProvider } from '../../api/types';
 import { FilePicker } from '../../components/FilePicker';
 import { Preloader } from '../../../shared/components/Preloader';
+import { RichTextEditor } from '../../../shared/editor/RichTextEditor';
 import { getConfig } from '../../core/config';
 
 interface NewTicketPageProps {
@@ -197,7 +198,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
           </label>:null}
           <label>
             <span>How can we help?</span>
-            <textarea value={content} onChange={(event) => setContent(event.target.value)} rows={8} required />
+            <RichTextEditor value={content} onChange={setContent} disabled={submitting} />
           </label>
           {departments.length === 0 ? <p className="sbay-form-error">No support departments are currently available.</p> : null}
           {error ? <p className="sbay-form-error" role="alert">{error}</p> : null}

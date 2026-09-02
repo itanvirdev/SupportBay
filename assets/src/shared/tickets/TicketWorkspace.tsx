@@ -14,8 +14,6 @@ interface TicketWorkspaceProps {
   createTicket?: () => void;
   options?: TicketWorkspaceOptions;
   bulk?: (ticketIds: number[], action: string, value: unknown) => Promise<{updated:number;failed:number}>;
-  openCustomers?: () => void;
-  openVerifications?: () => void;
   autoRefresh?: {enabled:boolean;interval:number};
   needReplyFilterEnabled?: boolean;
   statusLabels?:Record<string,string>;
@@ -47,7 +45,7 @@ const defaults: TicketQueryParams = {
   assignment: '', agentId:'', departmentId:'', categoryId:'', tagId:'', customFieldId:'', customFieldValue:'', needReply:false, orderby: 'updated_at', order: 'desc',
 };
 
-export function TicketWorkspace({ mode, load, openTicket, createTicket, options, bulk, openCustomers, openVerifications, autoRefresh, needReplyFilterEnabled = true, statusLabels = {} }: TicketWorkspaceProps) {
+export function TicketWorkspace({ mode, load, openTicket, createTicket, options, bulk, autoRefresh, needReplyFilterEnabled = true, statusLabels = {} }: TicketWorkspaceProps) {
   const [query, setQuery] = useState(defaults);
   const [draftSearch, setDraftSearch] = useState('');
   const [result, setResult] = useState<TicketPage | null>(null);
@@ -158,7 +156,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
 
   return (
     <section className={`sbay-ticket-workspace sbay-ticket-workspace--${mode}`}>
-      <TicketQueueTabs mode={mode} query={query} update={update} refresh={()=>setRefresh(value=>value+1)} createTicket={createTicket} openCustomers={openCustomers} openVerifications={openVerifications}/>
+      <TicketQueueTabs mode={mode} query={query} update={update} refresh={()=>setRefresh(value=>value+1)} createTicket={createTicket}/>
       {bulkNotice?<p className="sbay-ticket-bulk-notice" role="status">{bulkNotice}</p>:null}
 
       <div className="sbay-ticket-filters">

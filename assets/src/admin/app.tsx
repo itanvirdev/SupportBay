@@ -7,11 +7,9 @@ import { TicketWorkspace, ticketQueryString, type TicketPage, type TicketQueryPa
 import '../shared/tickets/workspace.scss';
 import { TicketConversation, type ConversationMessage, type ConversationTicket, type TicketAttachment, type TicketContext } from '../shared/tickets/TicketConversation';
 import type { SavedReply } from '../shared/tickets/SavedReplyPicker';
-import { CustomerProfile, type CustomerProfileData } from './CustomerProfile';
-import { CustomerDirectory } from './CustomerDirectory';
-import { VerificationDirectory } from './VerificationDirectory';
 import { Preloader } from '../shared/components/Preloader';
 import { RequestState } from '../shared/components/RequestState';
+import { StaffTicketCreateModal } from './StaffTicketCreateModal';
 
 const ReportsWorkspace = lazy(() => import('./ReportsWorkspace').then((module) => ({ default: module.ReportsWorkspace })));
 const SettingsWorkspace = lazy(() => import('./SettingsWorkspace').then((module) => ({ default: module.SettingsWorkspace })));
@@ -56,24 +54,19 @@ function AdminApp() {
   const config = getAdminConfig();
   const content = sectionContent[config.section];
   const [error, setError] = useState<string | null>(null);
+  const [creatingTicket, setCreatingTicket] = useState(false);
   const ticketId = Number(new URLSearchParams(window.location.search).get('ticket')) || null;
-  const customerId = Number(new URLSearchParams(window.location.search).get('customer')) || null;
-  const returnTicketId = Number(new URLSearchParams(window.location.search).get('return_ticket')) || null;
-  const customerDirectory = new URLSearchParams(window.location.search).get('customers') === '1';
-  const verificationDirectory = new URLSearchParams(window.location.search).get('verifications') === '1';
-  const returnCustomers = new URLSearchParams(window.location.search).get('return_customers') === '1';
   const [detail, setDetail] = useState<{ ticket: ConversationTicket; messages: ConversationMessage[]; context: TicketContext } | null>(null);
-  const [customerProfile, setCustomerProfile] = useState<CustomerProfileData | null>(null);
   const [queueOptions, setQueueOptions] = useState<TicketContext['options']>();
   const detailRequestId=useRef(0);
   const detailMutationPending=useRef(false);
 
   useEffect(() => {
-    if (config.section !== 'tickets' || ticketId || customerId || customerDirectory || verificationDirectory) return;
+    if (config.section !== 'tickets' || ticketId) return;
     adminGet<TicketContext['options']>('admin/tickets/options')
       .then((response) => setQueueOptions(response.data))
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Ticket filters could not be loaded.'));
-  }, [config.section, ticketId, customerId, customerDirectory, verificationDirectory]);
+  }, [config.section, ticketId]);
 
   const loadTicketDetail=useCallback(async(background=false)=>{
     if(!ticketId)return;
@@ -98,18 +91,6 @@ function AdminApp() {
     },Math.max(5,config.ticketListAutoRefreshInterval)*1000);
     return()=>window.clearInterval(interval);
   },[config.ticketListAutoRefreshEnabled,config.ticketListAutoRefreshInterval,loadTicketDetail,ticketId]);
-
-  const loadCustomerProfile = async (id: number) => {
-    setError(null);
-    const response = await adminGet<CustomerProfileData>(`admin/customers/${id}/profile`);
-    setCustomerProfile(response.data);
-  };
-
-  useEffect(() => {
-    if (!customerId) return;
-    loadCustomerProfile(customerId)
-      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Customer profile could not be loaded.'));
-  }, [customerId]);
 
   const addMessage = async (content: string, type: 'reply' | 'internal_note', files: File[], close: boolean) => {
     if (!ticketId || !detail) return;
@@ -174,12 +155,6 @@ function AdminApp() {
     window.location.href = `${config.adminUrl}&ticket=${targetId}`;
   };
 
-  const changeCustomerState = async (state: 'registered'|'suspended') => {
-    if (!customerId) return;
-    await adminPost(`customers/${customerId}/state`, { state });
-    await loadCustomerProfile(customerId);
-  };
-
   return (
     <main className={`sbay-admin-main sbay-admin-main--${config.section}`}>
       <header className="sbay-admin-workspace-header">
@@ -187,22 +162,22 @@ function AdminApp() {
         <span>{config.userName || 'Administrator'}</span>
       </header>
       <p className="sbay-admin-intro">{content.description}</p>
-      {error && !ticketId && !customerId ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
+      {error && !ticketId ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
 
       {config.section === 'tickets' ? (
-        verificationDirectory ? <VerificationDirectory back={()=>{window.location.href=config.adminUrl;}}/> : customerDirectory ? <CustomerDirectory back={()=>{window.location.href=config.adminUrl;}} openCustomer={id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_customers=1`;}}/> : customerId ? (customerProfile ? <CustomerProfile profile={customerProfile} back={()=>{window.location.href=returnTicketId?`${config.adminUrl}&ticket=${returnTicketId}`:returnCustomers?`${config.adminUrl}&customers=1`:config.adminUrl;}} openTicket={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}} changeState={changeCustomerState}/> : error ? <RequestState title="Customer profile could not be loaded" message={error} retry={()=>void loadCustomerProfile(customerId).catch((reason:unknown)=>setError(reason instanceof Error?reason.message:'Customer profile could not be loaded.'))}/> : <Preloader label="Loading customer profile…" />) : ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} previewAttachments={config.attachmentPopupPreviewEnabled} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} openCustomer={config.canManageCustomers?id=>{window.location.href=`${config.adminUrl}&customer=${id}&return_ticket=${ticketId}`;}:undefined} /> : error ? <RequestState title="Ticket could not be loaded" message={error} retry={()=>void loadTicketDetail(false)}/> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
+        ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={() => { window.location.href = config.adminUrl; }} submit={addMessage} transition={transition} download={downloadAttachment} previewAttachments={config.attachmentPopupPreviewEnabled} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} merge={mergeTicket} /> : error ? <RequestState title="Ticket could not be loaded" message={error} retry={()=>void loadTicketDetail(false)}/> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
           mode="staff"
           load={loadTickets}
           options={queueOptions}
           bulk={bulkTickets}
-          openCustomers={config.canManageCustomers?()=>{window.location.href=`${config.adminUrl}&customers=1`;}:undefined}
-          openVerifications={config.canViewVerifications?()=>{window.location.href=`${config.adminUrl}&verifications=1`;}:undefined}
+          createTicket={config.section==='tickets'?()=>setCreatingTicket(true):undefined}
           openTicket={(ticket) => { window.location.href = `${config.adminUrl}&ticket=${ticket.id}`; }}
           autoRefresh={{enabled:config.ticketListAutoRefreshEnabled,interval:config.ticketListAutoRefreshInterval}}
           needReplyFilterEnabled={config.needReplyFilterEnabled}
           statusLabels={config.ticketStatusLabels}
         />
       ) : null}
+      {creatingTicket?<StaffTicketCreateModal close={()=>setCreatingTicket(false)} created={id=>{window.location.href=`${config.adminUrl}&ticket=${id}`;}}/>:null}
 
       {config.section === 'reports' ? (
         <Suspense fallback={<Preloader label="Loading reports workspace…" />}><ReportsWorkspace /></Suspense>

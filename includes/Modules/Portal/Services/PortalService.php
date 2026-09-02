@@ -241,7 +241,11 @@ final class PortalService {
 
       $providers[] = [
         'slug' => $integration->slug(),
-        'name' => $provider->name(),
+        'name' => sanitize_text_field((string) $this->providerConfiguration->get(
+          $integration->slug(),
+          'purchase_provider_option_label',
+          $provider->name(),
+        )) ?: $provider->name(),
         'purchase_field_label' => sanitize_text_field((string) $this->providerConfiguration->get(
           $integration->slug(),
           'purchase_field_label',

@@ -23,6 +23,7 @@ use SupportBay\Modules\Verifications\Services\VerificationService;
 use SupportBay\Modules\Tickets\Enums\TicketPriority;
 use SupportBay\Modules\Tickets\Enums\TicketState;
 use SupportBay\Modules\Tickets\Enums\TicketBulkAction;
+use SupportBay\Common\Utilities\RichTextSanitizer;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -46,6 +47,14 @@ final class AdminTicketController {
   }
 
   public function registerRoutes(): void {
+    register_rest_route('sbay/v1', '/admin/tickets/create-options', [
+      'methods' => 'GET', 'callback' => [$this, 'createOptions'],
+      'permission_callback' => [$this, 'canCreateForCustomer'],
+    ]);
+    register_rest_route('sbay/v1', '/admin/tickets/create-for-customer', [
+      'methods' => 'POST', 'callback' => [$this, 'createForCustomer'],
+      'permission_callback' => [$this, 'canCreateForCustomer'],
+    ]);
     register_rest_route('sbay/v1', '/admin/tickets/options', [
       'methods' => 'GET', 'callback' => [$this, 'options'],
       'permission_callback' => [$this, 'permissions'],
@@ -89,6 +98,36 @@ final class AdminTicketController {
       'permission_callback' => [$this, 'permissions'],
       'args' => ['id' => ['sanitize_callback' => 'absint']],
     ]);
+  }
+
+  public function canCreateForCustomer(): bool|WP_Error {
+    return current_user_can(CapabilityManager::CREATE_TICKET_FOR_CUSTOMER)
+      ? true
+      : new WP_Error('sbay_permission_denied', 'You are not allowed to create tickets for customers.', ['status' => 403]);
+  }
+
+  public function createOptions(): WP_REST_Response {
+    $items = array_map(function ($customer): array {
+      $user = get_user_by('id', $customer->userId());
+      return ['id' => $customer->id(), 'name' => $user?->display_name ?? 'Customer', 'email' => $user?->user_email ?? ''];
+    }, $this->customers->all());
+    return RestResponse::success(['customers' => $items, 'departments' => array_map(static fn($department): array => ['id'=>$department->id(),'name'=>$department->name()], $this->departments->active())], 'Ticket creation options retrieved.');
+  }
+
+  public function createForCustomer(WP_REST_Request $request): WP_REST_Response {
+    try {
+      $customer = $this->customers->find(absint($request->get_param('customer_id')));
+      if (! $customer) throw new RuntimeException('Customer was not found.');
+      $subject = sanitize_text_field(wp_unslash((string) $request->get_param('subject')));
+      $content = RichTextSanitizer::sanitize(wp_unslash((string) $request->get_param('content')));
+      if ($subject === '' || $content === '') throw new RuntimeException('Subject and message are required.');
+      $department = $this->departments->find(absint($request->get_param('department_id'))) ?? $this->departments->default();
+      if (! $department->isActive()) throw new RuntimeException('Please select an active department.');
+      $ticketId = $this->tickets->create(['customer_id'=>$customer->id(),'created_by_id'=>get_current_user_id(),'created_by_type'=>AuthorType::AGENT->value,'department_id'=>$department->id(),'subject'=>$subject,'priority'=>TicketPriority::tryFrom(sanitize_key((string)$request->get_param('priority'))) ?->value ?? TicketPriority::default()->value]);
+      $this->messages->create(['ticket_id'=>$ticketId,'author_id'=>get_current_user_id(),'author_type'=>AuthorType::AGENT->value,'content'=>$content]);
+      $ticket = $this->tickets->find($ticketId);
+      return RestResponse::success($ticket?->toArray() ?? [], 'Ticket created for customer.', [], 201);
+    } catch (RuntimeException $exception) { return RestResponse::error($exception->getMessage(), 'STAFF_TICKET_CREATION_FAILED', [], 422); }
   }
 
   public function permissions(?WP_REST_Request $request = null): bool|WP_Error {
