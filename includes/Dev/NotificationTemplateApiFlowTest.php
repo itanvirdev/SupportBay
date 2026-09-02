@@ -152,6 +152,7 @@ final class NotificationTemplateApiFlowTest extends FlowTest {
     $testRequest->set_body_params([
       'test_recipient' => $testRecipient,
       'subject' => 'Test {{track_id}}',
+      'html_content' => '<p>Hello {{customer_name}}</p>',
       'plain_text_content' => 'Hello {{customer_name}}',
     ]);
     $testResponse = rest_do_request($testRequest);
@@ -161,8 +162,9 @@ final class NotificationTemplateApiFlowTest extends FlowTest {
       && ($testResponse->get_data()['data']['sent'] ?? false) === true
       && ($deliveries[0]['to'] ?? '') === $testRecipient
       && ($deliveries[0]['subject'] ?? '') === 'Test 54E5DF43'
-      && ($deliveries[0]['message'] ?? '') === 'Hello Alex Customer',
-      'Test email sends sanitized rendered draft through WordPress mail.'
+      && ($deliveries[0]['message'] ?? '') === '<p>Hello Alex Customer</p>'
+      && in_array('Content-Type: text/html; charset=UTF-8', $deliveries[0]['headers'] ?? [], true),
+      'Test email sends the sanitized rich-text draft through WordPress mail.'
     );
     remove_filter('pre_wp_mail', $capture, 10);
     Assert::equals(

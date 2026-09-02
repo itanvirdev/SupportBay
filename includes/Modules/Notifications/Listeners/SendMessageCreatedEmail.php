@@ -110,7 +110,8 @@ final class SendMessageCreatedEmail implements Listener {
       event: $eventKey,
       recipient: $recipient,
       subject: $template->subject,
-      content: $template->plainTextContent,
+      content: $template->htmlContent,
+      headers: ['Content-Type: text/html; charset=UTF-8'],
       metadata: [
         'ticket_id'  => $ticket->id(),
         'message_id' => $message->id(),

@@ -613,37 +613,33 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($savedReplyWorkspace, "saved-replies?status=active")
       && str_contains($savedReplyWorkspace, "saved-replies?status=inactive")
       && str_contains($savedReplyWorkspace, '<RichTextEditor')
-      && str_contains($savedReplyWorkspace, 'Create Saved Reply')
-      && str_contains($savedReplyWorkspace, 'Save Changes')
+      && str_contains($savedReplyWorkspace, 'Saved Replies')
+      && str_contains($savedReplyWorkspace, 'Add New')
+      && str_contains($savedReplyWorkspace, "draft.id?'Edit':'Add New'")
       && str_contains($savedReplyWorkspace, 'adminDelete')
-      && str_contains($savedReplyWorkspace, 'This cannot be undone')
+      && str_contains($savedReplyWorkspace, 'sbay-saved-reply-delete-confirmation')
+      && str_contains($savedReplyWorkspace, 'Are you sure want to delete?')
       && str_contains($savedReplyWorkspace, 'composer insertions')
       && str_contains($savedReplyWorkspace, 'last_used_at')
-      && str_contains($savedReplyWorkspace, 'Most Used')
-      && str_contains($savedReplyWorkspace, 'Recently Used')
-      && str_contains($savedReplyWorkspace, 'All Categories')
+      && str_contains($savedReplyWorkspace, 'Bulk Actions')
       && str_contains($savedReplyWorkspace, 'For example: Billing')
       && str_contains($savedReplyWorkspace, 'active.meta.placeholders')
-      && str_contains($savedReplyWorkspace, 'Saved reply placeholders')
+      && str_contains($savedReplyWorkspace, 'placeholderOptions={placeholderOptions}')
       && str_contains($savedReplyWorkspace, 'Global — all departments')
       && str_contains($savedReplyWorkspace, "adminGet<Department[]>('departments?status=active')"),
-      'Settings provides capability-gated saved-reply lifecycle management with rich-text editing and confirmed deletion.'
+      'Settings provides a table-based saved-reply lifecycle with modal rich-text editing, placeholders, bulk actions, and confirmed deletion.'
     );
 
     Assert::true(
       is_string($templateWorkspace)
       && str_contains($templateWorkspace, "adminGet<NotificationTemplate[]>('admin/notification-templates')")
-      && str_contains($templateWorkspace, "adminGet<NotificationPreferences>('admin/notification-preferences')")
-      && str_contains($templateWorkspace, "adminPut<NotificationPreferences>('admin/notification-preferences', preferences)")
-      && str_contains($templateWorkspace, 'Email Preferences')
-      && str_contains($templateWorkspace, 'Save preferences')
-      && str_contains($templateWorkspace, 'adminPut<NotificationTemplate>(path, payload)')
-      && str_contains($templateWorkspace, '`${path}/preview`')
-      && str_contains($templateWorkspace, '`${path}/test-email`')
-      && str_contains($templateWorkspace, '`${path}/reset`')
-      && str_contains($templateWorkspace, 'dangerouslySetInnerHTML={{ __html: preview.html_content }}')
+      && str_contains($templateWorkspace, 'Edit Email Notification')
+      && str_contains($templateWorkspace, '<RichTextEditor')
+      && str_contains($templateWorkspace, 'placeholderOptions={placeholders}')
+      && str_contains($templateWorkspace, 'Email Notifications')
+      && str_contains($templateWorkspace, 'admin/notification-templates/${draft.event}/${draft.recipient_type}')
       && ! str_contains(strtolower($templateWorkspace), 'smtp'),
-      'Email Notifications uses protected template, preview, reset, and WordPress test-email APIs without SMTP configuration.'
+      'Email Notifications provides a protected template list and rich-text modal editor with placeholder insertion without SMTP configuration.'
     );
 
     $adminBundle = '';
@@ -653,12 +649,9 @@ final class ReactAdminFlowTest extends FlowTest {
 
     Assert::true(
       is_string($adminBundle)
-      && str_contains($adminBundle, 'Notification Templates')
-      && str_contains($adminBundle, '/preview')
-      && str_contains($adminBundle, '/test-email')
-      && str_contains($adminBundle, 'notification-preferences')
-      && str_contains($adminBundle, 'Email Preferences')
-      && str_contains($adminBundle, 'Send test email')
+      && str_contains($adminBundle, 'Email Notifications')
+      && str_contains($adminBundle, 'Edit Email Notification')
+      && str_contains($adminBundle, 'Placeholders')
       && ! str_contains($adminBundle, 'Delivery Logs')
       && ! str_contains($adminBundle, 'Retry delivery')
       && ! str_contains($adminBundle, 'Delivery Report')

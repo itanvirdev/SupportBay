@@ -47,7 +47,8 @@ final class SendTicketSlaBreachedEmail implements Listener {
     if (! $template) { return; }
     $this->notifications->enqueue(new NotificationData(
       event:'ticket_sla_breached',recipient:(string)$agent->user_email,subject:$template->subject,
-      content:$template->plainTextContent,
+      content:$template->htmlContent,
+      headers:['Content-Type: text/html; charset=UTF-8'],
       metadata:['ticket_id'=>$ticket->id(),'agent_id'=>$agentId,'sla_breach_id'=>$breach->id(),'sla_metric'=>$breach->metric()],
     ));
   }

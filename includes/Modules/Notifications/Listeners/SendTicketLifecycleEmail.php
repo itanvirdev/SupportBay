@@ -83,7 +83,8 @@ final class SendTicketLifecycleEmail implements Listener {
       event: $eventKey,
       recipient: (string) $user->user_email,
       subject: $template->subject,
-      content: $template->plainTextContent,
+      content: $template->htmlContent,
+      headers: ['Content-Type: text/html; charset=UTF-8'],
       metadata: [
         'ticket_id' => $ticket->id(),
         'user_id' => $customer->userId(),

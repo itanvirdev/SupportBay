@@ -56,7 +56,8 @@ final class SendTicketCreatedEmails implements Listener {
         event: 'ticket_created',
         recipient: (string) get_option('admin_email'),
         subject: $agentTemplate->subject,
-        content: $agentTemplate->plainTextContent,
+        content: $agentTemplate->htmlContent,
+        headers: ['Content-Type: text/html; charset=UTF-8'],
         metadata: ['ticket_id' => $ticket->id()],
       ));
     }
@@ -95,7 +96,8 @@ final class SendTicketCreatedEmails implements Listener {
         event: 'ticket_created',
         recipient: (string) $user->user_email,
         subject: $customerTemplate->subject,
-        content: $customerTemplate->plainTextContent,
+        content: $customerTemplate->htmlContent,
+        headers: ['Content-Type: text/html; charset=UTF-8'],
         metadata: [
           'ticket_id' => $ticket->id(),
           'user_id'   => $customer->userId(),

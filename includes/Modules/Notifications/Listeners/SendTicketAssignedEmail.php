@@ -74,7 +74,8 @@ final class SendTicketAssignedEmail implements Listener {
       event: $eventKey,
       recipient: (string) $agent->user_email,
       subject: $template->subject,
-      content: $template->plainTextContent,
+      content: $template->htmlContent,
+      headers: ['Content-Type: text/html; charset=UTF-8'],
       metadata: [
         'ticket_id' => $ticket->id(),
         'agent_id' => $agentId,

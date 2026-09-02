@@ -3,36 +3,81 @@ import { RichTextEditor } from '../shared/editor/RichTextEditor';
 import { adminDelete, adminGet, adminPost, adminPut } from './api';
 import { Preloader } from '../shared/components/Preloader';
 
-interface SavedReply { id:number;title:string;content:string;category:string|null;department_id:number|null;status:'active'|'inactive';usage_count:number;last_used_at:string|null;last_used_by:number|null;updated_at:string }
-interface Placeholder { key:string;label:string }
-interface Department { id:number;name:string }
-const empty={id:0,title:'',content:'',category:null,department_id:null,status:'active' as const,usage_count:0,last_used_at:null,last_used_by:null,updated_at:''};
+interface SavedReply { id:number; title:string; content:string; category:string|null; department_id:number|null; status:'active'|'inactive'; usage_count:number; last_used_at:string|null; last_used_by:number|null; updated_at:string }
+interface Placeholder { key:string; label:string }
+interface Department { id:number; name:string }
+const emptyReply:SavedReply={id:0,title:'',content:'',category:null,department_id:null,status:'active',usage_count:0,last_used_at:null,last_used_by:null,updated_at:''};
 
 export function SavedReplyWorkspace() {
   const [items,setItems]=useState<SavedReply[]>([]);
-  const [selected,setSelected]=useState<SavedReply>(empty);
-  const [query,setQuery]=useState('');
-  const [sort,setSort]=useState<'title'|'usage'|'recent'>('title');
-  const [category,setCategory]=useState('');
-  const [department,setDepartment]=useState('');
+  const [draft,setDraft]=useState<SavedReply|null>(null);
+  const [placeholders,setPlaceholders]=useState<Placeholder[]>([]);
+  const [departments,setDepartments]=useState<Department[]>([]);
+  const [selectedIds,setSelectedIds]=useState<number[]>([]);
+  const [bulkAction,setBulkAction]=useState('');
+  const [deleteConfirmation,setDeleteConfirmation]=useState<number[]|null>(null);
   const [loading,setLoading]=useState(true);
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState<string|null>(null);
   const [notice,setNotice]=useState<string|null>(null);
-  const [placeholders,setPlaceholders]=useState<Placeholder[]>([]);
-  const [departments,setDepartments]=useState<Department[]>([]);
-  const load=useCallback(async()=>{setLoading(true);setError(null);try{const [active,inactive,departmentResponse]=await Promise.all([adminGet<SavedReply[]>('saved-replies?status=active'),adminGet<SavedReply[]>('saved-replies?status=inactive'),adminGet<Department[]>('departments?status=active')]);setItems([...active.data,...inactive.data].sort((a,b)=>a.title.localeCompare(b.title)));setDepartments(departmentResponse.data);if(Array.isArray(active.meta.placeholders))setPlaceholders(active.meta.placeholders as Placeholder[]);}catch(reason){setError(reason instanceof Error?reason.message:'Saved replies could not be loaded.');}finally{setLoading(false);}},[]);
-  useEffect(()=>{void load();},[load]);
-  const categories=useMemo(()=>Array.from(new Set(items.map(item=>item.category).filter((value):value is string=>Boolean(value)))).sort(),[items]);
-  const visible=useMemo(()=>items.filter(item=>(!category||item.category===category)&&(!department||(department==='global'?item.department_id===null:item.department_id===Number(department)))&&`${item.title} ${item.content.replace(/<[^>]*>/g,' ')}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>sort==='usage'?b.usage_count-a.usage_count||a.title.localeCompare(b.title):sort==='recent'?(Date.parse(b.last_used_at||'')||0)-(Date.parse(a.last_used_at||'')||0)||a.title.localeCompare(b.title):a.title.localeCompare(b.title)),[items,query,sort,category,department]);
-  const save=async(event:FormEvent)=>{event.preventDefault();setSaving(true);setError(null);setNotice(null);try{const payload={title:selected.title,content:selected.content,category:selected.category,department_id:selected.department_id,status:selected.status};const response=selected.id?await adminPut<SavedReply>(`saved-replies/${selected.id}`,payload):await adminPost<SavedReply>('saved-replies',payload);setSelected(response.data);setNotice(selected.id?'Saved reply updated.':'Saved reply created.');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Saved reply could not be saved.');}finally{setSaving(false);}};
-  const remove=async()=>{if(!selected.id||!window.confirm(`Delete “${selected.title}”? This cannot be undone.`))return;setSaving(true);setError(null);try{await adminDelete(`saved-replies/${selected.id}`);setSelected(empty);setNotice('Saved reply deleted.');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Saved reply could not be deleted.');}finally{setSaving(false);}};
 
-  return <section className="sbay-saved-reply-settings">
-    <header><div><small>Agent productivity</small><h2>Saved Replies</h2><p>Create reusable, sanitized responses for replies and internal notes.</p></div><button type="button" onClick={()=>{setSelected(empty);setError(null);setNotice(null);}}>Add Saved Reply</button></header>
-    {error?<p className="sbay-admin-error" role="alert">{error}</p>:null}{notice?<p className="sbay-admin-success" role="status">{notice}</p>:null}
-    <div className="sbay-saved-reply-settings__grid"><aside><label>Search<input type="search" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search saved replies…"/></label><label>Category<select value={category} onChange={event=>setCategory(event.target.value)}><option value="">All Categories</option>{categories.map(item=><option key={item}>{item}</option>)}</select></label><label>Department scope<select value={department} onChange={event=>setDepartment(event.target.value)}><option value="">All Scopes</option><option value="global">Global</option>{departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label><label>Sort<select value={sort} onChange={event=>setSort(event.target.value as typeof sort)}><option value="title">Title</option><option value="usage">Most Used</option><option value="recent">Recently Used</option></select></label>{loading?<Preloader label="Loading saved replies…" compact />:visible.length===0?<p>No saved replies found.</p>:<ul>{visible.map(item=><li key={item.id}><button type="button" className={selected.id===item.id?'is-active':''} onClick={()=>{setSelected(item);setNotice(null);setError(null);}}><strong>{item.title}</strong><span>{item.category?`${item.category} · `:''}{item.department_id?`Department #${item.department_id} · `:'Global · '}{item.status} · {item.usage_count} uses</span></button></li>)}</ul>}</aside>
-      <form onSubmit={save}><label>Title<input required maxLength={190} value={selected.title} onChange={event=>setSelected(current=>({...current,title:event.target.value}))}/></label><label>Category<input maxLength={100} value={selected.category??''} onChange={event=>setSelected(current=>({...current,category:event.target.value||null}))} placeholder="For example: Billing"/></label><label>Department scope<select value={selected.department_id??''} onChange={event=>setSelected(current=>({...current,department_id:Number(event.target.value)||null}))}><option value="">Global — all departments</option>{departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label><label>Status<select value={selected.status} onChange={event=>setSelected(current=>({...current,status:event.target.value as SavedReply['status']}))}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>{selected.id?<div className="sbay-saved-reply-usage"><span><strong>{selected.usage_count}</strong> composer insertions</span><span>{selected.last_used_at?`Last inserted ${new Date(selected.last_used_at).toLocaleString()} by user #${selected.last_used_by}`:'Not inserted yet'}</span></div>:null}<label>Reply content</label><div className="sbay-saved-reply-placeholders" aria-label="Saved reply placeholders">{placeholders.map(item=><button type="button" key={item.key} title={`Insert ${item.label}`} onClick={()=>setSelected(current=>({...current,content:`${current.content}{{${item.key}}}`}))}>{`{{${item.key}}}`}</button>)}</div><RichTextEditor key={selected.id||'new'} value={selected.content} onChange={content=>setSelected(current=>({...current,content}))} disabled={saving}/><div className="sbay-saved-reply-settings__actions"><button disabled={saving||selected.title.trim()===''||selected.content.trim()===''}>{saving?'Saving…':selected.id?'Save Changes':'Create Saved Reply'}</button>{selected.id?<button type="button" className="is-danger" disabled={saving} onClick={()=>void remove()}>Delete</button>:null}</div></form>
-    </div>
+  const load=useCallback(async()=>{
+    setLoading(true);setError(null);
+    try {
+      const [active,inactive,departmentResponse]=await Promise.all([
+        adminGet<SavedReply[]>('saved-replies?status=active'), adminGet<SavedReply[]>('saved-replies?status=inactive'), adminGet<Department[]>('departments?status=active'),
+      ]);
+      setItems([...active.data,...inactive.data].sort((left,right)=>left.id-right.id));
+      setDepartments(departmentResponse.data);
+      setPlaceholders(Array.isArray(active.meta.placeholders)?active.meta.placeholders as Placeholder[]:[]);
+      setSelectedIds([]);
+    } catch(reason) { setError(reason instanceof Error?reason.message:'Saved replies could not be loaded.'); }
+    finally { setLoading(false); }
+  },[]);
+  useEffect(()=>{void load();},[load]);
+
+  const placeholderOptions=useMemo(()=>placeholders.map(placeholder=>placeholder.key),[placeholders]);
+  const updateDraft=(changes:Partial<SavedReply>)=>setDraft(current=>current?{...current,...changes}:current);
+  const toggleSelection=(id:number)=>setSelectedIds(current=>current.includes(id)?current.filter(item=>item!==id):[...current,id]);
+  const toggleAll=()=>setSelectedIds(current=>current.length===items.length?[]:items.map(item=>item.id));
+
+  const save=async(event:FormEvent)=>{
+    event.preventDefault(); if(!draft)return;
+    setSaving(true);setError(null);setNotice(null);
+    try {
+      const payload={title:draft.title,content:draft.content,category:draft.category,department_id:draft.department_id,status:draft.status};
+      const response=draft.id?await adminPut<SavedReply>(`saved-replies/${draft.id}`,payload):await adminPost<SavedReply>('saved-replies',payload);
+      setItems(current=>draft.id?current.map(item=>item.id===response.data.id?response.data:item):[...current,response.data].sort((left,right)=>left.id-right.id));
+      setDraft(null);setNotice(draft.id?'Saved reply updated.':'Saved reply created.');
+    } catch(reason) { setError(reason instanceof Error?reason.message:'Saved reply could not be saved.'); }
+    finally { setSaving(false); }
+  };
+  const deleteItems=async(ids:number[])=>{
+    setSaving(true);setError(null);setNotice(null);
+    try { await Promise.all(ids.map(id=>adminDelete(`saved-replies/${id}`)));setItems(current=>current.filter(item=>!ids.includes(item.id)));setSelectedIds(current=>current.filter(id=>!ids.includes(id)));setBulkAction('');setNotice(ids.length===1?'Saved reply deleted.':'Saved replies deleted.'); }
+    catch(reason) { setError(reason instanceof Error?reason.message:'Saved replies could not be deleted.'); }
+    finally { setSaving(false); }
+  };
+  const remove=(reply:SavedReply)=>setDeleteConfirmation([reply.id]);
+  const applyBulk=async()=>{
+    if(!bulkAction||selectedIds.length===0)return;
+    if(bulkAction==='delete'){setDeleteConfirmation(selectedIds);return;}
+    setSaving(true);setError(null);setNotice(null);
+    try {
+      await Promise.all(selectedIds.map(async id=>{
+        const item=items.find(reply=>reply.id===id);
+        return item?adminPut<SavedReply>(`saved-replies/${id}`,{title:item.title,content:item.content,category:item.category,department_id:item.department_id,status:bulkAction}):null;
+      }));
+      setNotice(`Saved replies ${bulkAction==='active'?'activated':'deactivated'}.`);setBulkAction('');await load();
+    } catch(reason) { setError(reason instanceof Error?reason.message:'Saved reply bulk action could not be completed.'); }
+    finally { setSaving(false); }
+  };
+
+  return <section className="sbay-saved-replies">
+    <header className="sbay-saved-replies__header"><h2>Saved Replies</h2><div><button type="button" aria-label="Refresh saved replies" onClick={()=>void load()} disabled={loading}>↻</button><button className="is-primary" type="button" onClick={()=>{setDraft({...emptyReply});setError(null);setNotice(null);}}>＋ Add New</button></div></header>
+    {error?<p className="sbay-admin-error" role="alert">{error}</p>:null}{notice?<p className="sbay-admin-notice" role="status">{notice}</p>:null}{loading?<Preloader label="Loading saved replies…"/>:null}
+    {!loading?<><div className="sbay-saved-replies__table"><div className="sbay-saved-replies__row is-header"><input type="checkbox" aria-label="Select all saved replies" checked={items.length>0&&selectedIds.length===items.length} onChange={toggleAll}/><strong>ID</strong><strong>Title</strong><strong>Status</strong><strong>Action</strong></div>{items.map(reply=><div className="sbay-saved-replies__row" key={reply.id}><input type="checkbox" aria-label={`Select ${reply.title}`} checked={selectedIds.includes(reply.id)} onChange={()=>toggleSelection(reply.id)}/><span>{reply.id}</span><span><strong>{reply.title}</strong>{reply.category?<small>{reply.category}</small>:null}</span><span><i className={`sbay-saved-replies__status is-${reply.status}`}>{reply.status==='active'?'Active':'Inactive'}</i></span><span className="sbay-saved-replies__actions"><button type="button" aria-label={`Edit ${reply.title}`} onClick={()=>{setDraft({...reply});setError(null);setNotice(null);}}>✎</button><button type="button" className="is-danger" aria-label={`Delete ${reply.title}`} onClick={()=>void remove(reply)} disabled={saving}>🗑</button></span></div>)}{items.length===0?<p className="sbay-saved-replies__empty">No saved replies yet. Add one to reuse a response in ticket replies.</p>:null}<footer><div><select value={bulkAction} onChange={event=>setBulkAction(event.target.value)} aria-label="Bulk actions"><option value="">Bulk Actions</option><option value="active">Activate</option><option value="inactive">Deactivate</option><option value="delete">Delete</option></select><button type="button" onClick={()=>void applyBulk()} disabled={!bulkAction||selectedIds.length===0||saving}>Apply</button></div><span>Showing {items.length?`1 – ${items.length}`:'0'} of {items.length}</span></footer></div>{items.length>0?<nav className="sbay-saved-replies__pagination" aria-label="Saved reply pagination"><button type="button" disabled>‹</button><button type="button" className="is-current">1</button><button type="button" disabled>›</button></nav>:null}</>:null}
+    {draft?<div className="sbay-saved-reply-modal" role="dialog" aria-modal="true" aria-labelledby="sbay-saved-reply-modal-title"><form onSubmit={save}><header><h2 id="sbay-saved-reply-modal-title">{draft.id?'Edit':'Add New'} Saved Reply</h2><button type="button" aria-label="Close" onClick={()=>setDraft(null)} disabled={saving}>×</button></header><label><span>Title <b>*</b></span><input required maxLength={190} value={draft.title} onChange={event=>updateDraft({title:event.target.value})}/></label><div className="sbay-saved-reply-modal__editor"><span>Content <b>*</b></span><RichTextEditor key={draft.id||'new'} value={draft.content} onChange={content=>updateDraft({content})} disabled={saving} placeholderOptions={placeholderOptions}/></div><details><summary>Optional organization</summary><div><label>Category<input maxLength={100} value={draft.category??''} onChange={event=>updateDraft({category:event.target.value||null})} placeholder="For example: Billing"/></label><label>Department scope<select value={draft.department_id??''} onChange={event=>updateDraft({department_id:Number(event.target.value)||null})}><option value="">Global — all departments</option>{departments.map(department=><option value={department.id} key={department.id}>{department.name}</option>)}</select></label></div></details>{draft.id?<p className="sbay-saved-reply-modal__usage"><strong>{draft.usage_count}</strong> composer insertions{draft.last_used_at?` · Last used ${new Date(draft.last_used_at).toLocaleString()}`:''}</p>:null}<label className="sbay-general-toggle"><input type="checkbox" role="switch" checked={draft.status==='active'} onChange={event=>updateDraft({status:event.target.checked?'active':'inactive'})}/><span>Status</span></label><footer><button type="button" onClick={()=>setDraft(null)} disabled={saving}>Cancel</button><button className="is-primary" disabled={saving||!draft.title.trim()||!draft.content.replace(/<[^>]*>/g,'').trim()}>{saving?(draft.id?'Updating…':'Creating…'):(draft.id?'Update':'Create')}</button></footer></form></div>:null}
+    {deleteConfirmation?<div className="sbay-saved-reply-delete-confirmation" role="alertdialog" aria-modal="true" aria-labelledby="sbay-saved-reply-delete-title"><div><header><span aria-hidden="true">ⓘ</span><h2 id="sbay-saved-reply-delete-title">Delete</h2></header><p>Are you sure want to delete?</p><footer><button type="button" onClick={()=>setDeleteConfirmation(null)} disabled={saving}>No</button><button type="button" className="is-danger" onClick={()=>{const ids=deleteConfirmation;setDeleteConfirmation(null);void deleteItems(ids);}} disabled={saving}>Yes</button></footer></div></div>:null}
   </section>;
 }

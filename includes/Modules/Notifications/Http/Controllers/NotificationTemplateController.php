@@ -251,7 +251,8 @@ final class NotificationTemplateController {
         event: 'template_test',
         recipient: $recipient,
         subject: $preview->subject,
-        content: $preview->plainTextContent,
+        content: $preview->htmlContent,
+        headers: ['Content-Type: text/html; charset=UTF-8'],
         metadata: [
           'template_event' => $event,
           'template_recipient_type' => $recipientType->value,
