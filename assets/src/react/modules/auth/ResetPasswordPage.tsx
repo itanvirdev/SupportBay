@@ -35,60 +35,58 @@ export function ResetPasswordPage({ navigate }: ResetPasswordPageProps) {
 	return (
 		<main className="sbay-auth-page">
 			<section className="sbay-auth-card">
-				<header>
+				<header className="sbay-auth-card-header">
 					<div className="sbay-auth-brand">
 						<img src={config.portalLogoUrl} alt={config.siteName} />
 					</div>
 				</header>
-				<nav>
-					<a href={config.homeUrl} aria-label="Home">
-						<span aria-hidden="true">⌂</span>
-					</a>
-					<button type="button" onClick={() => navigate("/support/login/")}>
-						<span aria-hidden="true">♙</span> Login
-					</button>
-					{config.guestTicketCreationEnabled ? (
-						<button type="button" onClick={() => navigate("/support/guest-ticket/")} className="sbay-guest-ticket-link">
-							<span aria-hidden="true">＋</span> Create Ticket as a Guest
+				<nav className="sbay-auth-card-nav">
+					<div className="sbay-auth-card-nav-left">
+						<a className="sbay-auth-nav-btn" href={config.homeUrl} aria-label="Home">
+							<span className="sbay-auth-nav-btn-icon" aria-hidden="true">⌂</span>
+						</a>
+						<button type="button" className="sbay-auth-nav-btn" onClick={() => navigate("/support/login/")}>
+							<span className="sbay-auth-nav-btn-icon" aria-hidden="true">♙</span> Login
 						</button>
-					) : null}
+					</div>
+					<div className="sbay-auth-card-nav-right">
+						{config.guestTicketCreationEnabled ? (
+							<button type="button" className="sbay-auth-nav-btn sbay-auth-nav-btn-primary" onClick={() => navigate("/support/guest-ticket/")}>
+								<span className="sbay-auth-nav-btn-icon" aria-hidden="true">＋</span> Create Ticket as a Guest
+							</button>
+						) : null}
+					</div>
 				</nav>
-				{config.availabilityNotices.map((notice) => (
-					<aside className={`sbay-availability-notice is-${notice.type}`} role="status" key={notice.type}>
-						{notice.message}
-					</aside>
-				))}
-				<form onSubmit={submit}>
+				<div className="sbay-auth-card-body">
 					<h1>Reset Password</h1>
 					<p>Enter your username or email address and we'll email you a link to reset your password.</p>
-					<label>
-						<span>Username or Email Address</span>
-						<input
-							value={login}
-							onChange={(event) => setLogin(event.target.value)}
-							autoComplete="username"
-							required
-						/>
-					</label>
-					{error ? (
-						<p className="sbay-form-error" role="alert">
-							{error}
-						</p>
+					<form className="sbay-auth-form" onSubmit={submit}>
+						<div className="sbay-auth-form-group">
+							<label htmlFor="reset-login">Username or Email Address</label>
+							<input
+								id="reset-login"
+								value={login}
+								onChange={(event) => setLogin(event.target.value)}
+								autoComplete="username"
+								required
+							/>
+						</div>
+						{error ? (
+							<p className="sbay-form-error" role="alert">{error}</p>
+						) : null}
+						{success ? (
+							<p className="sbay-form-success" role="status">{success}</p>
+						) : null}
+						<button className="sbay-auth-btn sbay-auth-btn-primary sbay-auth-btn-block" disabled={busy}>
+							{busy ? "Sending…" : "Get New Password"}
+						</button>
+					</form>
+					{config.registrationEnabled ? (
+						<div className="sbay-auth-register-prompt">
+							Don't have an account? <a onClick={() => navigate("/support/register/")}>Register Now</a>
+						</div>
 					) : null}
-					{success ? (
-						<p className="sbay-form-success" role="status">
-							{success}
-						</p>
-					) : null}
-					<button className="sbay-primary-button" disabled={busy}>
-						{busy ? "Sending…" : "Get New Password"}
-					</button>
-				</form>
-				{config.registrationEnabled ? (
-					<div className="sbay-auth-register-prompt">
-						Don't have an account? <a onClick={() => navigate("/support/register/")}>Register Now</a>
-					</div>
-				) : null}
+				</div>
 			</section>
 			<PortalCopyright />
 		</main>

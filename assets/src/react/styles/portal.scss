@@ -212,7 +212,425 @@ body.supportbay-portal { padding-top: 0 !important; }
   .sbay-purchase-grid { grid-template-columns: 1fr; }
   .sbay-thread article.is-support, .sbay-thread article.is-customer { margin-left: 0; margin-right: 0; }
 }
-.sbay-auth-page{min-height:100vh;padding:7vh 20px;box-sizing:border-box;background:#f1f2f3;color:#202523}.sbay-auth-card{width:min(720px,100%);margin:0 auto;padding:30px;border-radius:12px;background:#fff;box-shadow:0 8px 30px rgba(20,30,25,.05)}.sbay-auth-card>header{padding:12px 0 30px;border-bottom:1px solid #e5e9e7}.sbay-auth-brand{display:flex;justify-content:center;align-items:center}.sbay-auth-brand img{display:block;max-width:280px;max-height:72px;object-fit:contain}.sbay-auth-card>nav{padding:16px 0;display:flex;gap:10px;border-bottom:1px solid #e5e9e7}.sbay-auth-card>nav a,.sbay-auth-card>nav button{padding:9px 15px;border:1px solid #ccd5d0;border-radius:7px;background:#fff;color:#202523;text-decoration:none;font:inherit}.sbay-auth-card form{padding:24px 0;display:grid;gap:18px}.sbay-auth-card form h1{margin:0 0 10px;font-size:25px}.sbay-auth-card form>label:not(.sbay-auth-remember){display:grid;gap:8px;font-weight:650}.sbay-auth-card input{width:100%;padding:12px;box-sizing:border-box;border:1px solid #cbd4cf;border-radius:7px;font:inherit}.sbay-password-input{position:relative}.sbay-password-input input{padding-right:70px}.sbay-password-input button{position:absolute;right:6px;top:6px;padding:7px;border:0;background:transparent;color:#216e52}.sbay-auth-card .sbay-auth-remember{display:flex;align-items:center;gap:9px}.sbay-auth-remember input{width:auto}.sbay-auth-card form>.sbay-primary-button{justify-self:end;min-width:110px}.sbay-auth-card>footer{padding-top:22px;border-top:1px solid #e5e9e7;text-align:center}.sbay-auth-card a{color:#216e52}.sbay-auth-copyright{text-align:center;color:#53605a}@media(max-width:600px){.sbay-auth-page{padding:20px 12px}.sbay-auth-card{padding:20px}.sbay-auth-card form>.sbay-primary-button{width:100%}}
+/* Auth Pages - Ant Design Style */
+.sbay-auth-page {
+  min-height: 100vh;
+  padding: 8px 8px 24px;
+  box-sizing: border-box;
+  background: #f0f2f5;
+  color: #000000e6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.sbay-auth-card {
+  width: min(480px, 100%);
+  margin: 24px auto;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+}
+
+.sbay-auth-card-header {
+  padding: 24px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+.sbay-auth-brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sbay-auth-brand img {
+  display: block;
+  max-width: 280px;
+  max-height: 72px;
+  object-fit: contain;
+}
+
+.sbay-auth-card-nav {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sbay-auth-card-nav-left,
+.sbay-auth-card-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sbay-auth-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+  color: #000000d9;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sbay-auth-nav-btn:hover {
+  color: var(--sbay-green);
+  border-color: var(--sbay-green);
+}
+
+.sbay-auth-nav-btn-primary {
+  background: var(--sbay-green);
+  border-color: var(--sbay-green);
+  color: #fff;
+}
+
+.sbay-auth-nav-btn-primary:hover {
+  background: #195b42;
+  border-color: #195b42;
+  color: #fff;
+}
+
+.sbay-auth-nav-btn-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.sbay-auth-card-body {
+  padding: 24px;
+}
+
+.sbay-auth-card-body h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #000000e6;
+}
+
+.sbay-auth-card-body > p {
+  margin: 0 0 24px;
+  color: #00000073;
+  font-size: 14px;
+}
+
+.sbay-auth-form {
+  display: grid;
+  gap: 20px;
+}
+
+.sbay-auth-form-group {
+  display: grid;
+  gap: 8px;
+}
+
+.sbay-auth-form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #000000d9;
+}
+
+.sbay-auth-form-group input,
+.sbay-auth-form-group select,
+.sbay-auth-form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #000000e6;
+  transition: all 0.2s;
+}
+
+.sbay-auth-form-group input:hover,
+.sbay-auth-form-group select:hover,
+.sbay-auth-form-group textarea:hover {
+  border-color: #40a9ff;
+}
+
+.sbay-auth-form-group input:focus,
+.sbay-auth-form-group select:focus,
+.sbay-auth-form-group textarea:focus {
+  border-color: var(--sbay-green);
+  box-shadow: 0 0 0 2px rgba(33, 110, 82, 0.1);
+  outline: none;
+}
+
+.sbay-auth-form-group input[readonly] {
+  background: #f5f5f5;
+  border-color: #d9d9d9;
+  cursor: not-allowed;
+}
+
+.sbay-name-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.sbay-password-input {
+  position: relative;
+}
+
+.sbay-password-input input {
+  padding-right: 44px;
+}
+
+.sbay-password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: #00000073;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.sbay-password-toggle:hover {
+  color: var(--sbay-green);
+}
+
+.sbay-auth-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sbay-auth-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sbay-auth-checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.sbay-auth-checkbox label {
+  font-size: 14px;
+  color: #000000d9;
+  cursor: pointer;
+}
+
+.sbay-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sbay-auth-btn-primary {
+  background: var(--sbay-green);
+  color: #fff;
+}
+
+.sbay-auth-btn-primary:hover {
+  background: #195b42;
+}
+
+.sbay-auth-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sbay-auth-btn-outline {
+  background: #fff;
+  border-color: #d9d9d9;
+  color: #000000d9;
+}
+
+.sbay-auth-btn-outline:hover {
+  border-color: var(--sbay-green);
+  color: var(--sbay-green);
+}
+
+.sbay-auth-btn-block {
+  width: 100%;
+}
+
+.sbay-auth-oauth {
+  display: grid;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.sbay-auth-oauth a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+  color: #000000d9;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.sbay-auth-oauth a:hover {
+  border-color: var(--sbay-green);
+}
+
+.sbay-auth-oauth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #00000073;
+  font-size: 14px;
+}
+
+.sbay-auth-oauth-divider::before,
+.sbay-auth-oauth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #f0f0f0;
+}
+
+.sbay-auth-footer {
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+.sbay-auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sbay-auth-muted {
+  color: #00000073;
+  font-size: 14px;
+}
+
+.sbay-auth-links a,
+.sbay-auth-links button {
+  color: var(--sbay-green);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sbay-auth-links a:hover,
+.sbay-auth-links button:hover {
+  text-decoration: underline;
+}
+
+.sbay-auth-register-prompt {
+  padding-top: 20px;
+  margin-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+  color: #00000073;
+  font-size: 14px;
+}
+
+.sbay-auth-register-prompt a {
+  color: var(--sbay-green);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sbay-auth-register-prompt a:hover {
+  text-decoration: underline;
+}
+
+.sbay-auth-copyright {
+  margin-top: 24px;
+  text-align: center;
+  color: #00000073;
+  font-size: 14px;
+}
+
+.sbay-auth-copyright a {
+  color: var(--sbay-green);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.sbay-auth-copyright a:hover {
+  text-decoration: underline;
+}
+
+.sbay-guest-ticket-success {
+  padding: 32px 0;
+  display: grid;
+  gap: 14px;
+  text-align: center;
+}
+
+.sbay-guest-ticket-success h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--sbay-green);
+}
+
+.sbay-guest-ticket-success p {
+  margin: 0;
+  color: #000000d9;
+  font-size: 14px;
+}
+
+.sbay-guest-ticket-success .sbay-auth-btn {
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .sbay-auth-page {
+    padding: 8px;
+  }
+
+  .sbay-auth-card {
+    margin: 8px auto;
+  }
+
+  .sbay-auth-card-nav {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sbay-name-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .sbay-auth-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
 .sbay-auth-name-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}.sbay-auth-name-fields label{display:grid;gap:8px;font-weight:650}.sbay-auth-card>nav button{display:inline-flex;align-items:center;gap:8px}.sbay-auth-card>nav button>span{font-size:20px}@media(max-width:600px){.sbay-auth-name-fields{grid-template-columns:1fr}}
 .sbay-auth-card>nav .sbay-guest-ticket-link{margin-left:auto;border-color:var(--sbay-green);color:var(--sbay-green)}.sbay-auth-card textarea{width:100%;padding:12px;box-sizing:border-box;resize:vertical;border:1px solid #cbd4cf;border-radius:7px;font:inherit}.sbay-guest-ticket-success{padding:32px 0;display:grid;gap:14px}.sbay-guest-ticket-success h1,.sbay-guest-ticket-success p{margin:0}.sbay-guest-ticket-success .sbay-primary-button{justify-self:start}@media(max-width:600px){.sbay-auth-card>nav{flex-wrap:wrap}.sbay-auth-card>nav .sbay-guest-ticket-link{width:100%;margin-left:0;justify-content:center}}
 .sbay-auth-card>nav .sbay-returning-login{margin-left:auto;border-color:var(--sbay-green);color:var(--sbay-green)}@media(max-width:600px){.sbay-auth-card>nav .sbay-returning-login{margin-left:0}}
