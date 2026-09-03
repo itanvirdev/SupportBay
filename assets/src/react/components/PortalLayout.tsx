@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { PortalOverview } from '../api/types';
 import { getConfig } from '../core/config';
 
-export type PortalRoute = 'overview' | 'tickets' | 'purchases' | 'profile';
+export type PortalRoute = 'overview' | 'tickets' | 'purchases' | 'profile' | 'reset-password';
 
 interface PortalLayoutProps {
   overview: PortalOverview;

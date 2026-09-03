@@ -145,7 +145,7 @@ final class PortalPage {
         'fileUploadAllowedExtensions' => $this->settings->allowedFileExtensions(),
         'attachmentPopupPreviewEnabled' => $this->settings->attachmentPopupPreviewEnabled(),
         'ticketStatusLabels' => $this->settings->ticketStatusLabels(),
-        'resetPasswordUrl' => esc_url_raw(wp_lostpassword_url(trailingslashit($portalUrl) . 'login/')),
+        'resetPasswordUrl' => trailingslashit($portalUrl) . 'reset-password/',
         'registrationEnabled' => $this->settings->registrationEnabled(),
         'guestTicketCreationEnabled' => $this->settings->guestTicketCreationEnabled(),
         'recaptchaSiteKey' => $this->recaptcha->siteKey(),
@@ -313,7 +313,7 @@ final class PortalPage {
 
     $path = self::relativeRewritePath($url);
     $pattern = $path === ''
-      ? '^(?:login|register|guest-ticket|tickets(?:/.*)?|purchases|profile)/?$'
+      ? '^(?:login|register|guest-ticket|tickets(?:/.*)?|purchases|profile|reset-password)/?$'
       : '^' . preg_quote($path, '#') . '(?:/.*)?$';
     $target = 'index.php?' . self::QUERY_VAR . '=1';
 

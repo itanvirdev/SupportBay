@@ -28,6 +28,7 @@ final class CustomerAuthController {
     register_rest_route('sbay/v1', '/auth/register', ['methods'=>'POST','callback'=>[$this,'register'],'permission_callback'=>[$this,'publicPermission']]);
     register_rest_route('sbay/v1', '/auth/registration-fields', ['methods'=>'GET','callback'=>[$this,'registrationFields'],'permission_callback'=>[$this,'publicPermission']]);
     register_rest_route('sbay/v1', '/auth/logout', ['methods'=>'POST','callback'=>[$this,'logout'],'permission_callback'=>[$this,'authenticatedPermission']]);
+    register_rest_route('sbay/v1', '/auth/lost-password', ['methods'=>'POST','callback'=>[$this,'lostPassword'],'permission_callback'=>[$this,'publicPermission']]);
   }
 
   public function publicPermission(WP_REST_Request $request): bool|WP_Error {
@@ -101,6 +102,19 @@ final class CustomerAuthController {
   public function logout(): WP_REST_Response {
     wp_logout();
     return RestResponse::success(['redirect'=>trailingslashit($this->settings->portalUrl()).'login/'], 'Logout successful.');
+  }
+
+  public function lostPassword(WP_REST_Request $request): WP_REST_Response {
+    try { $this->recaptcha->verify((string)$request->get_param('recaptcha_token'),'login',isset($_SERVER['REMOTE_ADDR'])?sanitize_text_field((string)$_SERVER['REMOTE_ADDR']):null); }
+    catch (\RuntimeException $exception) { return RestResponse::error($exception->getMessage(),'RECAPTCHA_FAILED',[],403); }
+    $login = sanitize_text_field(wp_unslash((string) $request->get_param('login')));
+    if ($login === '') { return RestResponse::error('Enter your username or email address.', 'LOST_PASSWORD_LOGIN_REQUIRED', [], 422); }
+    $user = get_user_by('email', $login);
+    if (! $user) { $user = get_user_by('login', $login); }
+    if (! $user) { return RestResponse::success([], 'If an account exists for that username or email, a password reset link has been sent.'); }
+    $retrieve = retrieve_password($user->user_login);
+    if ($retrieve instanceof WP_Error) { return RestResponse::error(wp_strip_all_tags($retrieve->get_error_message()), 'LOST_PASSWORD_FAILED', [], 422); }
+    return RestResponse::success([], 'If an account exists for that username or email, a password reset link has been sent.');
   }
 
   private function uniqueUsername(string $email): string {

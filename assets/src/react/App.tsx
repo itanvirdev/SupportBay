@@ -8,6 +8,7 @@ import { getConfig } from './core/config';
 import './styles/portal.scss';
 
 const AuthPage = lazy(() => import('./modules/auth/AuthPage').then((module) => ({ default: module.AuthPage })));
+const ResetPasswordPage = lazy(() => import('./modules/auth/ResetPasswordPage').then((module) => ({ default: module.ResetPasswordPage })));
 const DashboardPage = lazy(() => import('./modules/dashboard/DashboardPage').then((module) => ({ default: module.DashboardPage })));
 const PurchasesPage = lazy(() => import('./modules/purchases/PurchasesPage').then((module) => ({ default: module.PurchasesPage })));
 const ProfilePage = lazy(() => import('./modules/profile/ProfilePage').then((module) => ({ default: module.ProfilePage })));
@@ -23,6 +24,10 @@ interface RouteMatch {
 }
 
 function matchRoute(pathname: string): RouteMatch {
+  if (/^\/support\/reset-password\/?$/.test(pathname)) {
+    return { active: 'reset-password' };
+  }
+
   if (/^\/support\/tickets\/new\/?$/.test(pathname)) {
     return { active: 'tickets', newTicket: true };
   }
@@ -74,12 +79,17 @@ function App() {
 
   const canonicalPath=pathname.startsWith(portalPath)?`/support${pathname.slice(portalPath.length)}`:pathname;
   const guestRoute = config.guestTicketCreationEnabled && /^\/support\/guest-ticket\/?$/.test(canonicalPath);
+  const resetPasswordRoute = /^\/support\/reset-password\/?$/.test(canonicalPath);
   const authMode = guestRoute
     ? 'guest'
     : config.registrationEnabled && /^\/support\/register\/?$/.test(canonicalPath)
     ? 'register'
     : 'login';
   const authRoute = /^\/support\/(?:login|register)\/?$/.test(canonicalPath) || guestRoute;
+
+  if (resetPasswordRoute) {
+    return <Suspense fallback={<PortalState loading message="Loading reset password page…" />}><ResetPasswordPage navigate={navigate}/></Suspense>;
+  }
 
   if (!config.authenticated) {
     if (config.wordpressAuthEnabled && authMode !== 'guest') {
