@@ -250,6 +250,7 @@ final class TicketRepository extends Repository {
     $order = strtoupper($query->direction) === 'ASC' ? 'ASC' : 'DESC';
     $orderBy = match ($query->orderBy) {
       'created_at' => 't.created_at', 'priority' => "CASE t.priority WHEN 'urgent' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END",
+      'last_reply_at' => 'COALESCE(lm.created_at,t.last_reply_at,t.created_at)',
       'need_reply' => $query->needsReply ? $needExpression : 'COALESCE(t.last_reply_at,t.updated_at,t.created_at)',
       default => 'COALESCE(t.last_reply_at,t.updated_at,t.created_at)',
     };

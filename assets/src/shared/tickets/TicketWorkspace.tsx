@@ -42,7 +42,7 @@ export function ticketQueryString(query: TicketQueryParams): string {
 
 const defaults: TicketQueryParams = {
   page: 1, perPage: 20, search: '', status: '', state: 'active', priority: '',
-  assignment: '', agentId:'', categoryId:'', tagId:'', customFieldId:'', customFieldValue:'', needReply:false, orderby: 'updated_at', order: 'desc',
+  assignment: '', agentId:'', categoryId:'', tagId:'', customFieldId:'', customFieldValue:'', needReply:false, orderby: 'last_reply_at', order: 'desc',
 };
 
 export function TicketWorkspace({ mode, load, openTicket, createTicket, options, bulk, autoRefresh, needReplyFilterEnabled = true, statusLabels = {} }: TicketWorkspaceProps) {
@@ -82,7 +82,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
     return {
       ...current,
       needReply: enabled,
-      orderby: !enabled && current.orderby === 'need_reply' ? 'updated_at' : current.orderby,
+      orderby: !enabled && current.orderby === 'need_reply' ? 'last_reply_at' : current.orderby,
       order: !enabled && current.orderby === 'need_reply' ? 'desc' : current.order,
       page: 1,
     };
@@ -168,7 +168,7 @@ export function TicketWorkspace({ mode, load, openTicket, createTicket, options,
           {mode==='staff'&&query.customFieldId?(selectedCustomField?.type==='select'?<select aria-label="Custom field value" value={query.customFieldValue} onChange={event=>update({customFieldValue:event.target.value})}><option value="">Any Value</option>{selectedCustomField.options.map(option=><option key={option}>{option}</option>)}</select>:selectedCustomField?.type==='checkbox'?<select aria-label="Custom field value" value={query.customFieldValue} onChange={event=>update({customFieldValue:event.target.value})}><option value="">Any Value</option><option value="1">Checked</option><option value="0">Not Checked</option></select>:<input aria-label="Custom field value" value={query.customFieldValue} onChange={event=>update({customFieldValue:event.target.value})} placeholder="Exact custom field value"/>):null}
           {mode==='staff'?<select aria-label="Agent" value={query.agentId} onChange={event=>update({agentId:event.target.value,assignment:''})}><option value="">All Agents</option>{options?.agents.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>:null}
           <select aria-label="Priority" value={query.priority} onChange={(event) => update({ priority: event.target.value })}><option value="">All Priorities</option><option value="normal">Normal</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>
-          <select aria-label="Sort tickets" value={`${query.orderby}:${query.order}`} onChange={(event) => { const [orderby, order] = event.target.value.split(':'); update({ orderby, order }); }}><option value="updated_at:desc">Updated (Newest First)</option><option value="updated_at:asc">Updated (Oldest First)</option><option value="created_at:desc">Created (Newest First)</option><option value="priority:desc">Priority (Highest First)</option></select>
+          <select aria-label="Sort tickets" value={`${query.orderby}:${query.order}`} onChange={(event) => { const [orderby, order] = event.target.value.split(':'); update({ orderby, order }); }}><option value="last_reply_at:desc">Sort: Reply Date (Newest First)</option><option value="last_reply_at:asc">Sort: Reply Date (Oldest First)</option><option value="created_at:desc">Sort: Opening Date (Newest First)</option><option value="created_at:asc">Sort: Opening Date (Oldest First)</option></select>
           <button disabled={query.search === '' && query.priority === '' && query.status === '' && query.state === 'active' && query.assignment === '' && query.agentId === '' && query.categoryId === '' && query.tagId === '' && query.customFieldId === '' && !query.needReply} onClick={() => { setDraftSearch(''); setQuery(defaults); }}>Reset Filters</button>
         </div>
       </div>

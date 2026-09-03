@@ -5,7 +5,7 @@ export interface WorkspaceTicket {
   assigned_agent_id?:number|null;agent_name?:string|null;customer_name?:string|null;
   customer_avatar_url?:string|null;category_id?:number|null;
   category_name?:string|null;tags?:Array<{id:number;name:string;color:string|null}>;
-  reply_count?:number;latest_reply_excerpt?:string;needs_reply?:boolean;has_support_reply?:boolean;
+  reply_count?:number;latest_reply_excerpt?:string;needs_reply?:boolean;has_support_reply?:boolean;last_reply_at?:string|null;
   updated_at:string|null;created_at:string;
 }
 export interface TicketPage {items:WorkspaceTicket[];page:number;total:number;totalPages:number;showCategories?:boolean}

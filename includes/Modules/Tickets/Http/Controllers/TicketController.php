@@ -317,7 +317,7 @@ final class TicketController {
       'custom_field_id' => ['sanitize_callback' => 'absint'],
       'custom_field_value' => ['sanitize_callback' => 'sanitize_textarea_field'],
       'need_reply' => ['default' => false, 'sanitize_callback' => 'rest_sanitize_boolean'],
-      'orderby' => ['default' => 'updated_at', 'sanitize_callback' => 'sanitize_key'],
+      'orderby' => ['default' => 'last_reply_at', 'sanitize_callback' => 'sanitize_key'],
       'order' => ['default' => 'desc', 'sanitize_callback' => 'sanitize_key'],
     ];
   }
