@@ -502,6 +502,10 @@ final class PortalController {
     $verification = $ticket->purchaseVerificationId() !== null
       ? $this->portal->verification($ticket->purchaseVerificationId())
       : null;
+    $category = null;
+    foreach ($this->portal->categories() as $item) {
+      if ($item->id() === $ticket->categoryId()) { $category = $item->name(); break; }
+    }
 
     return RestResponse::success([
       'ticket'       => $this->ticketData($ticket),
@@ -509,6 +513,14 @@ final class PortalController {
       'verification' => $verification
         ? $this->verificationData($verification)
         : null,
+      'information' => [
+        'category' => $category,
+        'status' => $ticket->status()->value,
+      ],
+      'tags' => array_map(
+        static fn($tag): array => $tag->toArray(),
+        $this->portal->ticketTags($ticket->id()),
+      ),
       'custom_fields' => array_map(
         static fn(array $item): array => [
           'id' => $item['field']->id(),
@@ -831,6 +843,7 @@ final class PortalController {
       'priority'                 => $ticket->priority()->value,
       'source'                   => $ticket->source()->value,
       'purchase_verification_id' => $ticket->purchaseVerificationId(),
+      'category_id'              => $ticket->categoryId(),
       'created_at'               => $ticket->createdAt(),
       'updated_at'               => $ticket->updatedAt(),
     ];

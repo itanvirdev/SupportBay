@@ -128,8 +128,10 @@ final class ReactAdminFlowTest extends FlowTest {
     $reportsWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/ReportsWorkspace.tsx'
     );
-    $ticketConversation = file_get_contents(
+    $ticketConversation = (string) file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketConversation.tsx'
+    ) . (string) file_get_contents(
+      dirname(__DIR__, 2) . '/assets/src/shared/tickets/TicketDetailSidebar.tsx'
     );
     $savedReplyWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/SavedReplyWorkspace.tsx'
@@ -284,12 +286,11 @@ final class ReactAdminFlowTest extends FlowTest {
     );
 
     Assert::true(
-      str_contains($ticketConversation, 'context.custom_fields.map')
-      && str_contains($ticketConversation, "mutate('custom_field'")
-      && str_contains($ticketConversation, 'field.type===\'select\'')
-      && str_contains($ticketConversation, 'Inactive historical field')
-      && str_contains($ticketConversation, 'Custom Fields'),
-      'Agent ticket detail renders typed custom fields and protected value mutations.'
+      ! str_contains($ticketConversation, 'context.custom_fields.map')
+      && str_contains($ticketConversation, 'context.permissions')
+      && str_contains($ticketConversation, 'Ticket Logs')
+      && str_contains($ticketConversation, 'TicketDetailSidebar'),
+      'Agent ticket detail renders componentized, permission-aware context and workflow logs without duplicating form custom fields.'
     );
 
     $ticketWorkspace = implode('', array_map(

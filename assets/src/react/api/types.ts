@@ -63,6 +63,7 @@ export interface PortalTicket {
   priority: string;
   source: string;
   purchase_verification_id: number | null;
+  category_id?: number | null;
   created_at: string;
   updated_at: string | null;
   category_name?: string | null;
@@ -99,6 +100,8 @@ export interface PortalTicketDetail {
   messages: PortalMessage[];
   verification: PortalVerification | null;
   custom_fields: PortalTicketCustomFieldValue[];
+  information: {category:string|null;status:string};
+  tags: PortalTag[];
 }
 
 export interface PortalTicketCustomFieldValue {

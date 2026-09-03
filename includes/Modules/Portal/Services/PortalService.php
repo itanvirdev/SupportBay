@@ -60,6 +60,18 @@ final class PortalService {
     return $this->tags->activeForCustomers();
   }
 
+  /** @return \SupportBay\Modules\Tags\Entities\Tag[] */
+  public function ticketTags(int $ticketId): array {
+    $visible = array_fill_keys(array_map(
+      static fn($tag): int => $tag->id(),
+      $this->tags->activeForCustomers(),
+    ), true);
+    return array_values(array_filter(
+      $this->tags->forTicket($ticketId),
+      static fn($tag): bool => isset($visible[$tag->id()]),
+    ));
+  }
+
   /**
    * Resolve the authenticated SupportBay customer.
    */

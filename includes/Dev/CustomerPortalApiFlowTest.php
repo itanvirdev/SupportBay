@@ -358,6 +358,13 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Ticket detail exposes stored customer-visible values without leaking staff-only fields.'
     );
 
+    Assert::true(
+      array_key_exists('information', $detailData['data'])
+      && array_key_exists('tags', $detailData['data'])
+      && ($detailData['data']['information']['status'] ?? null) === $ticket->status()->value,
+      'Customer ticket detail exposes its safe information and tag sidebar data.'
+    );
+
     $verificationResponse = rest_do_request(
       new WP_REST_Request('GET', '/sbay/v1/portal/verifications')
     );

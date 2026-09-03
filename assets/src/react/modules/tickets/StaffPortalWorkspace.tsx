@@ -175,7 +175,7 @@ export function StaffPortalWorkspace({ navigate }: Props) {
   );
 
   if (ticketId !== null) {
-    if (detail) return shell(<section className="sbay-staff-portal"><TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={back} submit={submit} transition={transition} download={(file) => apiDownload(`admin/attachments/${file.id}/download`)} previewAttachments={config.attachmentPopupPreviewEnabled} mutate={mutate} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply}/></section>);
+    if (detail) return shell(<section className="sbay-staff-portal"><TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={back} refresh={()=>void loadDetail(false)} submit={submit} transition={transition} download={(file) => apiDownload(`admin/attachments/${file.id}/download`)} previewAttachments={config.attachmentPopupPreviewEnabled} mutate={mutate} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply}/></section>);
     if (error) return shell(<RequestState title="Ticket could not be loaded" message={error} retry={() => void loadDetail()}/>);
     return shell(<Preloader label="Loading ticket conversation…"/>);
   }

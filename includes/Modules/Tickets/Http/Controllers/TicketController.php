@@ -201,6 +201,13 @@ final class TicketController {
       static function ($message): array {
         $data = $message->toArray();
         $data['content'] = RichTextSanitizer::sanitize((string) $data['content']);
+        $author = $message->authorType()->isStaff() && $message->authorId()
+          ? get_userdata($message->authorId())
+          : null;
+        $data['author_name'] = $author ? $author->display_name : null;
+        $data['author_avatar_url'] = $author
+          ? get_avatar_url($author->ID, ['size' => 72])
+          : null;
         return $data;
       },
       $this->messages->findByTicket($ticketId),

@@ -206,6 +206,29 @@ final class AdminTicketController {
     foreach ($this->customFields->valuesForTicket($ticket->id()) as $value) {
       $customValues[$value->fieldId()] = $value->value();
     }
+    $workflowTypes = ['ticket_created', 'ticket_assigned', 'ticket_unassigned', 'status_changed', 'state_changed', 'priority_changed', 'category_changed', 'ticket_reopened', 'ticket_resolved', 'ticket_closed'];
+    $workflowActivities = [[
+      'id' => 0,
+      'label' => 'Ticket opened by - ' . ($customer['name'] ?? 'Customer'),
+      'description' => null,
+      'actor_type' => 'customer',
+      'created_at' => $ticket->createdAt(),
+    ]];
+    foreach ($this->activities->getByTicket($ticket->id()) as $activity) {
+      if (! in_array($activity->eventType()->value, $workflowTypes, true)) { continue; }
+      $label = match ($activity->eventType()->value) {
+        'ticket_assigned' => 'Ticket assigned on - ' . ($agent?->display_name ?? 'Support staff'),
+        'ticket_unassigned' => 'Ticket unassigned',
+        default => $activity->eventType()->label(),
+      };
+      $workflowActivities[] = [
+        'id' => $activity->id(),
+        'label' => $label,
+        'description' => in_array($activity->eventType()->value, ['ticket_assigned', 'ticket_unassigned'], true) ? null : $activity->description(),
+        'actor_type' => $activity->actorType()->value,
+        'created_at' => $activity->createdAt(),
+      ];
+    }
 
     return RestResponse::success([
       'customer' => $customer,
@@ -226,13 +249,19 @@ final class AdminTicketController {
         'support_expires_at' => $verification->supportExpiresAt(),
         'status' => $verification->status()->value,
       ] : null,
-      'activities' => array_map(static fn($activity): array => [
-        'id' => $activity->id(),
-        'label' => $activity->eventType()->label(),
-        'description' => $activity->description(),
-        'actor_type' => $activity->actorType()->value,
-        'created_at' => $activity->createdAt(),
-      ], $this->activities->getByTicket($ticket->id())),
+      'activities' => $workflowActivities,
+      'permissions' => [
+        'reply' => current_user_can(CapabilityManager::REPLY_TICKET),
+        'internal_note' => current_user_can(CapabilityManager::CREATE_INTERNAL_NOTE),
+        'assign' => current_user_can('sbay_assign_ticket'),
+        'category' => current_user_can(CapabilityManager::CHANGE_TICKET_CATEGORY),
+        'tags' => current_user_can(CapabilityManager::CHANGE_TICKET_TAGS),
+        'custom_fields' => current_user_can(CapabilityManager::CHANGE_TICKET_CUSTOM_FIELDS),
+        'priority' => current_user_can('sbay_change_ticket_priority'),
+        'status' => current_user_can(CapabilityManager::CHANGE_TICKET_STATUS),
+        'email' => current_user_can(CapabilityManager::SHOW_TICKET_USER_EMAIL),
+        'verification' => current_user_can(CapabilityManager::REFRESH_VERIFICATION),
+      ],
       'attachments' => array_map(fn($attachment): array => $this->attachmentData($attachment), array_filter(
         $this->attachments->findByTicket($ticket->id()),
         static fn($attachment): bool => $attachment->isActive(),

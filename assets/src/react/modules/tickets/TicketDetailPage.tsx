@@ -6,6 +6,7 @@ import { Preloader } from '../../../shared/components/Preloader';
 import { RequestState } from '../../../shared/components/RequestState';
 import { FilePicker } from '../../components/FilePicker';
 import { getConfig } from '../../core/config';
+import { RichTextEditor } from '../../../shared/editor/RichTextEditor';
 
 interface TicketDetailPageProps {
   ticketId: number;
@@ -224,13 +225,7 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
           {canReply ? (
             <form className="sbay-reply-form" onSubmit={submitReply}>
               <label htmlFor="sbay-ticket-reply">Add a reply</label>
-              <textarea
-                id="sbay-ticket-reply"
-                value={reply}
-                onChange={(event) => setReply(event.target.value)}
-                rows={5}
-                required
-              />
+              <RichTextEditor value={reply} onChange={setReply} disabled={submitting}/>
               {config.fileUploadEnabled?<FilePicker files={files} onChange={setFiles} disabled={submitting} maxSizeMb={config.fileUploadMaxSizeMb} allowedExtensions={config.fileUploadAllowedExtensions}/>:null}
               {error ? <p className="sbay-form-error" role="alert">{error}</p> : null}
               <button className="sbay-primary-button" type="submit" disabled={submitting}>
@@ -242,34 +237,21 @@ export function TicketDetailPage({ ticketId, navigate }: TicketDetailPageProps) 
           )}
         </section>
 
-        <aside className="sbay-ticket-aside">
-          <h2>Ticket details</h2>
-          <dl>
+        <aside className="sbay-ticket-aside sbay-client-ticket-sidebar">
+          <section className="sbay-client-ticket-id"><strong>#{detail.ticket.track_id}</strong></section>
+          <section className="sbay-client-detail-card"><h2>Information</h2><dl>
+            <div><dt>Category</dt><dd>{detail.information.category||'Uncategorized'}</dd></div>
             <div><dt>Status</dt><dd>{config.ticketStatusLabels[detail.ticket.status]??detail.ticket.status}</dd></div>
-            <div><dt>Priority</dt><dd>{detail.ticket.priority}</dd></div>
-            <div><dt>Source</dt><dd>{detail.ticket.source}</dd></div>
-          </dl>
-          {detail.custom_fields.length > 0 ? (
-            <div className="sbay-ticket-custom-data">
-              <h3>Additional information</h3>
-              <dl>{detail.custom_fields.map((field) => (
-                <div key={field.id}>
-                  <dt>{field.name}</dt>
-                  <dd>{field.type === 'checkbox'
-                    ? field.value === '1' ? 'Yes' : 'No'
-                    : field.type === 'url'
-                      ? <a href={field.value} target="_blank" rel="noreferrer">{field.value}</a>
-                      : field.value}</dd>
-                </div>
-              ))}</dl>
-            </div>
-          ) : null}
+            {detail.tags.length?<div><dt>Tags</dt><dd className="sbay-client-ticket-tags">{detail.tags.map(tag=><i style={{borderColor:tag.color??undefined}} key={tag.id}>{tag.name}</i>)}</dd></div>:null}
+          </dl></section>
           {detail.verification ? (
-            <div className="sbay-linked-product">
-              <span className="sbay-verified">Verified purchase</span>
-              <h3>{detail.verification.product_name ?? 'Verified product'}</h3>
-              <p>{detail.verification.license_type ?? 'Purchase verified'}</p>
-            </div>
+            <section className="sbay-client-detail-card"><h2>Additional Data</h2><dl>
+              <div><dt>Purchase Code/Key</dt><dd>{detail.verification.reference||'—'}</dd></div>
+              <div><dt>Product Name</dt><dd>{detail.verification.product_name||detail.verification.product_id||'Verified product'}</dd></div>
+              <div><dt>License Type</dt><dd>{detail.verification.license_type||'—'}</dd></div>
+              <div><dt>Support Time</dt><dd>{detail.verification.support_expires_at?formatDate(detail.verification.support_expires_at):'—'}</dd></div>
+              <div><dt>Provider</dt><dd>{detail.verification.provider}</dd></div>
+            </dl></section>
           ) : null}
         </aside>
       </div>

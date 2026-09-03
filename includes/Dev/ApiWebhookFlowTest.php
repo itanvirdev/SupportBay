@@ -216,8 +216,10 @@ final class ApiWebhookFlowTest extends FlowTest {
       && $context['information']['category'] !== null
       && in_array($category->id(), array_column($context['options']['categories'], 'id'), true)
       && in_array($customField->id(), array_column($context['custom_fields'], 'id'), true)
-      && is_array($context['activities']),
-      'Agent ticket context composes safe customer, category, custom-field, and activity data.'
+      && ($context['permissions']['assign'] ?? false) === true
+      && ($context['activities'][0]['label'] ?? '') !== ''
+      && ! in_array('Message Created', array_column($context['activities'], 'label'), true),
+      'Agent ticket context composes capability-aware sidebar data and concise workflow logs.'
     );
 
     $customFieldChange = new WP_REST_Request(
