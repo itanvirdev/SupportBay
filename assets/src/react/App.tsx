@@ -163,7 +163,7 @@ function App() {
   );
 }
 
-const root = document.getElementById('supportbay-customer-portal');
+const root = document.getElementById('supportbay');
 
 if (root) {
   createRoot(root).render(

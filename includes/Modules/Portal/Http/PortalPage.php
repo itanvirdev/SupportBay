@@ -193,7 +193,7 @@ final class PortalPage {
       </head>
       <body <?php body_class('supportbay-portal'); ?>>
         <?php wp_body_open(); ?>
-        <div id="supportbay-customer-portal"></div>
+        <div id="supportbay"></div>
         <noscript>
           <?php echo esc_html__('JavaScript is required to use the SupportBay customer portal.', 'supportbay'); ?>
         </noscript>
@@ -260,7 +260,7 @@ final class PortalPage {
       return '';
     }
 
-    return '<div id="supportbay-customer-portal"></div><noscript>'.esc_html__('JavaScript is required to use the SupportBay customer portal.','supportbay').'</noscript>';
+    return '<div id="supportbay"></div><noscript>'.esc_html__('JavaScript is required to use the SupportBay customer portal.','supportbay').'</noscript>';
   }
 
   private function handleMagicLogin(): ?string {
