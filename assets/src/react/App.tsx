@@ -5,6 +5,7 @@ import type { PortalOverview } from './api/types';
 import { PortalLayout, type PortalRoute } from './components/PortalLayout';
 import { PortalState } from './components/PortalState';
 import { getConfig } from './core/config';
+import { SupportBayConfigProvider } from './core/ConfigProvider';
 import './styles/portal.scss';
 
 const AuthPage = lazy(() => import('./modules/auth/AuthPage').then((module) => ({ default: module.AuthPage })));
@@ -167,7 +168,9 @@ const root = document.getElementById('supportbay-customer-portal');
 if (root) {
   createRoot(root).render(
     <StrictMode>
-      <App />
+      <SupportBayConfigProvider>
+        <App />
+      </SupportBayConfigProvider>
     </StrictMode>,
   );
 }
