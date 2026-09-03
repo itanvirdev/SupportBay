@@ -15,9 +15,6 @@ final class CapabilityManager {
   public const CREATE_TICKET_FOR_CUSTOMER = 'sbay_create_ticket_for_customer';
   public const CREATE_INTERNAL_NOTE = 'sbay_create_internal_note';
   public const CHANGE_TICKET_STATUS = 'sbay_change_ticket_status';
-  public const MANAGE_DEPARTMENTS = 'sbay_manage_departments';
-  public const CREATE_DEPARTMENT = 'sbay_create_department';
-  public const EDIT_DEPARTMENT = 'sbay_edit_department';
   public const MANAGE_PROVIDERS = 'sbay_manage_providers';
   public const VIEW_REPORTS = 'sbay_view_reports';
   public const EXPORT_REPORTS = 'sbay_export_reports';
@@ -42,7 +39,7 @@ final class CapabilityManager {
       self::CREATE_TICKET_FOR_CUSTOMER,
       self::VIEW_UNASSIGNED_TICKETS,
       'sbay_upload_attachment', self::CHANGE_TICKET_STATUS,
-      'sbay_change_ticket_priority', 'sbay_move_ticket_department',
+      'sbay_change_ticket_priority',
       self::CHANGE_TICKET_CATEGORY,
       self::CHANGE_TICKET_TAGS,
       self::CHANGE_TICKET_CUSTOM_FIELDS,
@@ -53,8 +50,6 @@ final class CapabilityManager {
       self::VIEW_ALL_TICKETS, self::SHOW_TICKET_USER_EMAIL,
       'sbay_reassign_ticket', 'sbay_escalate_ticket',
       'sbay_merge_ticket',
-      self::MANAGE_DEPARTMENTS, self::CREATE_DEPARTMENT,
-      self::EDIT_DEPARTMENT, 'sbay_disable_department',
       self::VIEW_REPORTS, self::REFRESH_VERIFICATION,
       'sbay_manage_agents', self::MANAGE_CUSTOMERS,
       self::MANAGE_SAVED_REPLIES,

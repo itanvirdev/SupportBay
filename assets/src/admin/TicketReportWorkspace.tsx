@@ -9,14 +9,13 @@ interface TicketReport {
   range: { from: string; to: string };
   summary: TicketMetricRow & { resolved: number };
   daily: Array<TicketMetricRow & { date: string }>;
-  departments: Array<TicketMetricRow & { department: string }>;
   categories: Array<TicketMetricRow & { category: string }>;
   tags: Array<TicketMetricRow & { tag: string }>;
   custom_fields: Array<TicketMetricRow & { value: string }>;
   agents: Array<TicketMetricRow & { agent: string }>;
 }
-interface ReportCustomField { id:number;name:string;type:string;options:string[];department_id:number|null }
-interface ReportOptions { departments: Array<{id:number;name:string}>; categories: Array<{id:number;name:string;department_id:number|null}>; tags:Array<{id:number;name:string}>; custom_fields:ReportCustomField[]; agents: Array<{id:number;name:string}>; }
+interface ReportCustomField { id:number;name:string;type:string;options:string[];category_ids:number[] }
+interface ReportOptions { categories: Array<{id:number;name:string}>; tags:Array<{id:number;name:string}>; custom_fields:ReportCustomField[]; agents: Array<{id:number;name:string}>; }
 
 const isoDate = (date: Date) => {
   const offset = date.getTimezoneOffset();
@@ -27,9 +26,9 @@ export function TicketReportWorkspace() {
   const canExport = getAdminConfig().canExportReports;
   const today = isoDate(new Date());
   const start = new Date(); start.setDate(start.getDate() - 29);
-  const defaults = { dateFrom: isoDate(start), dateTo: today, period: '30', departmentId: '', categoryId: '', tagId: '', customFieldId: '', customFieldValue: '', agentId: '', priority: '' };
+  const defaults = { dateFrom: isoDate(start), dateTo: today, period: '30', categoryId: '', tagId: '', customFieldId: '', customFieldValue: '', agentId: '', priority: '' };
   const [filters, setFilters] = useState(defaults);
-  const [options, setOptions] = useState<ReportOptions>({ departments: [], categories: [], tags: [], custom_fields: [], agents: [] });
+  const [options, setOptions] = useState<ReportOptions>({ categories: [], tags: [], custom_fields: [], agents: [] });
   const [report, setReport] = useState<TicketReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +36,6 @@ export function TicketReportWorkspace() {
 
   const query = () => {
     const params = new URLSearchParams({ date_from: filters.dateFrom, date_to: filters.dateTo });
-    if (filters.departmentId) params.set('department_id', filters.departmentId);
     if (filters.categoryId) params.set('category_id', filters.categoryId);
     if (filters.tagId) params.set('tag_id', filters.tagId);
     if (filters.customFieldId) params.set('custom_field_id', filters.customFieldId);
@@ -67,16 +65,11 @@ export function TicketReportWorkspace() {
     const timer = window.setTimeout(() => void load(), 250);
     return () => window.clearTimeout(timer);
   }, [filters]);
-  const categories = useMemo(() => options.categories.filter((category) =>
-    !filters.departmentId
-    || category.department_id === null
-    || category.department_id === Number(filters.departmentId)
-  ), [options.categories, filters.departmentId]);
   const customFields = useMemo(() => options.custom_fields.filter((field) =>
-    !filters.departmentId
-    || field.department_id === null
-    || field.department_id === Number(filters.departmentId)
-  ), [options.custom_fields, filters.departmentId]);
+    !filters.categoryId
+    || field.category_ids.length === 0
+    || field.category_ids.includes(Number(filters.categoryId))
+  ), [options.custom_fields, filters.categoryId]);
   const selectedCustomField = options.custom_fields.find((field) => field.id === Number(filters.customFieldId));
   const resetFilters = () => setFilters(defaults);
   const selectPeriod = (period:string) => {
@@ -109,8 +102,7 @@ export function TicketReportWorkspace() {
     <header><div><small>Support performance</small><h2>Support Tickets Report</h2><p>Track ticket activity, response performance, outstanding replies, and team workload.</p></div><div>{canExport?<button type="button" onClick={() => void exportReport()} disabled={exporting}>{exporting?'Exporting…':'Export CSV'}</button>:null}<button type="button" onClick={() => void load()} disabled={loading}>Refresh</button></div></header>
     <div className="sbay-report-filters sbay-ticket-report-filters">
       <label><span>Period</span><select aria-label="Report period" value={filters.period} onChange={(event)=>selectPeriod(event.target.value)}><option value="60">Last 60 Days</option><option value="30">Last 30 Days</option><option value="14">Last 14 Days</option><option value="7">Last 7 Days</option></select></label>
-      {options.departments.length?<label><span>Department</span><select value={filters.departmentId} onChange={(event) => setFilters({...filters,departmentId:event.target.value,categoryId:'',customFieldId:'',customFieldValue:''})}><option value="">All departments</option>{options.departments.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>:null}
-      {options.categories.length?<label><span>Category</span><select value={filters.categoryId} onChange={(event) => setFilters({...filters,categoryId:event.target.value})}><option value="">All categories</option><option value="uncategorized">Uncategorized</option>{categories.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>:null}
+      {options.categories.length?<label><span>Category</span><select value={filters.categoryId} onChange={(event) => setFilters({...filters,categoryId:event.target.value,customFieldId:'',customFieldValue:''})}><option value="">All categories</option><option value="uncategorized">Uncategorized</option>{options.categories.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>:null}
       {options.tags.length?<label><span>Tag</span><select value={filters.tagId} onChange={(event) => setFilters({...filters,tagId:event.target.value})}><option value="">All tags</option>{options.tags.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>:null}
       {options.custom_fields.length?<label><span>Custom field</span><select value={filters.customFieldId} onChange={(event) => setFilters({...filters,customFieldId:event.target.value,customFieldValue:''})}><option value="">All custom fields</option>{customFields.map((item)=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>:null}
       {filters.customFieldId?<label><span>Exact value</span>{selectedCustomField?.type==='select'?<select value={filters.customFieldValue} onChange={(event)=>setFilters({...filters,customFieldValue:event.target.value})}><option value="">Any value</option>{selectedCustomField.options.map(option=><option key={option}>{option}</option>)}</select>:selectedCustomField?.type==='checkbox'?<select value={filters.customFieldValue} onChange={(event)=>setFilters({...filters,customFieldValue:event.target.value})}><option value="">Any value</option><option value="1">Checked</option><option value="0">Not checked</option></select>:<input value={filters.customFieldValue} onChange={(event)=>setFilters({...filters,customFieldValue:event.target.value})} placeholder="Any value"/>}</label>:null}
@@ -128,7 +120,6 @@ export function TicketReportWorkspace() {
       </div>
       <section className={`sbay-report-chart${loading?' is-loading':''}`} aria-busy={loading}><header><h3>Daily support activity</h3><span>{report.range.from} — {report.range.to}</span></header><div className="sbay-ticket-chart-scroll"><svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="Daily tickets, responses, need reply, and resolved or closed chart">{yTicks.map((tick)=><g key={tick}><line x1={plot.left} y1={plot.top+plotHeight-(tick/scaleMaximum)*plotHeight} x2={chartWidth-plot.right} y2={plot.top+plotHeight-(tick/scaleMaximum)*plotHeight}/><text x={plot.left-10} y={plot.top+plotHeight-(tick/scaleMaximum)*plotHeight+4} textAnchor="end">{tick}</text></g>)}{report.daily.map((row,index)=>{const slot=plotWidth/Math.max(1,report.daily.length);const barWidth=Math.min(6,slot/5);const x=plot.left+index*slot+slot/2;const series=[['is-ticket',row.tickets],['is-response',row.responses],['is-need-reply',row.need_reply],['is-closed',row.closed]] as const;return <g key={row.date}><title>{`${dateLabel(row.date)}: ${row.tickets} tickets, ${row.responses} responses, ${row.need_reply} need reply, ${row.closed} resolved or closed`}</title>{series.map(([className,value],seriesIndex)=>{const height=(value/scaleMaximum)*plotHeight;return <rect key={className} className={className} x={x-(barWidth*2)+(seriesIndex*barWidth)} y={plot.top+plotHeight-height} width={Math.max(1,barWidth-1)} height={Math.max(value?1:0,height)}/>})}<text className="is-date" transform={`translate(${x-3} ${plot.top+plotHeight+14}) rotate(45)`}>{dateLabel(row.date)}</text></g>})}</svg></div><footer><span><i className="is-ticket"/>Tickets</span><span><i className="is-response"/>Responses</span><span><i className="is-need-reply"/>Need Reply</span><span><i className="is-closed"/>Resolved / Closed</span></footer></section>
       <div className="sbay-report-breakdowns">
-        <section><h3>By department</h3><div className="is-header"><span>Department</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.departments.length?report.departments.map((row)=><div key={row.department}><strong>{row.department}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No department data in this range.</p>}</section>
         <section><h3>By category</h3><div className="is-header"><span>Category</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.categories.length?report.categories.map((row)=><div key={row.category}><strong>{row.category}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No category data in this range.</p>}</section>
         <section><h3>By tag</h3><div className="is-header"><span>Tag</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.tags.length?report.tags.map((row)=><div key={row.tag}><strong>{row.tag}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No tag data in this range.</p>}</section>
         {filters.customFieldId?<section><h3>By custom field value{selectedCustomField?`: ${selectedCustomField.name}`:''}</h3><div className="is-header"><span>Value</span><span>Tickets</span><span>Responses</span><span>Need reply</span></div>{report.custom_fields.length?report.custom_fields.map((row)=><div key={row.value}><strong>{row.value==='1'&&selectedCustomField?.type==='checkbox'?'Checked':row.value==='0'&&selectedCustomField?.type==='checkbox'?'Not checked':row.value}</strong><span>{row.tickets}</span><span>{row.responses}</span><span>{row.need_reply}</span></div>):<p>No custom field data in this range.</p>}</section>:null}

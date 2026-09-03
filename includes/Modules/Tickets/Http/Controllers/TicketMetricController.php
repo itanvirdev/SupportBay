@@ -99,7 +99,6 @@ final class TicketMetricController {
     return new TicketMetricQuery(
       dateFrom: sanitize_text_field((string) $request->get_param('date_from')) ?: $today->modify('-29 days')->format('Y-m-d'),
       dateTo: sanitize_text_field((string) $request->get_param('date_to')) ?: $today->format('Y-m-d'),
-      departmentId: absint($request->get_param('department_id')) ?: null,
       categoryId: $category !== 'uncategorized'
         ? (absint($category) ?: null)
         : null,

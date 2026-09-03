@@ -27,7 +27,6 @@ final class SupportRoleService {
         'sbay_upload_attachment' => 'Upload attachments',
         'sbay_change_ticket_status' => 'Change ticket status',
         'sbay_change_ticket_priority' => 'Change ticket priority',
-        'sbay_move_ticket_department' => 'Move ticket department',
         'sbay_take_ticket_ownership' => 'Take ticket ownership',
         'sbay_assign_ticket' => 'Assign or transfer individual tickets',
         'sbay_reassign_ticket' => 'Bulk reassign tickets',
@@ -47,7 +46,6 @@ final class SupportRoleService {
       'Content & Organization' => [
         'sbay_use_saved_replies' => 'Use saved replies',
         'sbay_manage_saved_replies' => 'Manage saved replies',
-        'sbay_manage_departments' => 'Manage departments',
         'sbay_manage_categories' => 'Manage categories',
         'sbay_manage_tags' => 'Manage tags',
         'sbay_manage_custom_fields' => 'Manage custom fields',

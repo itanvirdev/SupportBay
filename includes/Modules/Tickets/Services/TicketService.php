@@ -44,6 +44,7 @@ final class TicketService {
    */
   public function create(array $data): int {
     $this->validateVerification($data);
+    $this->categories->validateSelection(absint($data['category_id'] ?? 0) ?: null);
 
     $data['track_id'] = $data['track_id'] ?? $this->trackIds->next();
 
@@ -234,39 +235,6 @@ final class TicketService {
     return $ticket;
   }
 
-  public function changeDepartment(int $id, int $departmentId, int $actorId): Ticket {
-    $existing = $this->findOrFail($id);
-    $updates = ['department_id' => $departmentId];
-    $categoryCleared = false;
-
-    if ($existing->categoryId() !== null) {
-      try {
-        $this->categories->validateSelection(
-          $existing->categoryId(),
-          $departmentId,
-        );
-      } catch (InvalidArgumentException) {
-        $updates['category_id'] = null;
-        $categoryCleared = true;
-      }
-    }
-
-    $ticket = $this->change(
-      $id,
-      $updates,
-      'department',
-      $actorId,
-    );
-
-    if ($categoryCleared) {
-      $this->events->dispatch(
-        new TicketChanged($ticket, 'category', $actorId)
-      );
-    }
-
-    return $ticket;
-  }
-
   public function changeCategory(
     int $id,
     ?int $categoryId,
@@ -278,10 +246,7 @@ final class TicketService {
       return $existing;
     }
 
-    $this->categories->validateSelection(
-      $categoryId,
-      $existing->departmentId(),
-    );
+    $this->categories->validateSelection($categoryId);
 
     return $this->change(
       $id,
@@ -325,7 +290,6 @@ final class TicketService {
       try {
         $updated[] = match ($action) {
           TicketBulkAction::ASSIGNMENT => $this->changeAssignment($ticketId, absint($value) ?: null, $actorId),
-          TicketBulkAction::DEPARTMENT => $this->changeDepartment($ticketId, absint($value), $actorId),
           TicketBulkAction::CATEGORY => $this->changeCategory($ticketId, absint($value) ?: null, $actorId),
           TicketBulkAction::TAG_ADD => $this->changeTag($ticketId, absint($value), $actorId, true),
           TicketBulkAction::TAG_REMOVE => $this->changeTag($ticketId, absint($value), $actorId, false),

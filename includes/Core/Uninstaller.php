@@ -10,8 +10,8 @@ use RecursiveIteratorIterator;
 use SupportBay\Core\Database\MigrationRegistry;
 
 final class Uninstaller {
-  private const CRON_HOOKS=['sbay_notification_dispatch','sbay_notification_retry','sbay_notification_cleanup','sbay_ticket_sla_breach_detection','sbay_ticket_lifecycle_cleanup'];
-  private const OPTIONS=['sbay_settings','sbay_version','sbay_db_version','sbay_role_defaults_version','sbay_portal_rewrite_version','sbay_assign_rule_defaults_installed','sbay_role_metadata','sbay_notification_templates','sbay_notification_preferences','sbay_notification_retention','sbay_auto_close_settings','sbay_weekend_holiday_settings','sbay_ticket_sla_policy'];
+  private const CRON_HOOKS=['sbay_ticket_lifecycle_cleanup'];
+  private const OPTIONS=['sbay_settings','sbay_version','sbay_db_version','sbay_role_defaults_version','sbay_portal_rewrite_version','sbay_assign_rule_defaults_installed','sbay_role_metadata','sbay_notification_templates','sbay_notification_preferences','sbay_auto_close_settings','sbay_weekend_holiday_settings'];
 
   public static function uninstall():void{
     $capability=is_multisite()?'manage_network_plugins':'activate_plugins';

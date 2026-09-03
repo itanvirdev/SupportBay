@@ -15,7 +15,6 @@ enum ActivityType: string {
   case STATE_CHANGED       = 'state_changed';
   case PRIORITY_CHANGED    = 'priority_changed';
 
-  case DEPARTMENT_CHANGED  = 'department_changed';
   case CATEGORY_CHANGED    = 'category_changed';
   case TAG_ADDED           = 'tag_added';
   case TAG_REMOVED         = 'tag_removed';
@@ -31,7 +30,6 @@ enum ActivityType: string {
   case TICKET_MERGED       = 'ticket_merged';
   // Read-only compatibility for activity rows created before split was removed.
   case TICKET_SPLIT        = 'ticket_split';
-  case TICKET_SLA_BREACHED = 'ticket_sla_breached';
 
   case MESSAGE_CREATED     = 'message_created';
   case MESSAGE_EDITED      = 'message_edited';
@@ -61,7 +59,6 @@ enum ActivityType: string {
       self::STATE_CHANGED       => 'State Changed',
       self::PRIORITY_CHANGED    => 'Priority Changed',
 
-      self::DEPARTMENT_CHANGED  => 'Department Changed',
       self::CATEGORY_CHANGED    => 'Category Changed',
       self::TAG_ADDED           => 'Tag Added',
       self::TAG_REMOVED         => 'Tag Removed',
@@ -76,7 +73,6 @@ enum ActivityType: string {
       self::TICKET_CLOSED       => 'Ticket Closed',
       self::TICKET_MERGED       => 'Ticket Merged',
       self::TICKET_SPLIT        => 'Ticket Split (Legacy)',
-      self::TICKET_SLA_BREACHED => 'Ticket SLA Breached',
 
       self::MESSAGE_CREATED     => 'Message Created',
       self::MESSAGE_EDITED      => 'Message Edited',

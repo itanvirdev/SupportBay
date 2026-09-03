@@ -13,6 +13,7 @@ final class Tag extends Entity {
     private readonly string $name,
     private readonly string $slug,
     private readonly ?string $color,
+    private readonly string $showOn,
     private readonly TagStatus $status,
     private readonly string $createdAt,
     private readonly string $updatedAt,
@@ -26,6 +27,7 @@ final class Tag extends Entity {
       'name' => $this->name,
       'slug' => $this->slug,
       'color' => $this->color,
+      'show_on' => $this->showOn,
       'status' => $this->status->value,
       'created_at' => $this->createdAt,
       'updated_at' => $this->updatedAt,
@@ -36,11 +38,16 @@ final class Tag extends Entity {
   public function name(): string { return $this->name; }
   public function slug(): string { return $this->slug; }
   public function color(): ?string { return $this->color; }
+  public function showOn(): string { return $this->showOn; }
   public function status(): TagStatus { return $this->status; }
   public function createdAt(): string { return $this->createdAt; }
   public function updatedAt(): string { return $this->updatedAt; }
 
   public function isActive(): bool {
     return $this->status === TagStatus::ACTIVE;
+  }
+
+  public function isCustomerVisible(): bool {
+    return $this->showOn === 'both';
   }
 }

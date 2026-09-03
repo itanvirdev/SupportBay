@@ -13,8 +13,6 @@ use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Data\CustomerProfileData;
 use SupportBay\Modules\Customers\Services\CustomerService;
-use SupportBay\Modules\Departments\Entities\Department;
-use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Categories\Entities\Category;
 use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\CustomFields\Entities\CustomField;
@@ -35,6 +33,8 @@ use SupportBay\Core\Integrations\Contracts\OAuthProvider;
 use SupportBay\Modules\Providers\Services\ProviderConfiguration;
 use SupportBay\Modules\Providers\Services\ProviderService;
 use SupportBay\Modules\Settings\Services\GeneralSettingsService;
+use SupportBay\Modules\Tickets\Enums\TicketPriority;
+use SupportBay\Modules\Tags\Services\TagService;
 
 final class PortalService {
   public function __construct(
@@ -42,7 +42,6 @@ final class PortalService {
     private readonly TicketService $tickets,
     private readonly VerificationService $verifications,
     private readonly MessageService $messages,
-    private readonly DepartmentService $departments,
     private readonly CategoryService $categories,
     private readonly CustomFieldService $customFields,
     private readonly AttachmentService $attachments,
@@ -52,7 +51,13 @@ final class PortalService {
     private readonly ProviderConfiguration $providerConfiguration,
     private readonly OAuthRoutes $oauthRoutes,
     private readonly GeneralSettingsService $settings,
+    private readonly TagService $tags,
   ) {
+  }
+
+  /** @return \SupportBay\Modules\Tags\Entities\Tag[] */
+  public function tags(): array {
+    return $this->tags->activeForCustomers();
   }
 
   /**
@@ -197,22 +202,9 @@ final class PortalService {
     ));
   }
 
-  /**
-   * Get departments available for customer tickets.
-   *
-   * @return Department[]
-   */
-  public function departments(): array {
-    return $this->departments->active();
-  }
-
   /** @return Category[] */
-  public function categories(int $departmentId): array {
-    if (! $this->departments->find($departmentId)?->isActive()) {
-      return [];
-    }
-
-    return $this->categories->applicable($departmentId);
+  public function categories(): array {
+    return $this->categories->active();
   }
 
   /** @return array<int, array{slug:string,name:string,purchase_field_label:string,license_required:bool,check_support_expiry:bool}> */
@@ -351,33 +343,21 @@ final class PortalService {
    */
   public function createTicket(array $data): Ticket {
     $customer = $this->currentCustomer();
-    $departmentId = (int) ($data['department_id'] ?? 0);
-    $department = $departmentId > 0
-      ? $this->departments->find($departmentId)
-      : $this->departments->default();
-    $departmentId = $department->id();
-
-    if (! $department || ! $department->isActive()) {
-      throw new InvalidArgumentException(
-        'Please select an available department.'
-      );
-    }
-
-    $applicableCategories = $this->categories->applicable($departmentId);
     $categoryId = absint($data['category_id'] ?? 0) ?: null;
 
-    if ($applicableCategories !== [] && $categoryId === null) {
+    if ($categoryId === null) {
       throw new InvalidArgumentException(
         'Please select an available category.'
       );
     }
 
-    $this->categories->validateSelection($categoryId, $departmentId);
+    $this->categories->validateSelection($categoryId);
 
     $customFieldValues = $this->customFields->validateCustomerValues(
-      $departmentId,
+      $categoryId,
       (array) ($data['custom_fields'] ?? []),
     );
+    $selectedTags = $this->tags->validateSelection((array) ($data['tag_ids'] ?? []), true);
 
     $subject = trim((string) ($data['subject'] ?? ''));
     $content = trim((string) ($data['content'] ?? ''));
@@ -437,10 +417,9 @@ final class PortalService {
       'created_by_type'          => AuthorType::CUSTOMER->value,
       'purchase_verification_id' => $verification?->id(),
       'allow_expired_support'     => ! (bool) ($providerContext['check_support_expiry'] ?? true),
-      'department_id'            => $departmentId,
       'category_id'              => $categoryId,
       'subject'                  => $subject,
-      'priority'                 => $department->defaultPriority()->value,
+      'priority'                 => TicketPriority::default()->value,
       'source'                   => SourceType::WEB->value,
     ]);
 
@@ -463,6 +442,9 @@ final class PortalService {
           AuthorType::CUSTOMER,
         );
         $savedCustomFieldIds[] = $fieldId;
+      }
+      foreach ($selectedTags as $tag) {
+        $this->tags->attach($ticketId, $tag->id(), $customer->userId());
       }
     } catch (InvalidArgumentException|RuntimeException $exception) {
       foreach ($savedCustomFieldIds ?? [] as $fieldId) {
@@ -514,12 +496,6 @@ final class PortalService {
       throw new InvalidArgumentException('Ticket description is required.');
     }
 
-    $department = $this->departments->default();
-
-    if (! $department || ! $department->isActive()) {
-      throw new RuntimeException('The default Support department is unavailable.');
-    }
-
     $identity = $this->customers->ensureGuestCustomer(
       $email,
       $firstName,
@@ -531,10 +507,9 @@ final class PortalService {
       'customer_id' => $customer->id(),
       'created_by_id' => $customer->userId(),
       'created_by_type' => AuthorType::GUEST->value,
-      'department_id' => $department->id(),
       'category_id' => null,
       'subject' => $subject,
-      'priority' => $department->defaultPriority()->value,
+      'priority' => TicketPriority::default()->value,
       'source' => SourceType::WEB->value,
     ]);
 
@@ -581,8 +556,8 @@ final class PortalService {
   }
 
   /** @return CustomField[] */
-  public function customFields(int $departmentId): array {
-    return $this->customFields->applicable($departmentId, true);
+  public function customFields(?int $categoryId = null): array {
+    return $this->customFields->applicable($categoryId, true);
   }
 
   /**

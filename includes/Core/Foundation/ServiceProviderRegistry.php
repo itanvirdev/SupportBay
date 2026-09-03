@@ -7,7 +7,6 @@ namespace SupportBay\Core\Foundation;
 use SupportBay\Core\Container\Container;
 use SupportBay\Modules\Tickets\TicketServiceProvider;
 use SupportBay\Modules\Messages\MessageServiceProvider;
-use SupportBay\Modules\Departments\DepartmentServiceProvider;
 use SupportBay\Core\Events\EventServiceProvider;
 use SupportBay\Modules\Activities\ActivityServiceProvider;
 use SupportBay\Modules\Attachments\AttachmentServiceProvider;
@@ -57,7 +56,6 @@ final class ServiceProviderRegistry {
    */
   private static function registerModuleProviders(Container $container): void {
     self::addProvider(new TicketServiceProvider());
-    self::addProvider(new DepartmentServiceProvider());
     self::addProvider(new ActivityServiceProvider());
     self::addProvider(new MessageServiceProvider());
     self::addProvider(new AttachmentServiceProvider());

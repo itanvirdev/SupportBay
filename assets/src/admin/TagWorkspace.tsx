@@ -1,117 +1,22 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { adminDelete, adminGet, adminPost, adminPut } from './api';
-import { Preloader } from '../shared/components/Preloader';
+import {FormEvent,useCallback,useEffect,useState} from 'react';
+import {adminDelete,adminGet,adminPost,adminPut} from './api';
+import {Preloader} from '../shared/components/Preloader';
 
-interface Tag {
-  id: number;
-  name: string;
-  slug: string;
-  color: string | null;
-  status: 'active' | 'inactive';
-  updated_at: string;
-}
+interface Tag{id:number;name:string;slug:string;color:string|null;show_on:'both'|'admin_only';status:'active'|'inactive';updated_at:string}
+const empty:Tag={id:0,name:'',slug:'',color:'#216e52',show_on:'both',status:'active',updated_at:''};
 
-const emptyTag: Tag = {
-  id: 0,
-  name: '',
-  slug: '',
-  color: '#216e52',
-  status: 'active',
-  updated_at: '',
-};
-
-export function TagWorkspace() {
-  const [items, setItems] = useState<Tag[]>([]);
-  const [selected, setSelected] = useState<Tag>(emptyTag);
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setItems((await adminGet<Tag[]>('tags')).data);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Tags could not be loaded.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
-
-  const visible = useMemo(() => items.filter((item) =>
-    (!status || item.status === status)
-    && `${item.name} ${item.slug}`.toLowerCase().includes(query.toLowerCase()),
-  ), [items, query, status]);
-
-  const save = async (event: FormEvent) => {
-    event.preventDefault();
-    const updating = selected.id > 0;
-    setSaving(true);
-    setError(null);
-    setNotice(null);
-    try {
-      const payload = {
-        name: selected.name,
-        slug: selected.slug || selected.name,
-        color: selected.color,
-        status: selected.status,
-      };
-      const response = updating
-        ? await adminPut<Tag>(`tags/${selected.id}`, payload)
-        : await adminPost<Tag>('tags', payload);
-      setSelected(response.data);
-      setNotice(updating ? 'Tag updated.' : 'Tag created.');
-      await load();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Tag could not be saved.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const remove = async () => {
-    if (!selected.id || !window.confirm(`Delete “${selected.name}”? Tags used by tickets cannot be deleted.`)) return;
-    setSaving(true);
-    setError(null);
-    setNotice(null);
-    try {
-      await adminDelete(`tags/${selected.id}`);
-      setSelected(emptyTag);
-      setNotice('Tag deleted.');
-      await load();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Tag could not be deleted.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return <section className="sbay-category-settings sbay-tag-settings">
-    <header>
-      <div><small>Ticket organization</small><h2>Tags</h2><p>Manage reusable global labels for staff ticket workflows.</p></div>
-      <button type="button" onClick={() => { setSelected(emptyTag); setError(null); setNotice(null); }}>Add Tag</button>
-    </header>
-    {error ? <p className="sbay-admin-error" role="alert">{error}</p> : null}
-    {notice ? <p className="sbay-admin-success" role="status">{notice}</p> : null}
-    <div className="sbay-category-settings__grid">
-      <aside>
-        <label>Search<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tags…" /></label>
-        <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All Statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-        {loading ? <Preloader label="Loading tags…" compact /> : visible.length === 0 ? <p>No tags found.</p> : <ul>{visible.map((item) => <li key={item.id}><button type="button" className={selected.id === item.id ? 'is-active' : ''} onClick={() => { setSelected(item); setError(null); setNotice(null); }}><i style={{ backgroundColor: item.color ?? '#a7b2ac' }} /><span><strong>{item.name}</strong><small>{item.slug} · {item.status}</small></span></button></li>)}</ul>}
-      </aside>
-      <form onSubmit={save}>
-        <label>Name<input required maxLength={100} value={selected.name} onChange={(event) => setSelected((current) => ({ ...current, name: event.target.value }))} /></label>
-        <label>Slug<input maxLength={120} value={selected.slug} onChange={(event) => setSelected((current) => ({ ...current, slug: event.target.value }))} placeholder="Generated from name when empty" /></label>
-        <div className="sbay-category-settings__row"><label>Status<select value={selected.status} onChange={(event) => setSelected((current) => ({ ...current, status: event.target.value as Tag['status'] }))}><option value="active">Active</option><option value="inactive">Inactive</option></select></label><label>Color<input type="color" value={selected.color ?? '#216e52'} onChange={(event) => setSelected((current) => ({ ...current, color: event.target.value }))} /></label></div>
-        <p>Inactive tags remain visible on historical tickets but cannot be newly assigned.</p>
-        <div className="sbay-category-settings__actions"><button disabled={saving || selected.name.trim() === ''}>{saving ? 'Saving…' : selected.id ? 'Save Changes' : 'Create Tag'}</button>{selected.id ? <button type="button" className="is-danger" disabled={saving} onClick={() => void remove()}>Delete</button> : null}</div>
-      </form>
-    </div>
-  </section>;
+export function TagWorkspace(){
+  const[items,setItems]=useState<Tag[]>([]),[draft,setDraft]=useState<Tag|null>(null),[selected,setSelected]=useState<number[]>([]),[bulkAction,setBulkAction]=useState(''),[deleteIds,setDeleteIds]=useState<number[]|null>(null),[bulkOpen,setBulkOpen]=useState(false),[bulkText,setBulkText]=useState(''),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState<string|null>(null),[notice,setNotice]=useState<string|null>(null);
+  const load=useCallback(async()=>{setLoading(true);setError(null);try{setItems((await adminGet<Tag[]>('tags')).data);setSelected([]);}catch(reason){setError(reason instanceof Error?reason.message:'Tags could not be loaded.');}finally{setLoading(false);}},[]);
+  useEffect(()=>{void load();},[load]);
+  const update=(changes:Partial<Tag>)=>setDraft(current=>current?{...current,...changes}:current);
+  const toggle=(id:number)=>setSelected(current=>current.includes(id)?current.filter(value=>value!==id):[...current,id]);
+  const save=async(event:FormEvent)=>{event.preventDefault();if(!draft)return;setSaving(true);setError(null);try{const payload={name:draft.name,color:draft.color,show_on:draft.show_on,status:draft.status};await(draft.id?adminPut(`tags/${draft.id}`,payload):adminPost('tags',payload));setDraft(null);setNotice(draft.id?'Tag updated.':'Tag created.');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Tag could not be saved.');}finally{setSaving(false);}};
+  const remove=async(ids:number[])=>{setSaving(true);setError(null);try{await Promise.all(ids.map(id=>adminDelete(`tags/${id}`)));setDeleteIds(null);setNotice(ids.length===1?'Tag deleted.':'Tags deleted.');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Tags could not be deleted.');}finally{setSaving(false);}};
+  const applyBulk=async()=>{if(!bulkAction||!selected.length)return;if(bulkAction==='delete'){setDeleteIds([...selected]);return;}setSaving(true);setError(null);try{await Promise.all(selected.map(id=>adminPut(`tags/${id}`,{status:bulkAction})));setBulkAction('');setNotice(`Tags ${bulkAction==='active'?'activated':'deactivated'}.`);await load();}catch(reason){setError(reason instanceof Error?reason.message:'Tags could not be updated.');}finally{setSaving(false);}};
+  const saveBulk=async(event:FormEvent)=>{event.preventDefault();setSaving(true);setError(null);try{let parsed:unknown;const trimmed=bulkText.trim();if(trimmed.startsWith('[')){parsed=JSON.parse(trimmed);}else{parsed=trimmed.split(/\r?\n/).map(name=>name.trim()).filter(Boolean);}if(!Array.isArray(parsed))throw new Error('Enter one tag per line or a JSON array.');await adminPost('tags/bulk',{items:parsed});setBulkOpen(false);setBulkText('');setNotice('Tags added or updated.');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Bulk tags could not be saved.');}finally{setSaving(false);}};
+  return <section className="sbay-catalog-settings"><header className="sbay-catalog-settings__header"><h2>Tags</h2><div><button type="button" onClick={()=>void load()} disabled={loading} aria-label="Refresh tags">↻</button><button type="button" onClick={()=>setBulkOpen(true)}>Bulk Add/Update</button><button className="is-primary" type="button" onClick={()=>setDraft({...empty})}>＋ Add New</button></div></header>{error?<p className="sbay-admin-error" role="alert">{error}</p>:null}{notice?<p className="sbay-admin-notice" role="status">{notice}</p>:null}{loading?<Preloader label="Loading tags…"/>:<div className="sbay-catalog-table sbay-tag-table"><div className="sbay-catalog-table__row is-header"><input type="checkbox" aria-label="Select all tags" checked={items.length>0&&selected.length===items.length} onChange={()=>setSelected(selected.length===items.length?[]:items.map(item=>item.id))}/><strong>ID</strong><strong>Title</strong><strong>Show On</strong><strong>Status</strong><strong>Action</strong></div>{items.map(item=><div className="sbay-catalog-table__row" key={item.id}><input type="checkbox" aria-label={`Select ${item.name}`} checked={selected.includes(item.id)} onChange={()=>toggle(item.id)}/><span>{item.id}</span><span><strong><i className="sbay-tag-color" style={{backgroundColor:item.color??'#a7b2ac'}}/>{item.name}</strong><small>{item.slug}</small></span><span>{item.show_on==='both'?'Clients & Admin':'Admin Only'}</span><span><i className={`sbay-catalog-status is-${item.status}`}>{item.status==='active'?'Active':'Inactive'}</i></span><span className="sbay-catalog-actions"><button type="button" onClick={()=>setDraft({...item})} aria-label={`Edit ${item.name}`}>✎</button><button type="button" className="is-danger" onClick={()=>setDeleteIds([item.id])} aria-label={`Delete ${item.name}`}>🗑</button></span></div>)}{!items.length?<p className="sbay-catalog-table__empty">No tags yet.</p>:null}<footer><div><select value={bulkAction} onChange={event=>setBulkAction(event.target.value)}><option value="">Bulk Actions</option><option value="active">Activate</option><option value="inactive">Deactivate</option><option value="delete">Delete</option></select><button type="button" disabled={!bulkAction||!selected.length||saving} onClick={()=>void applyBulk()}>Apply</button></div><span>Showing {items.length?`1 – ${items.length}`:'0'} of {items.length}</span></footer></div>}
+  {draft?<div className="sbay-catalog-modal" role="dialog" aria-modal="true"><form onSubmit={save}><header><h2>{draft.id?'Edit':'Add New'} Tag</h2><button type="button" onClick={()=>setDraft(null)} aria-label="Close">×</button></header><label><span>Tag Name <b>*</b></span><input required maxLength={150} value={draft.name} onChange={event=>update({name:event.target.value})}/><small>The slug is generated automatically.</small></label><label>Show On<select value={draft.show_on} onChange={event=>update({show_on:event.target.value as Tag['show_on']})}><option value="both">Both (Clients &amp; Admin)</option><option value="admin_only">Admin Only</option></select></label><label>Color<input type="color" value={draft.color??'#216e52'} onChange={event=>update({color:event.target.value})}/></label><label className="sbay-general-toggle"><input type="checkbox" role="switch" checked={draft.status==='active'} onChange={event=>update({status:event.target.checked?'active':'inactive'})}/><span>Status</span></label><footer><button type="button" onClick={()=>setDraft(null)}>Cancel</button><button className="is-primary" disabled={saving||!draft.name.trim()}>{saving?'Saving…':draft.id?'Update':'Create'}</button></footer></form></div>:null}
+  {bulkOpen?<div className="sbay-catalog-modal" role="dialog" aria-modal="true"><form onSubmit={saveBulk}><header><h2>Bulk Add/Update Tags</h2><button type="button" onClick={()=>setBulkOpen(false)} aria-label="Close">×</button></header><label>Tags<textarea required rows={12} value={bulkText} onChange={event=>setBulkText(event.target.value)} placeholder={'vip\nongoing\nwaiting-on-vendor'}/><small>Enter one tag per line or a JSON array. Existing tags with matching generated slugs are updated.</small></label><footer><button type="button" onClick={()=>setBulkOpen(false)}>Cancel</button><button className="is-primary" disabled={saving||!bulkText.trim()}>{saving?'Saving…':'Save'}</button></footer></form></div>:null}
+  {deleteIds?<div className="sbay-catalog-confirmation" role="alertdialog" aria-modal="true"><div><header><span>ⓘ</span><h2>Delete</h2></header><p>Are you sure want to delete?</p><footer><button type="button" onClick={()=>setDeleteIds(null)}>No</button><button type="button" className="is-danger" disabled={saving} onClick={()=>void remove(deleteIds)}>Yes</button></footer></div></div>:null}</section>;
 }

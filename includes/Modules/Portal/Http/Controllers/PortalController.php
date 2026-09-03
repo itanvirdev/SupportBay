@@ -11,7 +11,6 @@ use SupportBay\Common\Utilities\RichTextSanitizer;
 use SupportBay\Modules\Attachments\Entities\Attachment;
 use SupportBay\Modules\Customers\Entities\Customer;
 use SupportBay\Modules\Customers\Data\CustomerProfileData;
-use SupportBay\Modules\Departments\Entities\Department;
 use SupportBay\Modules\Categories\Entities\Category;
 use SupportBay\Modules\CustomFields\Entities\CustomField;
 use SupportBay\Modules\Messages\Entities\Message;
@@ -160,34 +159,23 @@ final class PortalController {
       );
     }
 
-    register_rest_route(self::NAMESPACE, '/portal/departments', [
-      'methods'             => 'GET',
-      'callback'            => [$this, 'departments'],
-      'permission_callback' => [$this, 'permissions'],
-    ]);
     register_rest_route(self::NAMESPACE, '/portal/categories', [
       'methods'             => 'GET',
       'callback'            => [$this, 'categories'],
       'permission_callback' => [$this, 'permissions'],
-      'args'                => [
-        'department_id' => [
-          'required'          => true,
-          'sanitize_callback' => 'absint',
-          'validate_callback' => static fn(mixed $value): bool =>
-            is_numeric($value) && (int) $value > 0,
-        ],
-      ],
+    ]);
+    register_rest_route(self::NAMESPACE, '/portal/tags', [
+      'methods'             => 'GET',
+      'callback'            => [$this, 'tags'],
+      'permission_callback' => [$this, 'permissions'],
     ]);
     register_rest_route(self::NAMESPACE, '/portal/custom-fields', [
       'methods'             => 'GET',
       'callback'            => [$this, 'customFields'],
       'permission_callback' => [$this, 'permissions'],
       'args'                => [
-        'department_id' => [
-          'required'          => true,
+        'category_id' => [
           'sanitize_callback' => 'absint',
-          'validate_callback' => static fn(mixed $value): bool =>
-            is_numeric($value) && (int) $value > 0,
         ],
       ],
     ]);
@@ -364,24 +352,18 @@ final class PortalController {
       orderBy: sanitize_key((string) $request->get_param('orderby')),
       direction: sanitize_key((string) $request->get_param('order')),
     ));
-    $departments = $this->portal->departments();
-    $departmentNames = [];
     $categoryNames = [];
-    foreach ($departments as $department) {
-      $departmentNames[$department->id()] = $department->name();
-      foreach ($this->portal->categories($department->id()) as $category) {
-        $categoryNames[$category->id()] = $category->name();
-      }
+    foreach ($this->portal->categories() as $category) {
+      $categoryNames[$category->id()] = $category->name();
     }
     $replySummaries = $this->portal->latestReplySummaries(array_map(
       static fn(Ticket $ticket): int => $ticket->id(),
       $result['items'],
     ));
     $tickets = array_map(
-      function (Ticket $ticket) use ($departmentNames, $categoryNames, $replySummaries): array {
+      function (Ticket $ticket) use ($categoryNames, $replySummaries): array {
         $reply = $replySummaries[$ticket->id()] ?? null;
         return array_merge($this->ticketData($ticket), [
-          'department_name' => $departmentNames[$ticket->departmentId()] ?? null,
           'category_name' => $ticket->categoryId() !== null
             ? ($categoryNames[$ticket->categoryId()] ?? null)
             : null,
@@ -403,7 +385,6 @@ final class PortalController {
         'per_page' => $perPage,
         'total' => $result['total'],
         'total_pages' => (int) ceil($result['total'] / $perPage),
-        'show_departments' => count($departments) > 1,
         'show_categories' => $categoryNames !== [],
       ]
     );
@@ -423,7 +404,6 @@ final class PortalController {
         'content' => RichTextSanitizer::sanitize(
           wp_unslash((string) $request->get_param('content'))
         ),
-        'department_id' => absint($request->get_param('department_id')),
         'category_id' => absint($request->get_param('category_id')) ?: null,
         'provider' => sanitize_key(
           (string) $request->get_param('provider')
@@ -432,6 +412,7 @@ final class PortalController {
           wp_unslash((string) $request->get_param('purchase_reference'))
         ),
         'custom_fields' => (array) $request->get_param('custom_fields'),
+        'tag_ids' => (array) $request->get_param('tag_ids'),
       ]);
     } catch (InvalidArgumentException|RuntimeException $exception) {
       return RestResponse::error(
@@ -714,28 +695,6 @@ final class PortalController {
     return true;
   }
 
-  /**
-   * Return active departments available to customers.
-   */
-  public function departments(
-    WP_REST_Request $request,
-  ): WP_REST_Response {
-    $departments = array_map(
-      fn(Department $department): array => [
-        'id'          => $department->id(),
-        'name'        => $department->name(),
-        'description' => $department->description(),
-      ],
-      $this->portal->departments(),
-    );
-
-    return RestResponse::success(
-      $departments,
-      'Departments retrieved.',
-      ['total' => count($departments)],
-    );
-  }
-
   public function purchaseProviders(
     WP_REST_Request $request,
   ): WP_REST_Response {
@@ -754,11 +713,8 @@ final class PortalController {
         'id'            => $category->id(),
         'name'          => $category->name(),
         'description'   => $category->description(),
-        'department_id' => $category->departmentId(),
       ],
-      $this->portal->categories(
-        absint($request->get_param('department_id'))
-      ),
+      $this->portal->categories(),
     );
 
     return RestResponse::success(
@@ -766,6 +722,14 @@ final class PortalController {
       'Categories retrieved.',
       ['total' => count($categories)],
     );
+  }
+
+  public function tags(WP_REST_Request $request): WP_REST_Response {
+    $tags = array_map(
+      static fn($tag): array => $tag->toArray(),
+      $this->portal->tags(),
+    );
+    return RestResponse::success($tags, 'Tags retrieved.', ['total' => count($tags)]);
   }
 
   public function customFields(WP_REST_Request $request): WP_REST_Response {
@@ -777,11 +741,11 @@ final class PortalController {
         'type'          => $field->type()->value,
         'options'       => $field->options(),
         'is_required'   => $field->isRequired(),
-        'department_id' => $field->departmentId(),
+        'placeholder'   => $field->placeholder(),
         'sort_order'    => $field->sortOrder(),
       ],
       $this->portal->customFields(
-        absint($request->get_param('department_id'))
+        absint($request->get_param('category_id')) ?: null
       ),
     );
 

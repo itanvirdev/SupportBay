@@ -17,7 +17,6 @@ use SupportBay\Modules\Tickets\Data\TicketQueueItem;
 use SupportBay\Modules\Tickets\Data\TicketMetricQuery;
 use SupportBay\Modules\Messages\Database\MessageSchema;
 use SupportBay\Modules\Customers\Database\CustomerSchema;
-use SupportBay\Modules\Departments\Database\DepartmentSchema;
 use SupportBay\Modules\Categories\Database\CategorySchema;
 use SupportBay\Modules\Tags\Database\TicketTagSchema;
 use SupportBay\Modules\Tags\Database\TagSchema;
@@ -44,7 +43,6 @@ final class TicketRepository extends Repository {
         'created_by_id'            => $data['created_by_id'] ?? null,
         'created_by_type'          => $data['created_by_type'],
         'purchase_verification_id' => $data['purchase_verification_id'] ?? null,
-        'department_id'            => $data['department_id'],
         'category_id'              => $data['category_id'] ?? null,
         'assigned_agent_id'        => $data['assigned_agent_id'] ?? null,
         'subject'                  => $data['subject'],
@@ -70,7 +68,6 @@ final class TicketRepository extends Repository {
         '%d', // created_by_id
         '%s', // created_by_type
         '%d', // purchase_verification_id
-        '%d', // department_id
         '%d', // category_id
         '%d', // assigned_agent_id
         '%s', // subject
@@ -205,7 +202,6 @@ final class TicketRepository extends Repository {
     $ticketTable = $this->table();
     $messageTable = MessageSchema::tableName();
     $customerTable = CustomerSchema::tableName();
-    $departmentTable = DepartmentSchema::tableName();
     $categoryTable = CategorySchema::tableName();
     $userTable = $this->db->users;
     $clauses = [];
@@ -213,12 +209,13 @@ final class TicketRepository extends Repository {
     foreach (['status', 'state', 'priority'] as $field) {
       if ($query->{$field} !== null) { $clauses[] = "t.{$field} = %s"; $values[] = $query->{$field}; }
     }
-    if ($query->departmentId !== null) { $clauses[] = 't.department_id = %d'; $values[] = $query->departmentId; }
     if ($query->uncategorized) { $clauses[] = 't.category_id IS NULL'; }
     elseif ($query->categoryId !== null) { $clauses[] = 't.category_id = %d'; $values[] = $query->categoryId; }
-    if ($query->tagId !== null) {
-      $clauses[] = 'EXISTS (SELECT 1 FROM ' . TicketTagSchema::tableName() . ' tag_filter WHERE tag_filter.ticket_id = t.id AND tag_filter.tag_id = %d)';
-      $values[] = $query->tagId;
+    $tagIds = $query->tagIds !== [] ? $query->tagIds : ($query->tagId !== null ? [$query->tagId] : []);
+    if ($tagIds !== []) {
+      $placeholders = implode(', ', array_fill(0, count($tagIds), '%d'));
+      $clauses[] = 'EXISTS (SELECT 1 FROM ' . TicketTagSchema::tableName() . " tag_filter WHERE tag_filter.ticket_id = t.id AND tag_filter.tag_id IN ({$placeholders}))";
+      array_push($values, ...$tagIds);
     }
     if ($query->customFieldId !== null) {
       $customFieldClause = 'EXISTS (SELECT 1 FROM ' . TicketCustomFieldValueSchema::tableName()
@@ -247,7 +244,7 @@ final class TicketRepository extends Repository {
     if ($query->needsReply) { $clauses[] = $needExpression; }
     $where = $clauses ? 'WHERE ' . implode(' AND ', $clauses) : '';
     $aggregate = "(SELECT ticket_id, COUNT(*) reply_count, MAX(id) latest_reply_id FROM {$messageTable} WHERE type = 'reply' GROUP BY ticket_id) replies";
-    $joins = "LEFT JOIN {$aggregate} ON replies.ticket_id=t.id LEFT JOIN {$messageTable} lm ON lm.id=replies.latest_reply_id LEFT JOIN {$customerTable} c ON c.id=t.customer_id LEFT JOIN {$userTable} cu ON cu.ID=c.user_id LEFT JOIN {$userTable} au ON au.ID=t.assigned_agent_id LEFT JOIN {$departmentTable} d ON d.id=t.department_id LEFT JOIN {$categoryTable} tc ON tc.id=t.category_id";
+    $joins = "LEFT JOIN {$aggregate} ON replies.ticket_id=t.id LEFT JOIN {$messageTable} lm ON lm.id=replies.latest_reply_id LEFT JOIN {$customerTable} c ON c.id=t.customer_id LEFT JOIN {$userTable} cu ON cu.ID=c.user_id LEFT JOIN {$userTable} au ON au.ID=t.assigned_agent_id LEFT JOIN {$categoryTable} tc ON tc.id=t.category_id";
     $countSql = "SELECT COUNT(*) FROM {$ticketTable} t {$joins} {$where}";
     $total = (int) ($values ? $this->db->get_var($this->db->prepare($countSql, ...$values)) : $this->db->get_var($countSql));
     $order = strtoupper($query->direction) === 'ASC' ? 'ASC' : 'DESC';
@@ -260,7 +257,7 @@ final class TicketRepository extends Repository {
       $orderBy = 'COALESCE(lm.created_at,t.last_reply_at,t.updated_at,t.created_at)';
       $order = 'ASC';
     }
-    $sql = "SELECT t.*, COALESCE(replies.reply_count,0) reply_count, {$needExpression} needs_reply, lm.content latest_reply_content, au.display_name agent_name, cu.ID customer_user_id, cu.display_name customer_name, d.name department_name, tc.name category_name
+    $sql = "SELECT t.*, COALESCE(replies.reply_count,0) reply_count, {$needExpression} needs_reply, lm.content latest_reply_content, au.display_name agent_name, cu.ID customer_user_id, cu.display_name customer_name, tc.name category_name
       FROM {$ticketTable} t {$joins} {$where} ORDER BY {$orderBy} {$order}, t.id DESC LIMIT %d OFFSET %d";
     $rows = $this->db->get_results($this->db->prepare($sql, ...[...$values, $query->perPage, ($query->page - 1) * $query->perPage]), ARRAY_A);
     return ['items' => array_map(static fn(array $row): TicketQueueItem => new TicketQueueItem($row), $rows), 'total' => $total];
@@ -270,14 +267,9 @@ final class TicketRepository extends Repository {
   public function metrics(TicketMetricQuery $query): array {
     $ticketTable = $this->table();
     $messageTable = MessageSchema::tableName();
-    $departmentTable = DepartmentSchema::tableName();
     $clauses = ['t.created_at >= %s', 't.created_at <= %s', "t.state <> 'trash'"];
     $values = [$query->dateFrom . ' 00:00:00', $query->dateTo . ' 23:59:59'];
 
-    if ($query->departmentId !== null) {
-      $clauses[] = 't.department_id = %d';
-      $values[] = $query->departmentId;
-    }
     if ($query->uncategorized) {
       $clauses[] = 't.category_id IS NULL';
     } elseif ($query->categoryId !== null) {
@@ -339,15 +331,6 @@ final class TicketRepository extends Repository {
         $needReply,
         'group_key ASC',
         'date',
-      ),
-      'departments' => $this->ticketMetricGroups(
-        "COALESCE(d.name, 'Unknown') AS group_key",
-        $where,
-        $values,
-        $joins . " LEFT JOIN {$departmentTable} d ON d.id = t.department_id",
-        $needReply,
-        'tickets DESC, group_key ASC',
-        'department',
       ),
       'categories' => $this->ticketMetricGroups(
         "COALESCE(tc.name, 'Uncategorized') AS group_key",
@@ -454,7 +437,6 @@ final class TicketRepository extends Repository {
         ? (int) $row['purchase_verification_id']
         : null,
 
-      departmentId: (int) $row['department_id'],
       categoryId: isset($row['category_id']) ? (int) $row['category_id'] : null,
 
       assignedAgentId: isset($row['assigned_agent_id'])

@@ -212,16 +212,16 @@ final class ReactPortalFlowTest extends FlowTest {
       && str_contains($newTicketPage, 'Promise.allSettled')
       && str_contains($newTicketPage, 'ticket.opening_message_id')
       && str_contains($newTicketPage, 'purchase_reference: purchaseReference.trim()')
-      && str_contains($newTicketPage, 'portalApi.customFields(departmentId)')
+      && str_contains($newTicketPage, 'portalApi.customFields(categoryId || null)')
       && str_contains($newTicketPage, 'custom_fields: customFieldValues')
       && str_contains($newTicketPage, 'selectedProvider.purchase_field_label')
       && str_contains($newTicketPage, 'required={selectedProvider.license_required}')
       && str_contains($newTicketPage, 'selectedProvider.check_support_expiry')
-      && str_contains($newTicketPage, 'departments.length > 1')
+      && str_contains($newTicketPage, 'categories.length')
       && str_contains($newTicketPage, 'providers.length > 1')
       && str_contains($newTicketPage, 'config.purchaseProviderFieldLabel')
       && ! str_contains($newTicketPage, 'purchase_verification_id'),
-      'Ticket creation renders provider-aware optional entitlement and department custom fields.'
+      'Ticket creation renders provider-aware optional entitlement and category-aware custom fields.'
     );
 
     $ticketDetailPage = file_get_contents(
@@ -257,10 +257,8 @@ final class ReactPortalFlowTest extends FlowTest {
 
     Assert::true(
       is_string($ticketsPage)
-      && str_contains($ticketsPage, 'show_departments')
       && str_contains($ticketsPage, 'show_categories')
       && is_string($ticketWorkspace)
-      && str_contains($ticketWorkspace, 'result?.showDepartments')
       && str_contains($ticketWorkspace, 'result?.showCategories')
       && str_contains($ticketWorkspace, 'ticket.has_support_reply')
       && str_contains($ticketWorkspace, 'ticket.reply_count')

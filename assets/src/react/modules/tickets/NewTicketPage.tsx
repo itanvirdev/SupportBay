@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { portalApi } from '../../api/portal';
-import type { PortalCategory, PortalCustomField, PortalDepartment, PortalPurchaseProvider } from '../../api/types';
+import type { PortalCategory, PortalCustomField, PortalPurchaseProvider, PortalTag } from '../../api/types';
 import { FilePicker } from '../../components/FilePicker';
 import { Preloader } from '../../../shared/components/Preloader';
 import { RichTextEditor } from '../../../shared/editor/RichTextEditor';
 import { getConfig } from '../../core/config';
+import { TagMultiSelect } from '../../../shared/tickets/TagMultiSelect';
 
 interface NewTicketPageProps {
   navigate: (path: string) => void;
@@ -12,14 +13,14 @@ interface NewTicketPageProps {
 
 export function NewTicketPage({ navigate }: NewTicketPageProps) {
   const config=getConfig();
-  const [departments, setDepartments] = useState<PortalDepartment[]>([]);
   const [providers, setProviders] = useState<PortalPurchaseProvider[]>([]);
   const [categories, setCategories] = useState<PortalCategory[]>([]);
+  const [tags, setTags] = useState<PortalTag[]>([]);
+  const [tagIds, setTagIds] = useState<number[]>([]);
   const [customFields, setCustomFields] = useState<PortalCustomField[]>([]);
   const [customFieldValues, setCustomFieldValues] = useState<Record<number, string>>({});
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
-  const [departmentId, setDepartmentId] = useState(0);
   const [categoryId, setCategoryId] = useState(0);
   const [provider, setProvider] = useState('');
   const [purchaseReference, setPurchaseReference] = useState('');
@@ -31,43 +32,27 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
   const selectedProvider=providers.find(item=>item.slug===provider)??null;
 
   useEffect(() => {
-    Promise.all([portalApi.departments(), portalApi.purchaseProviders()])
-      .then(([departmentData, providerData]) => {
-        setDepartments(departmentData);
+    Promise.all([portalApi.categories(), portalApi.purchaseProviders(), portalApi.tags()])
+      .then(([categoryData, providerData, tagData]) => {
+        setCategories(categoryData);
         setProviders(providerData);
-        setDepartmentId(departmentData[0]?.id ?? 0);
-        setProvider(providerData[0]?.slug ?? '');
+        setTags(tagData);
+        setCategoryId(0);
+        setProvider(providerData.length===1?providerData[0].slug:'');
       })
       .catch(() => setError('Ticket options could not be loaded.'))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    if (!departmentId) {
-      setCategories([]);
-      setCategoryId(0);
-      setCustomFields([]);
-      setCustomFieldValues({});
-      return;
-    }
-
     setCategoriesLoading(true);
-    setCategories([]);
-    setCategoryId(0);
     setCustomFields([]);
     setCustomFieldValues({});
-    Promise.all([
-      portalApi.categories(departmentId),
-      portalApi.customFields(departmentId),
-    ])
-      .then(([categoryItems, fieldItems]) => {
-        setCategories(categoryItems);
-        setCategoryId(categoryItems[0]?.id ?? 0);
-        setCustomFields(fieldItems);
-      })
+    portalApi.customFields(categoryId || null)
+      .then(setCustomFields)
       .catch(() => setError('Ticket options could not be loaded.'))
       .finally(() => setCategoriesLoading(false));
-  }, [departmentId]);
+  }, [categoryId]);
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -78,11 +63,11 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
       const ticket = await portalApi.createTicket({
         subject,
         content,
-        department_id: departmentId,
         category_id: categoryId || null,
         provider,
         purchase_reference: purchaseReference.trim(),
         custom_fields: customFieldValues,
+        tag_ids: tagIds,
       });
       if (files.length > 0) {
         const uploads = await Promise.allSettled(
@@ -125,35 +110,31 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
       {loading ? <Preloader label="Loading ticket options…" /> : (
         <form className="sbay-ticket-form" onSubmit={submit}>
           {providers.length > 1 ? <label>
-            <span>{config.purchaseProviderFieldLabel}</span>
-            <select value={provider} onChange={(event) => setProvider(event.target.value)} required>
+            <span>{config.purchaseProviderFieldLabel} <b aria-hidden="true">*</b></span>
+            <select value={provider} onChange={(event) => {setProvider(event.target.value);setPurchaseReference('');}} required>
+              <option value="">-- Select {config.purchaseProviderFieldLabel} --</option>
               {providers.map((item) => (
                 <option value={item.slug} key={item.slug}>{item.name}</option>
               ))}
             </select>
           </label> : null}
-          <label>
-            <span>Subject</span>
-            <input value={subject} onChange={(event) => setSubject(event.target.value)} required maxLength={255} />
-          </label>
-          {departments.length > 1 ? <label>
-            <span>Department</span>
-            <select value={departmentId} onChange={(event) => setDepartmentId(Number(event.target.value))} required>
-              {departments.map((department) => (
-                <option value={department.id} key={department.id}>{department.name}</option>
-              ))}
-            </select>
-          </label> : null}
-          {categoriesLoading ? <Preloader label="Loading categories…" compact /> : categories.length ? (
+          {categoriesLoading ? <Preloader label="Loading categories…" compact /> : (
             <label>
-              <span>Category</span>
-              <select value={categoryId} onChange={(event) => setCategoryId(Number(event.target.value))} required>
+              <span>Category <b aria-hidden="true">*</b></span>
+              <select value={categoryId} onChange={(event) => setCategoryId(Number(event.target.value))} required disabled={categories.length===0}>
+                <option value={0}>-- Select Category --</option>
                 {categories.map((category) => (
                   <option value={category.id} key={category.id}>{category.name}</option>
                 ))}
               </select>
+              {categories.length===0?<small>No active categories are available. Please contact the support team.</small>:null}
             </label>
-          ) : null}
+          )}
+          <label>
+            <span>Subject</span>
+            <input value={subject} onChange={(event) => setSubject(event.target.value)} required maxLength={255} />
+          </label>
+          <TagMultiSelect tags={tags} value={tagIds} change={setTagIds}/>
           {customFields.map((field) => {
             const value = customFieldValues[field.id] ?? '';
             const update = (nextValue: string) => setCustomFieldValues((current) => ({
@@ -162,7 +143,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
             }));
 
             if (field.type === 'textarea') {
-              return <label key={field.id}><span>{field.name}</span><textarea value={value} onChange={(event) => update(event.target.value)} required={field.is_required} rows={4} /></label>;
+              return <label key={field.id}><span>{field.name}</span><textarea placeholder={field.placeholder??undefined} value={value} onChange={(event) => update(event.target.value)} required={field.is_required} rows={4} /></label>;
             }
             if (field.type === 'select') {
               return (
@@ -186,7 +167,7 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
             return (
               <label key={field.id}>
                 <span>{field.name}</span>
-                <input type={field.type} value={value} onChange={(event) => update(event.target.value)} required={field.is_required} />
+                <input type={field.type} placeholder={field.placeholder??undefined} value={value} onChange={(event) => update(event.target.value)} required={field.is_required} />
               </label>
             );
           })}
@@ -200,9 +181,8 @@ export function NewTicketPage({ navigate }: NewTicketPageProps) {
             <span>How can we help?</span>
             <RichTextEditor value={content} onChange={setContent} disabled={submitting} />
           </label>
-          {departments.length === 0 ? <p className="sbay-form-error">No support departments are currently available.</p> : null}
           {error ? <p className="sbay-form-error" role="alert">{error}</p> : null}
-          <button className="sbay-primary-button" type="submit" disabled={submitting || categoriesLoading || departments.length === 0 || (categories.length > 0 && categoryId === 0)}>
+          <button className="sbay-primary-button" type="submit" disabled={submitting || categoriesLoading || categoryId === 0 || (providers.length > 1 && provider === '')}>
             {submitting ? 'Creating…' : 'Create ticket'}
           </button>
         </form>

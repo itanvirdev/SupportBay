@@ -1,145 +1,21 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { adminDelete, adminGet, adminPost, adminPut } from './api';
 import { Preloader } from '../shared/components/Preloader';
 
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  description: string | null;
-  department_id: number | null;
-  status: 'active' | 'inactive';
-  color: string | null;
-  sort_order: number;
-  updated_at: string;
-}
-
-interface Department { id: number; name: string }
-
-const emptyCategory: Category = {
-  id: 0,
-  name: '',
-  slug: '',
-  description: null,
-  department_id: null,
-  status: 'active',
-  color: '#216e52',
-  sort_order: 0,
-  updated_at: '',
-};
+interface Category { id:number; name:string; slug:string; description:string|null; status:'active'|'inactive'; color:string|null; sort_order:number }
+interface OrderConfirmation { id:number; name:string; direction:'up'|'down' }
+const emptyCategory:Category={id:0,name:'',slug:'',description:null,status:'active',color:'#216e52',sort_order:0};
 
 export function CategoryWorkspace() {
-  const [items, setItems] = useState<Category[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [selected, setSelected] = useState<Category>(emptyCategory);
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
-  const [department, setDepartment] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [items,setItems]=useState<Category[]>([]);const [draft,setDraft]=useState<Category|null>(null);const [selected,setSelected]=useState<number[]>([]);const [bulk,setBulk]=useState('');const [confirm,setConfirm]=useState<number[]|null>(null);const [orderConfirmation,setOrderConfirmation]=useState<OrderConfirmation|null>(null);const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false);const [error,setError]=useState<string|null>(null);const [notice,setNotice]=useState<string|null>(null);
+  const load=useCallback(async()=>{setLoading(true);setError(null);try{const response=await adminGet<Category[]>('categories');setItems(response.data.sort((a,b)=>a.sort_order-b.sort_order||a.id-b.id));setSelected([]);}catch(reason){setError(reason instanceof Error?reason.message:'Categories could not be loaded.');}finally{setLoading(false);}},[]);
+  useEffect(()=>{void load();},[load]);
+  const update=(changes:Partial<Category>)=>setDraft(current=>current?{...current,...changes}:current);
+  const toggle=(id:number)=>setSelected(current=>current.includes(id)?current.filter(value=>value!==id):[...current,id]);
+  const remove=async(ids:number[])=>{setSaving(true);try{await Promise.all(ids.map(id=>adminDelete(`categories/${id}`)));setConfirm(null);setNotice(ids.length===1?'Category deleted.':'Categories deleted.');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Categories could not be deleted.');}finally{setSaving(false);}};
+  const save=async(event:FormEvent)=>{event.preventDefault();if(!draft)return;setSaving(true);setError(null);try{const payload={name:draft.name,description:draft.description,status:draft.status,color:draft.color};await(draft.id?adminPut(`categories/${draft.id}`,payload):adminPost('categories',payload));setNotice(draft.id?'Category updated.':'Category created.');setDraft(null);await load();}catch(reason){setError(reason instanceof Error?reason.message:'Category could not be saved.');}finally{setSaving(false);}};
+  const applyBulk=async()=>{if(!bulk||!selected.length)return;if(bulk==='delete'){setConfirm([...selected]);return;}setSaving(true);try{await Promise.all(selected.map(id=>adminPut(`categories/${id}`,{status:bulk})));setNotice(`Categories ${bulk==='active'?'activated':'deactivated'}.`);setBulk('');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Category bulk action failed.');}finally{setSaving(false);}};
+  const move=async(id:number,direction:'up'|'down')=>{setSaving(true);setError(null);setNotice(null);try{await adminPost(`categories/${id}/move`,{direction});setOrderConfirmation(null);setNotice('Category order updated.');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Category could not be reordered.');}finally{setSaving(false);}};
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [categories, departmentResponse] = await Promise.all([
-        adminGet<Category[]>('categories'),
-        adminGet<Department[]>('departments?status=active'),
-      ]);
-      setItems(categories.data);
-      setDepartments(departmentResponse.data);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Categories could not be loaded.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
-
-  const departmentNames = useMemo(
-    () => new Map(departments.map((item) => [item.id, item.name])),
-    [departments],
-  );
-  const visible = useMemo(() => items.filter((item) =>
-    (!status || item.status === status)
-    && (!department || (department === 'global'
-      ? item.department_id === null
-      : item.department_id === Number(department)))
-    && `${item.name} ${item.slug} ${item.description ?? ''}`
-      .toLowerCase().includes(query.toLowerCase()),
-  ), [items, query, status, department]);
-
-  const save = async (event: FormEvent) => {
-    event.preventDefault();
-    const updating = selected.id > 0;
-    setSaving(true);
-    setError(null);
-    setNotice(null);
-    try {
-      const payload = {
-        name: selected.name,
-        slug: selected.slug || selected.name,
-        description: selected.description,
-        department_id: selected.department_id,
-        status: selected.status,
-        color: selected.color,
-        sort_order: selected.sort_order,
-      };
-      const response = updating
-        ? await adminPut<Category>(`categories/${selected.id}`, payload)
-        : await adminPost<Category>('categories', payload);
-      setSelected(response.data);
-      setNotice(updating ? 'Category updated.' : 'Category created.');
-      await load();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Category could not be saved.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const remove = async () => {
-    if (!selected.id || !window.confirm(`Delete “${selected.name}”? Categories used by tickets cannot be deleted.`)) return;
-    setSaving(true);
-    setError(null);
-    setNotice(null);
-    try {
-      await adminDelete(`categories/${selected.id}`);
-      setSelected(emptyCategory);
-      setNotice('Category deleted.');
-      await load();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Category could not be deleted.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return <section className="sbay-category-settings">
-    <header>
-      <div><small>Ticket organization</small><h2>Categories</h2><p>Manage global and department-specific ticket classifications.</p></div>
-      <button type="button" onClick={() => { setSelected(emptyCategory); setError(null); setNotice(null); }}>Add Category</button>
-    </header>
-    {error ? <p className="sbay-admin-error" role="alert">{error}</p> : null}
-    {notice ? <p className="sbay-admin-success" role="status">{notice}</p> : null}
-    <div className="sbay-category-settings__grid">
-      <aside>
-        <label>Search<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search categories…" /></label>
-        <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All Statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-        <label>Department scope<select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="">All Scopes</option><option value="global">Global</option>{departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
-        {loading ? <Preloader label="Loading categories…" compact /> : visible.length === 0 ? <p>No categories found.</p> : <ul>{visible.map((item) => <li key={item.id}><button type="button" className={selected.id === item.id ? 'is-active' : ''} onClick={() => { setSelected(item); setError(null); setNotice(null); }}><i style={{ backgroundColor: item.color ?? '#a7b2ac' }} /><span><strong>{item.name}</strong><small>{item.department_id ? departmentNames.get(item.department_id) ?? `Department #${item.department_id}` : 'Global'} · {item.status}</small></span></button></li>)}</ul>}
-      </aside>
-      <form onSubmit={save}>
-        <label>Name<input required maxLength={190} value={selected.name} onChange={(event) => setSelected((current) => ({ ...current, name: event.target.value }))} /></label>
-        <label>Slug<input maxLength={190} value={selected.slug} onChange={(event) => setSelected((current) => ({ ...current, slug: event.target.value }))} placeholder="Generated from name when empty" /></label>
-        <label>Description<textarea rows={4} value={selected.description ?? ''} onChange={(event) => setSelected((current) => ({ ...current, description: event.target.value || null }))} /></label>
-        <label>Department scope<select value={selected.department_id ?? ''} onChange={(event) => setSelected((current) => ({ ...current, department_id: Number(event.target.value) || null }))}><option value="">Global — all departments</option>{departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
-        <div className="sbay-category-settings__row"><label>Status<select value={selected.status} onChange={(event) => setSelected((current) => ({ ...current, status: event.target.value as Category['status'] }))}><option value="active">Active</option><option value="inactive">Inactive</option></select></label><label>Color<input type="color" value={selected.color ?? '#216e52'} onChange={(event) => setSelected((current) => ({ ...current, color: event.target.value }))} /></label><label>Sort order<input type="number" min="0" value={selected.sort_order} onChange={(event) => setSelected((current) => ({ ...current, sort_order: Number(event.target.value) || 0 }))} /></label></div>
-        <div className="sbay-category-settings__actions"><button disabled={saving || selected.name.trim() === ''}>{saving ? 'Saving…' : selected.id ? 'Save Changes' : 'Create Category'}</button>{selected.id ? <button type="button" className="is-danger" disabled={saving} onClick={() => void remove()}>Delete</button> : null}</div>
-      </form>
-    </div>
-  </section>;
+  return <section className="sbay-catalog-settings"><header className="sbay-catalog-settings__header"><h2>Categories</h2><div><button type="button" onClick={()=>void load()} disabled={loading} aria-label="Refresh categories">↻</button><button className="is-primary" type="button" onClick={()=>setDraft({...emptyCategory})}>＋ Add New</button></div></header>{error?<p className="sbay-admin-error" role="alert">{error}</p>:null}{notice?<p className="sbay-admin-notice" role="status">{notice}</p>:null}{loading?<Preloader label="Loading categories…"/>:null}{!loading?<div className="sbay-catalog-table"><div className="sbay-catalog-table__row is-header"><input type="checkbox" aria-label="Select all categories" checked={items.length>0&&selected.length===items.length} onChange={()=>setSelected(selected.length===items.length?[]:items.map(item=>item.id))}/><strong>ID</strong><strong>Title</strong><strong>Status</strong><strong>Order</strong><strong>Action</strong></div>{items.map((item,index)=><div className="sbay-catalog-table__row" key={item.id}><input type="checkbox" checked={selected.includes(item.id)} onChange={()=>toggle(item.id)} aria-label={`Select ${item.name}`}/><span>{item.id}</span><strong>{item.name}</strong><span><i className={`sbay-catalog-status is-${item.status}`}>{item.status==='active'?'Active':'Inactive'}</i></span><span className="sbay-catalog-order"><button type="button" disabled={saving||index===0} onClick={()=>setOrderConfirmation({id:item.id,name:item.name,direction:'up'})} aria-label={`Move ${item.name} up`}>⌃</button><i>{index+1}</i><button type="button" disabled={saving||index===items.length-1} onClick={()=>setOrderConfirmation({id:item.id,name:item.name,direction:'down'})} aria-label={`Move ${item.name} down`}>⌄</button>{orderConfirmation?.id===item.id?<div className="sbay-order-confirmation" role="alertdialog" aria-modal="true" aria-label={`${orderConfirmation.direction==='up'?'Order Up':'Order Down'} ${orderConfirmation.name}`}><header><span>ⓘ</span><h2>{orderConfirmation.direction==='up'?'Order Up':'Order Down'}</h2></header><p>Are you sure want to change order?</p><footer><button type="button" disabled={saving} onClick={()=>setOrderConfirmation(null)}>No</button><button type="button" className="is-primary" disabled={saving} onClick={()=>void move(orderConfirmation.id,orderConfirmation.direction)}>{saving?'Moving…':'Yes'}</button></footer></div>:null}</span><span className="sbay-catalog-actions"><button type="button" onClick={()=>setDraft({...item})} aria-label={`Edit ${item.name}`}>✎</button><button type="button" className="is-danger" onClick={()=>setConfirm([item.id])} aria-label={`Delete ${item.name}`}>🗑</button></span></div>)}{!items.length?<p className="sbay-catalog-table__empty">No categories yet.</p>:null}<footer><div><select value={bulk} onChange={event=>setBulk(event.target.value)}><option value="">Bulk Actions</option><option value="active">Activate</option><option value="inactive">Deactivate</option><option value="delete">Delete</option></select><button type="button" disabled={!bulk||!selected.length||saving} onClick={()=>void applyBulk()}>Apply</button></div><span>Showing {items.length?`1 – ${items.length}`:'0'} of {items.length}</span></footer></div>:null}{draft?<div className="sbay-catalog-modal" role="dialog" aria-modal="true"><form onSubmit={save}><header><h2>{draft.id?'Edit':'Add New'} Category</h2><button type="button" onClick={()=>setDraft(null)} aria-label="Close">×</button></header><label><span>Title <b>*</b></span><input required value={draft.name} onChange={event=>update({name:event.target.value})}/></label><label className="sbay-general-toggle"><input type="checkbox" role="switch" checked={draft.status==='active'} onChange={event=>update({status:event.target.checked?'active':'inactive'})}/><span>Status</span></label><details><summary>Optional details</summary><div><label>Description<textarea rows={3} value={draft.description??''} onChange={event=>update({description:event.target.value||null})}/></label><label>Color<input type="color" value={draft.color??'#216e52'} onChange={event=>update({color:event.target.value})}/></label></div></details><footer><button type="button" onClick={()=>setDraft(null)}>Cancel</button><button className="is-primary" disabled={saving||!draft.name.trim()}>{saving?'Saving…':draft.id?'Update':'Create'}</button></footer></form></div>:null}{confirm?<div className="sbay-catalog-confirmation" role="alertdialog" aria-modal="true"><div><header><span>ⓘ</span><h2>Delete</h2></header><p>Are you sure want to delete?</p><footer><button type="button" onClick={()=>setConfirm(null)}>No</button><button className="is-danger" type="button" disabled={saving} onClick={()=>void remove(confirm)}>Yes</button></footer></div></div>:null}</section>;
 }

@@ -86,7 +86,7 @@ final class NotificationTemplateService {
       'ticket_subject' => 'Demo support request',
       'ticket_status' => 'Open',
       'ticket_priority' => 'Normal',
-      'department_name' => 'General Support',
+      'category_name' => 'General',
       'ticket_url' => home_url('/support/tickets/42/'),
       'reply_content' => 'This is a sample ticket reply.',
       'product_name' => 'SupportBay Demo Product',

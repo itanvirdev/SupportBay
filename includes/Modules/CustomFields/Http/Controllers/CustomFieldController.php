@@ -36,6 +36,11 @@ final class CustomFieldController {
         ]],
       ]);
     }
+    register_rest_route('sbay/v1', '/custom-fields/(?P<id>\d+)/move', [
+      'methods' => 'POST', 'callback' => [$this, 'move'],
+      'permission_callback' => [$this, 'canManage'],
+      'args' => ['id' => ['sanitize_callback' => 'absint']],
+    ]);
   }
 
   public function canView(): bool|WP_Error { return $this->requires(CapabilityManager::VIEW_TICKETS); }
@@ -75,6 +80,17 @@ final class CustomFieldController {
     }
     return $deleted
       ? RestResponse::success([], 'Custom field deleted.')
+      : RestResponse::error('Custom field was not found.', 'CUSTOM_FIELD_NOT_FOUND', [], 404);
+  }
+
+  public function move(WP_REST_Request $request): WP_REST_Response {
+    $direction = sanitize_key((string) $request->get_param('direction'));
+    if (! in_array($direction, ['up', 'down'], true)) {
+      return RestResponse::error('Move direction is invalid.', 'INVALID_CUSTOM_FIELD_ORDER', [], 422);
+    }
+    $field = $this->fields->move(absint($request['id']), $direction);
+    return $field
+      ? RestResponse::success($field->toArray(), 'Custom field moved.')
       : RestResponse::error('Custom field was not found.', 'CUSTOM_FIELD_NOT_FOUND', [], 404);
   }
 

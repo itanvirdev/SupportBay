@@ -36,6 +36,9 @@ final class CustomFieldRepository extends Repository {
     return $this->updateById($id, $data);
   }
   public function delete(int $id): bool { return $this->deleteById($id); }
+  public function nextSortOrder(): int {
+    return (int) $this->db->get_var('SELECT COALESCE(MAX(sort_order), 0) + 1 FROM ' . $this->table());
+  }
 
   public function valueCount(int $fieldId): int {
     return (int) $this->db->get_var($this->db->prepare(
@@ -90,15 +93,18 @@ final class CustomFieldRepository extends Repository {
 
   protected function hydrate(array $row): CustomField {
     $options = json_decode((string) ($row['options'] ?? '[]'), true);
+    $categoryIds = json_decode((string) ($row['category_ids'] ?? '[]'), true);
     return new CustomField(
       id: (int) $row['id'],
       name: (string) $row['name'],
       slug: (string) $row['slug'],
       type: CustomFieldType::from($row['type']),
       options: is_array($options) ? array_values(array_map('strval', $options)) : [],
+      placeholder: ! empty($row['placeholder']) ? (string) $row['placeholder'] : null,
       required: (bool) $row['is_required'],
-      customerVisible: (bool) $row['customer_visible'],
-      departmentId: $row['department_id'] !== null ? (int) $row['department_id'] : null,
+      formLocation: (string) ($row['form_location'] ?? 'ticket'),
+      audience: (string) ($row['audience'] ?? 'both'),
+      categoryIds: is_array($categoryIds) ? array_values(array_map('intval', $categoryIds)) : [],
       status: CustomFieldStatus::from($row['status']),
       sortOrder: (int) $row['sort_order'],
       createdAt: (string) $row['created_at'],

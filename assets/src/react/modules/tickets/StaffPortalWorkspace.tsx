@@ -19,8 +19,8 @@ interface Props {
   navigate: (path: string) => void;
 }
 
-async function loadSavedReplies(departmentId?: number | null): Promise<SavedReply[]> {
-  return apiGet<SavedReply[]>(`saved-replies?orderby=usage&department_id=${departmentId ?? 0}`);
+async function loadSavedReplies(): Promise<SavedReply[]> {
+  return apiGet<SavedReply[]>('saved-replies?orderby=usage');
 }
 
 async function trackSavedReply(id: number): Promise<void> {

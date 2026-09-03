@@ -14,16 +14,16 @@ final class SavedReplyRepository extends Repository {
 
   public function create(array $data): int {
     return $this->insert([
-      'title' => $data['title'], 'content' => $data['content'], 'category' => $data['category'], 'department_id' => $data['department_id'], 'status' => $data['status'],
+      'title' => $data['title'], 'content' => $data['content'], 'category' => $data['category'], 'status' => $data['status'],
       'created_by' => $data['created_by'], 'created_at' => $data['created_at'] ?? $this->now(),
       'updated_at' => $data['updated_at'] ?? $this->now(),
-    ], ['%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s']);
+    ], ['%s', '%s', '%s', '%s', '%d', '%s', '%s']);
   }
 
   public function find(int $id): ?SavedReply { return $this->findById($id); }
 
   /** @return SavedReply[] */
-  public function search(string $term = '', ?SavedReplyStatus $status = null, string $orderBy = 'title', ?string $category = null, ?int $departmentId = null, bool $scopeDepartment = false): array {
+  public function search(string $term = '', ?SavedReplyStatus $status = null, string $orderBy = 'title', ?string $category = null): array {
     $where = ['1=1'];
     $values = [];
     if ($term !== '') {
@@ -40,10 +40,6 @@ final class SavedReplyRepository extends Repository {
     if ($category !== null) {
       $where[] = 'category = %s';
       $values[] = $category;
-    }
-    if ($scopeDepartment) {
-      if ($departmentId !== null) { $where[] = '(department_id IS NULL OR department_id = %d)'; $values[] = $departmentId; }
-      else { $where[] = 'department_id IS NULL'; }
     }
     $order = match ($orderBy) {
       'usage' => 'usage_count DESC, last_used_at DESC, title ASC',
@@ -71,7 +67,7 @@ final class SavedReplyRepository extends Repository {
   }
 
   protected function hydrate(array $row): SavedReply {
-    return new SavedReply(id: (int) $row['id'], title: (string) $row['title'], content: (string) $row['content'], category: ($row['category'] ?? '') !== '' ? (string) $row['category'] : null, departmentId: isset($row['department_id']) ? (int) $row['department_id'] : null,
+    return new SavedReply(id: (int) $row['id'], title: (string) $row['title'], content: (string) $row['content'], category: ($row['category'] ?? '') !== '' ? (string) $row['category'] : null,
       status: SavedReplyStatus::from($row['status']), createdBy: (int) $row['created_by'],
       usageCount: (int) ($row['usage_count'] ?? 0), lastUsedAt: isset($row['last_used_at']) ? (string) $row['last_used_at'] : null,
       lastUsedBy: isset($row['last_used_by']) ? (int) $row['last_used_by'] : null,

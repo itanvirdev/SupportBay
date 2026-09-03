@@ -7,7 +7,6 @@ namespace SupportBay\Dev;
 use SupportBay\Core\Testing\Assert;
 use SupportBay\Core\Testing\FlowTest;
 use SupportBay\Modules\Notifications\Http\Controllers\NotificationTemplateController;
-use SupportBay\Modules\Notifications\Repositories\NotificationLogRepository;
 use WP_Error;
 use WP_REST_Request;
 
@@ -18,8 +17,7 @@ final class NotificationTemplateApiFlowTest extends FlowTest {
 
   protected static function execute(...$services): void {
     /** @var NotificationTemplateController $controller */
-    /** @var NotificationLogRepository $logs */
-    [$controller, $logs] = $services;
+    [$controller] = $services;
 
     if (did_action('rest_api_init') === 0) {
       do_action('rest_api_init', rest_get_server());
@@ -167,12 +165,6 @@ final class NotificationTemplateApiFlowTest extends FlowTest {
       'Test email sends the sanitized rich-text draft through WordPress mail.'
     );
     remove_filter('pre_wp_mail', $capture, 10);
-    Assert::equals(
-      1,
-      $logs->deleteByRecipient($testRecipient),
-      'Test email delivery audit log deleted.'
-    );
-
     $reset = rest_do_request(new WP_REST_Request('POST', $path . '/reset'));
     Assert::true(
       $reset->get_status() === 200

@@ -16,12 +16,14 @@ use SupportBay\Modules\CustomFields\Events\TicketCustomFieldValueChanged;
 use SupportBay\Modules\CustomFields\Repositories\CustomFieldRepository;
 use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 use SupportBay\Modules\Tickets\Entities\Ticket;
+use SupportBay\Modules\Categories\Services\CategoryService;
 
 final class CustomFieldService {
   public function __construct(
     private readonly CustomFieldRepository $repository,
     private readonly TicketRepository $tickets,
     private readonly EventDispatcher $events,
+    private readonly CategoryService $categories,
   ) {}
 
   /** @param array<string, mixed> $data */
@@ -71,10 +73,25 @@ final class CustomFieldService {
   public function active(): array { return $this->repository->active(); }
 
   /** @return CustomField[] */
-  public function applicable(int $departmentId, bool $customerOnly = false): array {
+  public function ticketFields(): array {
+    return array_values(array_filter($this->active(), static fn(CustomField $field): bool => $field->formLocation() === 'ticket'));
+  }
+
+  /** @return CustomField[] */
+  public function applicable(?int $categoryId, bool $customerOnly = false): array {
     return array_values(array_filter(
       $this->active(),
-      static fn(CustomField $field): bool => $field->appliesTo($departmentId)
+      static fn(CustomField $field): bool => $field->formLocation() === 'ticket'
+        && $field->appliesToCategory($categoryId)
+        && (! $customerOnly || $field->isCustomerVisible()),
+    ));
+  }
+
+  /** @return CustomField[] */
+  public function registrationFields(bool $customerOnly = true): array {
+    return array_values(array_filter(
+      $this->active(),
+      static fn(CustomField $field): bool => $field->formLocation() === 'registration'
         && (! $customerOnly || $field->isCustomerVisible()),
     ));
   }
@@ -87,15 +104,49 @@ final class CustomFieldService {
     return $this->repository->delete($id);
   }
 
+  public function move(int $id, string $direction): ?CustomField {
+    $items = $this->all();
+    usort(
+      $items,
+      static fn(CustomField $left, CustomField $right): int =>
+        [$left->sortOrder(), $left->id()] <=> [$right->sortOrder(), $right->id()],
+    );
+    $index = array_search($id, array_map(static fn(CustomField $field): int => $field->id(), $items), true);
+    if ($index === false) { return null; }
+    $target = $direction === 'up' ? $index - 1 : ($direction === 'down' ? $index + 1 : -1);
+    if (! isset($items[$target])) { return $items[$index]; }
+
+    [$items[$index], $items[$target]] = [$items[$target], $items[$index]];
+
+    foreach ($items as $position => $item) {
+      $sortOrder = $position + 1;
+      if ($item->sortOrder() !== $sortOrder) {
+        $this->repository->update($item->id(), ['sort_order' => $sortOrder]);
+      }
+    }
+
+    return $this->find($id);
+  }
+
   /**
    * Validate and normalize customer-submitted values before ticket creation.
    *
    * @param array<int|string, mixed> $values
    * @return array<int, string>
    */
-  public function validateCustomerValues(int $departmentId, array $values): array {
+  public function validateCustomerValues(?int $categoryId, array $values): array {
+    return $this->validateTicketValues($categoryId, $values, true);
+  }
+
+  /** @param array<int|string, mixed> $values @return array<int, string> */
+  public function validateStaffValues(?int $categoryId, array $values): array {
+    return $this->validateTicketValues($categoryId, $values, false);
+  }
+
+  /** @param array<int|string, mixed> $values @return array<int, string> */
+  private function validateTicketValues(?int $categoryId, array $values, bool $customerOnly): array {
     $fields = [];
-    foreach ($this->applicable($departmentId, true) as $field) {
+    foreach ($this->applicable($categoryId, $customerOnly) as $field) {
       $fields[$field->id()] = $field;
     }
 
@@ -119,6 +170,24 @@ final class CustomFieldService {
     return $normalized;
   }
 
+  /** @param array<int|string, mixed> $values @return array<int, string> */
+  public function validateRegistrationValues(array $values): array {
+    $fields = [];
+    foreach ($this->registrationFields(true) as $field) { $fields[$field->id()] = $field; }
+    foreach (array_keys($values) as $fieldId) {
+      if ((! is_int($fieldId) && ! (is_string($fieldId) && ctype_digit($fieldId))) || ! isset($fields[(int) $fieldId])) {
+        throw new InvalidArgumentException('Please select an available registration field.');
+      }
+    }
+    $normalized = [];
+    foreach ($fields as $fieldId => $field) {
+      $value = $values[$fieldId] ?? $values[(string) $fieldId] ?? null;
+      $result = $this->normalizeValue($field, $value);
+      if ($result !== null) { $normalized[$fieldId] = $result; }
+    }
+    return $normalized;
+  }
+
   public function setValue(
     int $ticketId,
     int $fieldId,
@@ -129,7 +198,7 @@ final class CustomFieldService {
     $ticket = $this->tickets->find($ticketId);
     if (! $ticket) { throw new InvalidArgumentException('Ticket was not found.'); }
     $field = $this->find($fieldId);
-    if (! $field || ! $field->isActive() || ! $field->appliesTo($ticket->departmentId())) {
+    if (! $field || ! $field->isActive() || $field->formLocation() !== 'ticket' || ! $field->appliesToCategory($ticket->categoryId())) {
       throw new InvalidArgumentException('Please select an available custom field.');
     }
     $normalized = $this->normalizeValue($field, $value);
@@ -215,7 +284,7 @@ final class CustomFieldService {
     if (! $ticket) { throw new InvalidArgumentException('Ticket was not found.'); }
 
     $fields = [];
-    foreach ($this->applicable($ticket->departmentId()) as $field) {
+    foreach ($this->applicable($ticket->categoryId()) as $field) {
       $fields[$field->id()] = $field;
     }
     foreach ($this->valuesForTicket($ticketId) as $value) {
@@ -265,8 +334,8 @@ final class CustomFieldService {
       $result['name'] = $name;
       if ($creating && ! isset($data['slug'])) { $data['slug'] = $name; }
     }
-    if ($creating || array_key_exists('slug', $data)) {
-      $slug = sanitize_title((string) ($data['slug'] ?? ''));
+    if ($creating || array_key_exists('name', $data)) {
+      $slug = str_replace('-', '_', sanitize_title((string) ($result['name'] ?? $data['name'] ?? '')));
       if ($slug === '') { throw new InvalidArgumentException('Custom field slug is required.'); }
       $result['slug'] = $slug;
     }
@@ -289,19 +358,36 @@ final class CustomFieldService {
     if ($creating || array_key_exists('is_required', $data)) {
       $result['is_required'] = rest_sanitize_boolean($data['is_required'] ?? false) ? 1 : 0;
     }
-    if ($creating || array_key_exists('customer_visible', $data)) {
-      $result['customer_visible'] = rest_sanitize_boolean($data['customer_visible'] ?? false) ? 1 : 0;
+    if ($creating || array_key_exists('placeholder', $data)) {
+      $result['placeholder'] = sanitize_text_field((string) ($data['placeholder'] ?? '')) ?: null;
     }
-    if ($creating || array_key_exists('department_id', $data)) {
-      $result['department_id'] = absint($data['department_id'] ?? 0) ?: null;
+    if ($creating || array_key_exists('form_location', $data)) {
+      $location = sanitize_key((string) ($data['form_location'] ?? 'ticket'));
+      if (! in_array($location, ['ticket', 'registration'], true)) { throw new InvalidArgumentException('Create Where is invalid.'); }
+      $result['form_location'] = $location;
+    }
+    if ($creating || array_key_exists('audience', $data)) {
+      $audience = sanitize_key((string) ($data['audience'] ?? 'both'));
+      if (! in_array($audience, ['both', 'admin_only'], true)) { throw new InvalidArgumentException('Create For is invalid.'); }
+      $result['audience'] = $audience;
+    }
+    if ($creating || array_key_exists('category_ids', $data) || array_key_exists('form_location', $data)) {
+      $location = (string) ($result['form_location'] ?? $data['form_location'] ?? 'ticket');
+      $ids = $location === 'ticket'
+        ? array_values(array_unique(array_filter(array_map('absint', (array) ($data['category_ids'] ?? [])))))
+        : [];
+      foreach ($ids as $categoryId) {
+        if (! $this->categories->find($categoryId)) { throw new InvalidArgumentException('Please select an available category.'); }
+      }
+      $result['category_ids'] = wp_json_encode($ids);
     }
     if ($creating || array_key_exists('status', $data)) {
       $status = CustomFieldStatus::tryFrom(sanitize_key((string) ($data['status'] ?? CustomFieldStatus::ACTIVE->value)));
       if (! $status) { throw new InvalidArgumentException('Custom field status is invalid.'); }
       $result['status'] = $status->value;
     }
-    if ($creating || array_key_exists('sort_order', $data)) {
-      $result['sort_order'] = absint($data['sort_order'] ?? 0);
+    if ($creating) {
+      $result['sort_order'] = $this->repository->nextSortOrder();
     }
     return $result;
   }

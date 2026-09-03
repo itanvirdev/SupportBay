@@ -148,19 +148,21 @@ final class TicketController {
       unassigned: $assignment === 'unassigned',
       accessAgentId: $this->access->queueScopeAgentId(),
       accessUnassigned: $this->access->canViewUnassigned(),
-      departmentId: absint($request->get_param('department_id')) ?: null,
       categoryId: $category !== 'uncategorized'
         ? (absint($category) ?: null)
         : null,
       uncategorized: $category === 'uncategorized',
       tagId: absint($request->get_param('tag_id')) ?: null,
+      tagIds: array_values(array_unique(array_filter(array_map(
+        'absint',
+        explode(',', sanitize_text_field((string) $request->get_param('tag_ids'))),
+      )))),
       customFieldId: absint($request->get_param('custom_field_id')) ?: null,
       customFieldValue: $request->get_param('custom_field_value') !== null
         && (string) $request->get_param('custom_field_value') !== ''
           ? sanitize_textarea_field(wp_unslash((string) $request->get_param('custom_field_value')))
           : null,
       needsReply: rest_sanitize_boolean($request->get_param('need_reply')),
-      slaState: null,
       orderBy: sanitize_key((string) $request->get_param('orderby')),
       direction: sanitize_key((string) $request->get_param('order')),
     ));
@@ -310,7 +312,6 @@ final class TicketController {
       'priority' => ['sanitize_callback' => 'sanitize_key'],
       'assignment' => ['sanitize_callback' => 'sanitize_key'],
       'agent_id' => ['sanitize_callback' => 'absint'],
-      'department_id' => ['sanitize_callback' => 'absint'],
       'category_id' => ['sanitize_callback' => 'sanitize_text_field'],
       'tag_id' => ['sanitize_callback' => 'absint'],
       'custom_field_id' => ['sanitize_callback' => 'absint'],

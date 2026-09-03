@@ -21,9 +21,11 @@ final class CustomFieldSchema {
       slug VARCHAR(120) NOT NULL,
       type VARCHAR(30) NOT NULL DEFAULT '" . CustomFieldType::TEXT->value . "',
       options LONGTEXT NULL,
+      placeholder VARCHAR(255) NULL,
       is_required TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
-      customer_visible TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
-      department_id BIGINT UNSIGNED NULL,
+      form_location VARCHAR(20) NOT NULL DEFAULT 'ticket',
+      audience VARCHAR(20) NOT NULL DEFAULT 'both',
+      category_ids LONGTEXT NULL,
       status VARCHAR(20) NOT NULL DEFAULT '" . CustomFieldStatus::ACTIVE->value . "',
       sort_order INT UNSIGNED NOT NULL DEFAULT 0,
       created_at DATETIME NOT NULL,
@@ -31,7 +33,7 @@ final class CustomFieldSchema {
       PRIMARY KEY  (id),
       UNIQUE KEY slug (slug),
       KEY type (type),
-      KEY department_id (department_id),
+      KEY form_location (form_location),
       KEY status_sort (status, sort_order)
     ) {$wpdb->get_charset_collate()};";
   }

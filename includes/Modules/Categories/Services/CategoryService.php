@@ -88,20 +88,31 @@ final class CategoryService {
     return $this->repository->delete($id);
   }
 
-  /** @return Category[] */
-  public function applicable(int $departmentId): array {
-    return array_values(array_filter(
-      $this->active(),
-      static fn(Category $category): bool =>
-        $category->departmentId() === null
-        || $category->departmentId() === $departmentId,
-    ));
+  public function move(int $id, string $direction): ?Category {
+    $items = $this->all();
+    usort(
+      $items,
+      static fn(Category $left, Category $right): int =>
+        [$left->sortOrder(), $left->id()] <=> [$right->sortOrder(), $right->id()],
+    );
+    $index = array_search($id, array_map(static fn(Category $item): int => $item->id(), $items), true);
+    if ($index === false) { return null; }
+    $target = $direction === 'up' ? $index - 1 : ($direction === 'down' ? $index + 1 : -1);
+    if (! isset($items[$target])) { return $items[$index]; }
+
+    [$items[$index], $items[$target]] = [$items[$target], $items[$index]];
+
+    foreach ($items as $position => $item) {
+      $sortOrder = $position + 1;
+      if ($item->sortOrder() !== $sortOrder) {
+        $this->repository->update($item->id(), ['sort_order' => $sortOrder]);
+      }
+    }
+
+    return $this->find($id);
   }
 
-  public function validateSelection(
-    ?int $categoryId,
-    int $departmentId,
-  ): ?Category {
+  public function validateSelection(?int $categoryId): ?Category {
     if ($categoryId === null) {
       return null;
     }
@@ -111,10 +122,6 @@ final class CategoryService {
     if (
       ! $category
       || ! $category->isActive()
-      || (
-        $category->departmentId() !== null
-        && $category->departmentId() !== $departmentId
-      )
     ) {
       throw new InvalidArgumentException(
         'Please select an available category.'
@@ -165,12 +172,6 @@ final class CategoryService {
       ) ?: null;
     }
 
-    if ($creating || array_key_exists('department_id', $data)) {
-      $result['department_id'] = absint(
-        $data['department_id'] ?? 0
-      ) ?: null;
-    }
-
     if ($creating || array_key_exists('status', $data)) {
       $status = CategoryStatus::tryFrom(sanitize_key(
         (string) ($data['status'] ?? CategoryStatus::ACTIVE->value)
@@ -190,8 +191,8 @@ final class CategoryService {
       $result['color'] = $color ?: null;
     }
 
-    if ($creating || array_key_exists('sort_order', $data)) {
-      $result['sort_order'] = absint($data['sort_order'] ?? 0);
+    if ($creating) {
+      $result['sort_order'] = $this->repository->nextSortOrder();
     }
 
     return $result;

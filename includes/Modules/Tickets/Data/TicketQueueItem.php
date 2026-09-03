@@ -31,8 +31,6 @@ final class TicketQueueItem {
             'size' => 64,
           ])
           : null),
-      'department_id' => (int) $this->row['department_id'],
-      'department_name' => $this->row['department_name'] ?: null,
       'category_id' => $this->row['category_id'] !== null
         ? (int) $this->row['category_id']
         : null,

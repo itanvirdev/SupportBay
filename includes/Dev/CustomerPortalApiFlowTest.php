@@ -11,7 +11,6 @@ use SupportBay\Modules\Attachments\Services\AttachmentService;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\CustomFields\Services\CustomFieldService;
-use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Enums\MessageType;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Services\TicketService;
@@ -34,7 +33,6 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     /** @var TicketService $tickets */
     /** @var VerificationService $verifications */
     /** @var MessageService $messages */
-    /** @var DepartmentService $departments */
     /** @var CategoryService $categories */
     /** @var AttachmentService $attachments */
     /** @var IntegrationManager $integrations */
@@ -45,7 +43,6 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       $tickets,
       $verifications,
       $messages,
-      $departments,
       $categories,
       $attachments,
       $integrations,
@@ -144,34 +141,28 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'support_expires_at'  => '2020-01-01 00:00:00',
     ]);
 
-    $departmentId = $departments->create([
-      'name' => 'Portal Test Department ' . strtoupper(
-        wp_generate_password(6, false, false)
-      ),
-    ]);
     $category = $categories->create([
-      'name'          => 'Portal Category ' . strtoupper(
+      'name' => 'Portal Category ' . strtoupper(
         wp_generate_password(6, false, false)
       ),
-      'department_id' => $departmentId,
     ]);
     $customField = $customFields->create([
       'name'             => 'Site URL ' . $userId,
       'type'             => 'url',
       'is_required'      => true,
-      'customer_visible' => true,
-      'department_id'    => $departmentId,
+      'audience'         => 'both',
+      'category_ids'     => [$category->id()],
     ]);
     $privateCustomField = $customFields->create([
       'name'             => 'Internal account tier ' . $userId,
       'type'             => 'text',
-      'customer_visible' => false,
-      'department_id'    => $departmentId,
+      'audience'         => 'admin_only',
+      'category_ids'     => [$category->id()],
     ]);
 
     $ticketId = $tickets->create([
       'customer_id'              => $customerId,
-      'department_id'            => $departmentId,
+      'category_id'              => $category->id(),
       'subject'                  => 'Portal Test Ticket',
       'purchase_verification_id' => $verificationId,
     ]);
@@ -386,27 +377,10 @@ final class CustomerPortalApiFlowTest extends FlowTest {
       'Portal does not expose provider snapshots.'
     );
 
-    $departmentResponse = rest_do_request(
-      new WP_REST_Request('GET', '/sbay/v1/portal/departments')
-    );
-    $departmentData = $departmentResponse->get_data();
-
-    Assert::true(
-      in_array(
-        $departmentId,
-        array_column($departmentData['data'] ?? [], 'id'),
-        true,
-      ),
-      'Portal exposes active ticket departments.'
-    );
-
     $categoryRequest = new WP_REST_Request(
       'GET',
       '/sbay/v1/portal/categories'
     );
-    $categoryRequest->set_query_params([
-      'department_id' => $departmentId,
-    ]);
     $categoryResponse = rest_do_request($categoryRequest);
 
     Assert::true(
@@ -415,16 +389,14 @@ final class CustomerPortalApiFlowTest extends FlowTest {
         array_column($categoryResponse->get_data()['data'] ?? [], 'id'),
         true,
       ),
-      'Portal exposes categories applicable to the selected department.'
+      'Portal exposes active ticket categories.'
     );
 
     $customFieldRequest = new WP_REST_Request(
       'GET',
       '/sbay/v1/portal/custom-fields'
     );
-    $customFieldRequest->set_query_params([
-      'department_id' => $departmentId,
-    ]);
+    $customFieldRequest->set_query_params(['category_id' => $category->id()]);
     $customFieldResponse = rest_do_request($customFieldRequest);
 
     Assert::true(
@@ -464,7 +436,6 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     $missingCategoryRequest->set_body_params([
       'subject'            => 'Missing category request',
       'content'            => 'This ticket must not be created.',
-      'department_id'      => $departmentId,
       'provider'           => 'fake-purchase',
       'purchase_reference' => $verifications->find($verificationId)->providerReference(),
     ]);
@@ -472,14 +443,13 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::equals(
       422,
       rest_do_request($missingCategoryRequest)->get_status(),
-      'Portal requires a category when the department has applicable categories.'
+      'Portal requires a category when active categories are available.'
     );
 
     $expiredRequest = new WP_REST_Request('POST', '/sbay/v1/portal/tickets');
     $expiredRequest->set_body_params([
       'subject' => 'Expired support request',
       'content' => 'This ticket must not be created.',
-      'department_id' => $departmentId,
       'category_id' => $category->id(),
       'provider' => 'fake-purchase',
       'purchase_reference' => $expiredReference,
@@ -502,7 +472,6 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     $missingCustomFieldRequest->set_body_params([
       'subject' => 'Missing custom field request',
       'content' => 'This ticket must not be created.',
-      'department_id' => $departmentId,
       'category_id' => $category->id(),
       'provider' => 'fake-purchase',
       'purchase_reference' => $verifications->find($verificationId)->providerReference(),
@@ -521,7 +490,6 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     $createRequest->set_body_params([
       'subject'                  => 'Created from customer portal',
       'content'                  => 'This is the opening portal message.',
-      'department_id'            => $departmentId,
       'category_id'              => $category->id(),
       'provider'                  => 'fake-purchase',
       'purchase_reference'        => $verifications->find($verificationId)->providerReference(),
@@ -826,11 +794,6 @@ final class CustomerPortalApiFlowTest extends FlowTest {
     Assert::true(
       $customFields->delete($privateCustomField->id()),
       'Test private custom field deleted.'
-    );
-
-    Assert::true(
-      $departments->delete($departmentId),
-      'Test department deleted.'
     );
 
     Assert::true(

@@ -37,9 +37,7 @@ final class SavedReplyController {
     if (! current_user_can(CapabilityManager::MANAGE_SAVED_REPLIES)) { $status = SavedReplyStatus::ACTIVE; }
     try {
       $category = $request->has_param('category') ? sanitize_text_field((string) $request->get_param('category')) : null;
-      $manage = current_user_can(CapabilityManager::MANAGE_SAVED_REPLIES);
-      $scopeDepartment = $request->has_param('department_id') || ! $manage;
-      $items = $this->replies->search((string) $request->get_param('search'), $status, sanitize_key((string) $request->get_param('orderby')) ?: 'title', $category, absint($request->get_param('department_id')) ?: null, $scopeDepartment);
+      $items = $this->replies->search((string) $request->get_param('search'), $status, sanitize_key((string) $request->get_param('orderby')) ?: 'title', $category);
     } catch (InvalidArgumentException $exception) {
       return RestResponse::error($exception->getMessage(), 'INVALID_SAVED_REPLY_SORT', [], 422);
     }

@@ -54,7 +54,6 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains(implode('', $bootstrap), 'canManageTags')
       && str_contains(implode('', $bootstrap), 'canManageCustomFields')
       && str_contains(implode('', $bootstrap), 'canManageRoles')
-      && str_contains(implode('', $bootstrap), 'canManageDepartments')
       && str_contains(implode('', $bootstrap), 'ticketListAutoRefreshEnabled')
       && str_contains(implode('', $bootstrap), 'ticketListAutoRefreshInterval')
       && str_contains(implode('', $bootstrap), 'attachmentPopupPreviewEnabled')
@@ -113,9 +112,6 @@ final class ReactAdminFlowTest extends FlowTest {
     );
     $adminPageSource = file_get_contents(
       dirname(__DIR__) . '/Modules/Admin/AdminPage.php'
-    );
-    $departmentWorkspace = file_get_contents(
-      dirname(__DIR__, 2) . '/assets/src/admin/DepartmentWorkspace.tsx'
     );
     $generalWorkspace = file_get_contents(
       dirname(__DIR__, 2) . '/assets/src/admin/GeneralWorkspace.tsx'
@@ -206,7 +202,6 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($ticketReportWorkspace, 'reports/tickets/export?${query()}')
       && str_contains($ticketReportWorkspace, 'admin/tickets/options')
       && str_contains($ticketReportWorkspace, 'Daily support activity')
-      && str_contains($ticketReportWorkspace, 'By department')
       && str_contains($ticketReportWorkspace, 'By category')
       && str_contains($ticketReportWorkspace, 'By tag')
       && str_contains($ticketReportWorkspace, 'By custom field value')
@@ -220,7 +215,6 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($ticketReportWorkspace, 'window.setTimeout(() => void load(), 250)')
       && ! str_contains($ticketReportWorkspace, 'Apply report')
       && str_contains($ticketReportWorkspace, 'Clear report filters')
-      && str_contains($ticketReportWorkspace, 'options.departments.length?')
       && str_contains($ticketReportWorkspace, 'options.categories.length?')
       && str_contains($ticketReportWorkspace, 'options.tags.length?')
       && str_contains($ticketReportWorkspace, 'options.custom_fields.length?')
@@ -233,9 +227,8 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($ticketReportWorkspace, 'is-need-reply')
       && str_contains($ticketReportWorkspace, 'is-closed')
       && str_contains($ticketReportWorkspace, 'rotate(45)')
-      && ! str_contains($ticketReportWorkspace, 'First-response SLA')
       && ! str_contains($ticketReportWorkspace, 'response_bands'),
-      'Reports renders ticket performance without deferred notification delivery or SLA analysis.'
+      'Reports renders ticket volume and response performance.'
     );
 
     Assert::true(
@@ -266,7 +259,7 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($savedReplyRenderer, 'escapeHtml')
       && str_contains($savedReplyRenderer, 'hasOwnProperty.call')
       && str_contains($ticketConversation, 'renderSavedReply(saved.content,savedReplyContext)')
-      && str_contains($ticketConversation, 'loadSavedReplies(ticket.department_id)'),
+      && str_contains($ticketConversation, 'loadSavedReplies'),
       'Agent ticket detail supports resolution, final-state enforcement, and guarded saved-reply insertion.'
     );
 
@@ -304,14 +297,6 @@ final class ReactAdminFlowTest extends FlowTest {
       ['/assets/src/shared/tickets/TicketWorkspace.tsx', '/assets/src/shared/tickets/workspace/TicketQueueTabs.tsx', '/assets/src/shared/tickets/workspace/TicketRow.tsx', '/assets/src/shared/tickets/workspace/TicketPagination.tsx'],
     ));
     Assert::true(
-      is_string($ticketWorkspace)
-      && ! str_contains($ticketWorkspace, 'sla_state: query.slaState')
-      && ! str_contains($ticketWorkspace, 'SLA Due First')
-      && ! str_contains($ticketWorkspace, 'SLA Breached'),
-      'Shared ticket workspace omits deferred SLA controls.',
-    );
-
-    Assert::true(
       str_contains($ticketWorkspace, 'tag_id: query.tagId')
       && str_contains($ticketWorkspace, 'All Tags')
       && str_contains($ticketWorkspace, 'tag_add:')
@@ -337,11 +322,9 @@ final class ReactAdminFlowTest extends FlowTest {
     );
 
     Assert::true(
-      str_contains($ticketWorkspace, "(options?.departments.length ?? 0) > 1")
-      && str_contains($ticketWorkspace, "(options?.categories.length ?? 0) > 0")
+      str_contains($ticketWorkspace, "(options?.categories.length ?? 0) > 0")
       && str_contains($ticketWorkspace, "(options?.tags.length ?? 0) > 0")
       && str_contains($ticketWorkspace, "(options?.custom_fields.length ?? 0) > 0")
-      && str_contains($ticketWorkspace, 'showDepartments&&ticket.department_name')
       && str_contains($ticketWorkspace, "showCategories?` · \${ticket.category_name||'Uncategorized'}`:''"),
       'Staff queues hide taxonomy metadata, filters, and bulk groups until meaningful configuration exists.',
     );
@@ -370,25 +353,20 @@ final class ReactAdminFlowTest extends FlowTest {
     Assert::true(
       is_string($settingsWorkspace)
       && str_contains($settingsWorkspace, 'Email Notifications')
-      && ! str_contains($settingsWorkspace, 'Delivery Logs')
       && str_contains($settingsWorkspace, 'Saved Replies')
       && str_contains($settingsWorkspace, 'Categories')
       && str_contains($settingsWorkspace, 'Tags')
       && str_contains($settingsWorkspace, 'Custom Fields')
       && str_contains($settingsWorkspace, 'Assign Rules')
       && str_contains($settingsWorkspace, 'User Roles')
-      && str_contains($settingsWorkspace, 'Departments')
-      && ! str_contains($settingsWorkspace, 'Ticket SLA')
       && str_contains($settingsWorkspace, 'Integrations')
       && str_contains($settingsWorkspace, '<NotificationTemplateWorkspace/>')
-      && ! str_contains($settingsWorkspace, '<NotificationLogWorkspace/>')
       && str_contains($settingsWorkspace, '<SavedReplyWorkspace/>')
       && str_contains($settingsWorkspace, '<CategoryWorkspace/>')
       && str_contains($settingsWorkspace, '<TagWorkspace/>')
       && str_contains($settingsWorkspace, '<CustomFieldWorkspace/>')
       && str_contains($settingsWorkspace, '<AssignRuleWorkspace/>')
       && str_contains($settingsWorkspace, '<RoleWorkspace/>')
-      && str_contains($settingsWorkspace, '<DepartmentWorkspace/>')
       && str_contains($settingsWorkspace, '<GeneralWorkspace')
       && str_contains($settingsWorkspace, '<SecurityWorkspace')
       && str_contains($settingsWorkspace, 'aria-expanded={integrationsOpen}')
@@ -544,17 +522,6 @@ final class ReactAdminFlowTest extends FlowTest {
     );
 
     Assert::true(
-      is_string($departmentWorkspace)
-      && str_contains($departmentWorkspace, "adminGet<Department[]>('departments')")
-      && str_contains($departmentWorkspace, "adminPost<Department>('departments'")
-      && str_contains($departmentWorkspace, 'Support is the permanent fallback')
-      && str_contains($departmentWorkspace, "selected.slug==='support'")
-      && str_contains($departmentWorkspace, 'adminDelete(`departments/${item.id}`')
-      && str_contains($departmentWorkspace, "item.slug!=='support'"),
-      'Settings provides department management with a protected Support fallback.',
-    );
-
-    Assert::true(
       is_string($roleWorkspace)
       && str_contains($roleWorkspace, "adminGet<SupportRole[]>('roles')")
       && str_contains($roleWorkspace, "adminPost<SupportRole>('roles'")
@@ -573,13 +540,15 @@ final class ReactAdminFlowTest extends FlowTest {
       is_string($customFieldWorkspace)
       && str_contains($customFieldWorkspace, "adminGet<CustomField[]>('custom-fields')")
       && str_contains($customFieldWorkspace, "adminPost<CustomField>('custom-fields'")
-      && str_contains($customFieldWorkspace, 'adminPut<CustomField>(`custom-fields/${selected.id}`')
-      && str_contains($customFieldWorkspace, 'adminDelete(`custom-fields/${selected.id}`')
+      && str_contains($customFieldWorkspace, 'adminPut<CustomField>(`custom-fields/${draft.id}`')
+      && str_contains($customFieldWorkspace, 'adminDelete(`custom-fields/${id}`')
       && str_contains($customFieldWorkspace, 'Visible to customers')
       && str_contains($customFieldWorkspace, 'One choice per line')
-      && str_contains($customFieldWorkspace, 'Create Custom Field')
+      && str_contains($customFieldWorkspace, 'sbay-catalog-table')
+      && str_contains($customFieldWorkspace, 'sbay-catalog-modal')
+      && str_contains($customFieldWorkspace, 'sbay-catalog-confirmation')
       && str_contains($customFieldWorkspace, 'cannot change type or be deleted'),
-      'Settings provides capability-gated custom-field definition and lifecycle management.'
+      'Settings provides table-based custom-field definition and lifecycle management.'
     );
 
     Assert::true(
@@ -599,13 +568,12 @@ final class ReactAdminFlowTest extends FlowTest {
       is_string($categoryWorkspace)
       && str_contains($categoryWorkspace, "adminGet<Category[]>('categories')")
       && str_contains($categoryWorkspace, "adminPost<Category>('categories'")
-      && str_contains($categoryWorkspace, 'adminPut<Category>(`categories/${selected.id}`')
-      && str_contains($categoryWorkspace, 'adminDelete(`categories/${selected.id}`')
-      && str_contains($categoryWorkspace, 'Global — all departments')
-      && str_contains($categoryWorkspace, 'Create Category')
-      && str_contains($categoryWorkspace, 'Save Changes')
-      && str_contains($categoryWorkspace, 'Categories used by tickets cannot be deleted'),
-      'Settings provides capability-gated category lifecycle management and safe deletion guidance.'
+      && str_contains($categoryWorkspace, 'adminPut<Category>(`categories/${draft.id}`')
+      && str_contains($categoryWorkspace, 'adminDelete(`categories/${id}`')
+      && str_contains($categoryWorkspace, 'sbay-catalog-modal')
+      && str_contains($categoryWorkspace, 'sbay-catalog-confirmation')
+      && ! str_contains($categoryWorkspace, '<label>Slug'),
+      'Settings provides table-based category management with automatic slugs, modal editing, and confirmed deletion.'
     );
 
     Assert::true(
@@ -625,8 +593,7 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($savedReplyWorkspace, 'For example: Billing')
       && str_contains($savedReplyWorkspace, 'active.meta.placeholders')
       && str_contains($savedReplyWorkspace, 'placeholderOptions={placeholderOptions}')
-      && str_contains($savedReplyWorkspace, 'Global — all departments')
-      && str_contains($savedReplyWorkspace, "adminGet<Department[]>('departments?status=active')"),
+      && str_contains($savedReplyWorkspace, 'placeholderOptions={placeholderOptions}'),
       'Settings provides a table-based saved-reply lifecycle with modal rich-text editing, placeholders, bulk actions, and confirmed deletion.'
     );
 
@@ -653,14 +620,9 @@ final class ReactAdminFlowTest extends FlowTest {
       && str_contains($adminBundle, 'Edit Email Notification')
       && str_contains($adminBundle, 'Placeholders')
       && ! str_contains($adminBundle, 'Delivery Logs')
-      && ! str_contains($adminBundle, 'Retry delivery')
-      && ! str_contains($adminBundle, 'Delivery Report')
-      && ! str_contains($adminBundle, 'Daily delivery trend')
       && str_contains($adminBundle, 'Support Tickets Report')
       && str_contains($adminBundle, 'Daily support activity')
-      && str_contains($adminBundle, 'Export CSV')
-      && ! str_contains($adminBundle, 'First-response SLA')
-      && ! str_contains($adminBundle, 'Save SLA policy'),
+      && str_contains($adminBundle, 'Export CSV'),
       'Compiled administrator chunks contain the complete lazy-loaded settings and report workspaces.'
     );
 

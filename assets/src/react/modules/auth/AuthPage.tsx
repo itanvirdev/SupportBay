@@ -1,5 +1,5 @@
-import { FormEvent, useState } from "react";
-import { apiPost, apiPostForm } from "../../api/client";
+import { FormEvent, useEffect, useState } from "react";
+import { apiGet, apiPost, apiPostForm } from "../../api/client";
 import { getConfig } from "../../core/config";
 import { PortalCopyright } from "../../components/PortalCopyright";
 import { FilePicker } from "../../components/FilePicker";
@@ -10,6 +10,7 @@ interface AuthPageProps {
 	mode: "login" | "register" | "guest";
 	navigate: (path: string) => void;
 }
+interface RegistrationField {id:number;name:string;type:string;options:string[];placeholder:string|null;is_required:boolean}
 
 export function AuthPage({ mode, navigate }: AuthPageProps) {
 	const config = getConfig();
@@ -28,6 +29,9 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [guestTicket, setGuestTicket] = useState<{track_id:string;account_created:boolean}|null>(null);
+	const [registrationFields,setRegistrationFields]=useState<RegistrationField[]>([]);
+	const [customFields,setCustomFields]=useState<Record<number,string>>({});
+	useEffect(()=>{if(mode==='register')apiGet<RegistrationField[]>('auth/registration-fields').then(setRegistrationFields).catch(()=>setRegistrationFields([]));},[mode]);
 
 	const submit = async (event: FormEvent) => {
 		event.preventDefault();
@@ -63,6 +67,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 							email,
 							password,
 							password_confirmation: confirmPassword,
+							custom_fields: customFields,
 							recaptcha_token: token,
 						});
 			window.location.assign(response.redirect);
@@ -162,7 +167,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 						</div>
 					</label>}
 					{mode === "register" ? (
-						<label>
+						<><label>
 							<span>Confirm Password</span>
 							<div className="sbay-password-input">
 								<input
@@ -181,7 +186,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 									{showConfirmation ? "Hide" : "Show"}
 								</button>
 							</div>
-						</label>
+						</label>{registrationFields.map(field=>{const value=customFields[field.id]??'';const update=(next:string)=>setCustomFields(current=>({...current,[field.id]:next}));if(field.type==='textarea')return <label key={field.id}><span>{field.name}</span><textarea rows={4} placeholder={field.placeholder??undefined} required={field.is_required} value={value} onChange={event=>update(event.target.value)}/></label>;if(field.type==='select')return <label key={field.id}><span>{field.name}</span><select required={field.is_required} value={value} onChange={event=>update(event.target.value)}><option value="">Select {field.name}</option>{field.options.map(option=><option key={option}>{option}</option>)}</select></label>;if(field.type==='checkbox')return <label className="sbay-auth-remember" key={field.id}><input type="checkbox" required={field.is_required} checked={value==='1'} onChange={event=>update(event.target.checked?'1':'0')}/><span>{field.name}</span></label>;return <label key={field.id}><span>{field.name}</span><input type={field.type} placeholder={field.placeholder??undefined} required={field.is_required} value={value} onChange={event=>update(event.target.value)}/></label>;})}</>
 					) : mode === "login" ? (
 						<label className="sbay-auth-remember">
 							<input type="checkbox" checked={remember} onChange={event => setRemember(event.target.checked)} />

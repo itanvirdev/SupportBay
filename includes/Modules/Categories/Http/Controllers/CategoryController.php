@@ -48,6 +48,10 @@ final class CategoryController {
         ],
       ]);
     }
+    register_rest_route('sbay/v1', '/categories/(?P<id>\d+)/move', [
+      'methods' => 'POST', 'callback' => [$this, 'move'], 'permission_callback' => [$this, 'canManage'],
+      'args' => ['id' => ['sanitize_callback' => 'absint']],
+    ]);
   }
 
   public function canView(): bool|WP_Error {
@@ -102,6 +106,12 @@ final class CategoryController {
         (array) $request->get_json_params(),
       ),
     );
+  }
+
+  public function move(WP_REST_Request $request): WP_REST_Response {
+    return $this->mutate(fn(): ?Category => $this->categories->move(
+      absint($request['id']), sanitize_key((string) $request->get_param('direction')),
+    ));
   }
 
   public function delete(WP_REST_Request $request): WP_REST_Response {

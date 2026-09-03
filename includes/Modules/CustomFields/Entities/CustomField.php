@@ -16,9 +16,11 @@ final class CustomField extends Entity {
     private readonly string $slug,
     private readonly CustomFieldType $type,
     private readonly array $options,
+    private readonly ?string $placeholder,
     private readonly bool $required,
-    private readonly bool $customerVisible,
-    private readonly ?int $departmentId,
+    private readonly string $formLocation,
+    private readonly string $audience,
+    private readonly array $categoryIds,
     private readonly CustomFieldStatus $status,
     private readonly int $sortOrder,
     private readonly string $createdAt,
@@ -33,9 +35,11 @@ final class CustomField extends Entity {
       'slug' => $this->slug,
       'type' => $this->type->value,
       'options' => $this->options,
+      'placeholder' => $this->placeholder,
       'is_required' => $this->required,
-      'customer_visible' => $this->customerVisible,
-      'department_id' => $this->departmentId,
+      'form_location' => $this->formLocation,
+      'audience' => $this->audience,
+      'category_ids' => $this->categoryIds,
       'status' => $this->status->value,
       'sort_order' => $this->sortOrder,
       'created_at' => $this->createdAt,
@@ -49,16 +53,20 @@ final class CustomField extends Entity {
   public function type(): CustomFieldType { return $this->type; }
   /** @return string[] */
   public function options(): array { return $this->options; }
+  public function placeholder(): ?string { return $this->placeholder; }
   public function isRequired(): bool { return $this->required; }
-  public function isCustomerVisible(): bool { return $this->customerVisible; }
-  public function departmentId(): ?int { return $this->departmentId; }
+  public function formLocation(): string { return $this->formLocation; }
+  public function audience(): string { return $this->audience; }
+  /** @return int[] */
+  public function categoryIds(): array { return $this->categoryIds; }
   public function status(): CustomFieldStatus { return $this->status; }
   public function sortOrder(): int { return $this->sortOrder; }
   public function createdAt(): string { return $this->createdAt; }
   public function updatedAt(): string { return $this->updatedAt; }
 
   public function isActive(): bool { return $this->status === CustomFieldStatus::ACTIVE; }
-  public function appliesTo(int $departmentId): bool {
-    return $this->departmentId === null || $this->departmentId === $departmentId;
+  public function isCustomerVisible(): bool { return $this->audience === 'both'; }
+  public function appliesToCategory(?int $categoryId): bool {
+    return $this->categoryIds === [] || ($categoryId !== null && in_array($categoryId, $this->categoryIds, true));
   }
 }

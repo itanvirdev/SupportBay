@@ -22,9 +22,8 @@ final class CategoryFlowTest extends FlowTest {
 
     DatabaseInstaller::install();
     $suffix = strtolower(wp_generate_password(8, false, false));
-    $scoped = $categories->create([
+    $primary = $categories->create([
       'name'          => 'Technical Support ' . $suffix,
-      'department_id' => 2,
       'color'         => '#216e52',
     ]);
     $global = $categories->create([
@@ -33,38 +32,19 @@ final class CategoryFlowTest extends FlowTest {
 
     try {
       Assert::true(
-        $scoped->id() > 0
-        && $scoped->isActive()
-        && $scoped->departmentId() === 2,
-        'A sanitized active department-scoped category is created.'
+        $primary->id() > 0 && $primary->isActive(),
+        'A sanitized active category is created.'
       );
 
-      $departmentTwoIds = array_map(static fn($item): int => $item->id(), $categories->applicable(2));
+      $activeIds = array_map(static fn($item): int => $item->id(), $categories->active());
       Assert::true(
-        in_array($scoped->id(), $departmentTwoIds, true) && in_array($global->id(), $departmentTwoIds, true),
-        'A department receives its scoped and global categories.'
+        in_array($primary->id(), $activeIds, true) && in_array($global->id(), $activeIds, true),
+        'Active categories are globally available.'
       );
 
-      $departmentThreeIds = array_map(static fn($item): int => $item->id(), $categories->applicable(3));
-      Assert::true(
-        ! in_array($scoped->id(), $departmentThreeIds, true) && in_array($global->id(), $departmentThreeIds, true),
-        'A different department receives only global categories.'
-      );
+      Assert::equals($primary->id(), $categories->validateSelection($primary->id())?->id(), 'An active category is valid for ticket classification.');
 
-      $rejected = false;
-
-      try {
-        $categories->validateSelection($scoped->id(), 3);
-      } catch (InvalidArgumentException) {
-        $rejected = true;
-      }
-
-      Assert::true(
-        $rejected,
-        'A category scoped to another department is rejected.'
-      );
-
-      $updated = $categories->update($scoped->id(), [
+      $updated = $categories->update($primary->id(), [
         'name'   => 'Product Support ' . $suffix,
         'status' => CategoryStatus::INACTIVE->value,
       ]);
@@ -78,7 +58,7 @@ final class CategoryFlowTest extends FlowTest {
       $rejected = false;
 
       try {
-        $categories->validateSelection($scoped->id(), 2);
+        $categories->validateSelection($primary->id());
       } catch (InvalidArgumentException) {
         $rejected = true;
       }
@@ -104,12 +84,12 @@ final class CategoryFlowTest extends FlowTest {
         'Duplicate category slugs are rejected.'
       );
     } finally {
-      $categories->delete($scoped->id());
+      $categories->delete($primary->id());
       $categories->delete($global->id());
     }
 
     Assert::true(
-      $categories->find($scoped->id()) === null,
+      $categories->find($primary->id()) === null,
       'Category deletion is deterministic.'
     );
   }

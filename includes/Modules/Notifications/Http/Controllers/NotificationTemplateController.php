@@ -344,7 +344,7 @@ final class NotificationTemplateController {
       'customer_name', 'customer_email',
       'agent_name', 'agent_email',
       'ticket_id', 'track_id', 'ticket_subject', 'ticket_status',
-      'ticket_priority', 'department_name', 'ticket_url',
+      'ticket_priority', 'category_name', 'ticket_url',
       'reply_content', 'product_name', 'license_type', 'support_until',
     ];
   }

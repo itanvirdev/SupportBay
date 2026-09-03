@@ -1,83 +1,23 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { adminDelete, adminGet, adminPost, adminPut } from './api';
-import { Preloader } from '../shared/components/Preloader';
-
-type FieldType = 'text'|'textarea'|'number'|'select'|'checkbox'|'date'|'email'|'url';
-interface CustomField {
-  id:number; name:string; slug:string; type:FieldType; options:string[];
-  is_required:boolean; customer_visible:boolean; department_id:number|null;
-  status:'active'|'inactive'; sort_order:number; updated_at:string;
-}
-interface Department { id:number; name:string }
-
-const emptyField:CustomField={id:0,name:'',slug:'',type:'text',options:[],is_required:false,customer_visible:false,department_id:null,status:'active',sort_order:0,updated_at:''};
+import {FormEvent,useCallback,useEffect,useMemo,useState} from 'react';
+import {adminDelete,adminGet,adminPost,adminPut} from './api';
+import {Preloader} from '../shared/components/Preloader';
+type FieldType='text'|'textarea'|'number'|'select'|'checkbox'|'date'|'email'|'url';
+interface Category{id:number;name:string}
+interface Field{id:number;name:string;slug:string;type:FieldType;options:string[];placeholder:string|null;is_required:boolean;form_location:'ticket'|'registration';audience:'both'|'admin_only';category_ids:number[];status:'active'|'inactive';sort_order:number}
+interface OrderConfirmation{id:number;name:string;direction:'up'|'down'}
 const types:FieldType[]=['text','textarea','number','select','checkbox','date','email','url'];
-
-export function CustomFieldWorkspace() {
-  const [items,setItems]=useState<CustomField[]>([]);
-  const [departments,setDepartments]=useState<Department[]>([]);
-  const [selected,setSelected]=useState<CustomField>(emptyField);
-  const [query,setQuery]=useState('');
-  const [status,setStatus]=useState('');
-  const [type,setType]=useState('');
-  const [department,setDepartment]=useState('');
-  const [loading,setLoading]=useState(true);
-  const [saving,setSaving]=useState(false);
-  const [error,setError]=useState<string|null>(null);
-  const [notice,setNotice]=useState<string|null>(null);
-
-  const load=useCallback(async()=>{
-    setLoading(true);setError(null);
-    try {
-      const [fields,departmentResponse]=await Promise.all([
-        adminGet<CustomField[]>('custom-fields'),
-        adminGet<Department[]>('departments?status=active'),
-      ]);
-      setItems(fields.data);setDepartments(departmentResponse.data);
-    } catch(reason) { setError(reason instanceof Error?reason.message:'Custom fields could not be loaded.'); }
-    finally { setLoading(false); }
-  },[]);
-  useEffect(()=>{void load();},[load]);
-
-  const departmentNames=useMemo(()=>new Map(departments.map(item=>[item.id,item.name])),[departments]);
-  const visible=useMemo(()=>items.filter(item=>(!status||item.status===status)&&(!type||item.type===type)&&(!department||(department==='global'?item.department_id===null:item.department_id===Number(department)))&&`${item.name} ${item.slug} ${item.type}`.toLowerCase().includes(query.toLowerCase())),[items,query,status,type,department]);
-
-  const save=async(event:FormEvent)=>{
-    event.preventDefault();setSaving(true);setError(null);setNotice(null);
-    const updating=selected.id>0;
-    try {
-      const payload={name:selected.name,slug:selected.slug||selected.name,type:selected.type,options:selected.type==='select'?selected.options:[],is_required:selected.is_required,customer_visible:selected.customer_visible,department_id:selected.department_id,status:selected.status,sort_order:selected.sort_order};
-      const response=updating?await adminPut<CustomField>(`custom-fields/${selected.id}`,payload):await adminPost<CustomField>('custom-fields',payload);
-      setSelected(response.data);setNotice(updating?'Custom field updated.':'Custom field created.');await load();
-    } catch(reason) { setError(reason instanceof Error?reason.message:'Custom field could not be saved.'); }
-    finally { setSaving(false); }
-  };
-  const remove=async()=>{
-    if(!selected.id||!window.confirm(`Delete “${selected.name}”? Custom fields used by tickets cannot be deleted.`))return;
-    setSaving(true);setError(null);setNotice(null);
-    try { await adminDelete(`custom-fields/${selected.id}`);setSelected(emptyField);setNotice('Custom field deleted.');await load(); }
-    catch(reason) { setError(reason instanceof Error?reason.message:'Custom field could not be deleted.'); }
-    finally { setSaving(false); }
-  };
-
-  return <section className="sbay-category-settings sbay-custom-field-settings">
-    <header><div><small>Ticket data</small><h2>Custom Fields</h2><p>Define structured information collected for support tickets.</p></div><button type="button" onClick={()=>{setSelected(emptyField);setError(null);setNotice(null);}}>Add Custom Field</button></header>
-    {error?<p className="sbay-admin-error" role="alert">{error}</p>:null}{notice?<p className="sbay-admin-success" role="status">{notice}</p>:null}
-    <div className="sbay-category-settings__grid"><aside>
-      <label>Search<input type="search" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search custom fields…"/></label>
-      <label>Status<select value={status} onChange={event=>setStatus(event.target.value)}><option value="">All Statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-      <label>Type<select value={type} onChange={event=>setType(event.target.value)}><option value="">All Types</option>{types.map(item=><option value={item} key={item}>{item}</option>)}</select></label>
-      <label>Department scope<select value={department} onChange={event=>setDepartment(event.target.value)}><option value="">All Scopes</option><option value="global">Global</option>{departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
-      {loading?<Preloader label="Loading custom fields…" compact />:visible.length===0?<p>No custom fields found.</p>:<ul>{visible.map(item=><li key={item.id}><button type="button" className={selected.id===item.id?'is-active':''} onClick={()=>{setSelected(item);setError(null);setNotice(null);}}><i/><span><strong>{item.name}</strong><small>{item.type} · {item.department_id?departmentNames.get(item.department_id)??`Department #${item.department_id}`:'Global'} · {item.status}</small></span></button></li>)}</ul>}
-    </aside><form onSubmit={save}>
-      <label>Name<input required maxLength={100} value={selected.name} onChange={event=>setSelected(current=>({...current,name:event.target.value}))}/></label>
-      <label>Slug<input maxLength={120} value={selected.slug} onChange={event=>setSelected(current=>({...current,slug:event.target.value}))} placeholder="Generated from name when empty"/></label>
-      <div className="sbay-custom-field-settings__row"><label>Type<select value={selected.type} onChange={event=>setSelected(current=>({...current,type:event.target.value as FieldType,options:event.target.value==='select'?current.options:[]}))}>{types.map(item=><option value={item} key={item}>{item}</option>)}</select></label><label>Department scope<select value={selected.department_id??''} onChange={event=>setSelected(current=>({...current,department_id:Number(event.target.value)||null}))}><option value="">Global — all departments</option>{departments.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select></label></div>
-      {selected.type==='select'?<label>Choices<textarea required rows={6} value={selected.options.join('\n')} onChange={event=>setSelected(current=>({...current,options:event.target.value.split('\n')}))} placeholder={'One choice per line\nFor example: Current'}/><small>One choice per line. Empty and duplicate choices are removed when saved.</small></label>:null}
-      <div className="sbay-custom-field-settings__checks"><label><input type="checkbox" checked={selected.is_required} onChange={event=>setSelected(current=>({...current,is_required:event.target.checked}))}/>Required</label><label><input type="checkbox" checked={selected.customer_visible} onChange={event=>setSelected(current=>({...current,customer_visible:event.target.checked}))}/>Visible to customers</label></div>
-      <div className="sbay-custom-field-settings__row"><label>Status<select value={selected.status} onChange={event=>setSelected(current=>({...current,status:event.target.value as CustomField['status']}))}><option value="active">Active</option><option value="inactive">Inactive</option></select></label><label>Sort order<input type="number" min="0" value={selected.sort_order} onChange={event=>setSelected(current=>({...current,sort_order:Number(event.target.value)||0}))}/></label></div>
-      <p>Fields with ticket values cannot change type or be deleted. Deactivate them to preserve historical ticket data.</p>
-      <div className="sbay-category-settings__actions"><button disabled={saving||selected.name.trim()===''||(selected.type==='select'&&!selected.options.some(option=>option.trim()!==''))}>{saving?'Saving…':selected.id?'Save Changes':'Create Custom Field'}</button>{selected.id?<button type="button" className="is-danger" disabled={saving} onClick={()=>void remove()}>Delete</button>:null}</div>
-    </form></div>
-  </section>;
+const empty:Field={id:0,name:'',slug:'',type:'text',options:[],placeholder:null,is_required:false,form_location:'ticket',audience:'both',category_ids:[],status:'active',sort_order:0};
+const slugify=(value:string)=>value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+export function CustomFieldWorkspace(){
+ const [items,setItems]=useState<Field[]>([]),[categories,setCategories]=useState<Category[]>([]),[draft,setDraft]=useState<Field|null>(null),[selected,setSelected]=useState<number[]>([]),[bulk,setBulk]=useState(''),[confirm,setConfirm]=useState<number[]|null>(null),[orderConfirmation,setOrderConfirmation]=useState<OrderConfirmation|null>(null),[open,setOpen]=useState(false),[query,setQuery]=useState(''),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState<string|null>(null),[notice,setNotice]=useState<string|null>(null);
+ const load=useCallback(async()=>{setLoading(true);setError(null);try{const [fields,cats]=await Promise.all([adminGet<Field[]>('custom-fields'),adminGet<Category[]>('categories?status=active')]);setItems(fields.data.sort((a,b)=>a.sort_order-b.sort_order||a.id-b.id));setCategories(cats.data);setSelected([]);}catch(reason){setError(reason instanceof Error?reason.message:'Custom fields could not be loaded.');}finally{setLoading(false);}},[]);useEffect(()=>{void load();},[load]);
+ const names=useMemo(()=>new Map(categories.map(item=>[item.id,item.name])),[categories]);const visible=categories.filter(item=>item.name.toLowerCase().includes(query.toLowerCase()));
+ const update=(changes:Partial<Field>)=>setDraft(current=>current?{...current,...changes}:current);const choose=(id:number)=>draft&&update({category_ids:draft.category_ids.includes(id)?draft.category_ids.filter(value=>value!==id):[...draft.category_ids,id]});
+ const save=async(event:FormEvent)=>{event.preventDefault();if(!draft)return;setSaving(true);setError(null);try{const payload={name:draft.name,type:draft.type,options:draft.type==='select'?draft.options:[],placeholder:draft.placeholder,is_required:draft.is_required,form_location:draft.form_location,audience:draft.audience,category_ids:draft.form_location==='ticket'?draft.category_ids:[],status:draft.status};await(draft.id?adminPut(`custom-fields/${draft.id}`,payload):adminPost('custom-fields',payload));setNotice(draft.id?'Custom field updated.':'Custom field created.');setDraft(null);await load();}catch(reason){setError(reason instanceof Error?reason.message:'Custom field could not be saved.');}finally{setSaving(false);}};
+ const remove=async(ids:number[])=>{setSaving(true);try{await Promise.all(ids.map(id=>adminDelete(`custom-fields/${id}`)));setConfirm(null);setNotice(ids.length===1?'Custom field deleted.':'Custom fields deleted.');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Custom fields could not be deleted.');}finally{setSaving(false);}};
+ const move=async(id:number,direction:'up'|'down')=>{setSaving(true);setError(null);setNotice(null);try{await adminPost(`custom-fields/${id}/move`,{direction});setOrderConfirmation(null);setNotice('Custom field order updated.');await load();}catch(reason){setError(reason instanceof Error?reason.message:'Custom field could not be moved.');}finally{setSaving(false);}};
+ const applyBulk=async()=>{if(!bulk||!selected.length)return;if(bulk==='delete'){setConfirm([...selected]);return;}setSaving(true);try{await Promise.all(selected.map(id=>adminPut(`custom-fields/${id}`,{status:bulk})));setBulk('');await load();}finally{setSaving(false);}};
+ return <section className="sbay-catalog-settings"><header className="sbay-catalog-settings__header"><h2>Custom Fields</h2><div><button type="button" onClick={()=>void load()}>↻</button><button className="is-primary" type="button" onClick={()=>setDraft({...empty})}>＋ Add New</button></div></header>{error?<p className="sbay-admin-error">{error}</p>:null}{notice?<p className="sbay-admin-notice">{notice}</p>:null}{loading?<Preloader label="Loading custom fields…"/>:<div className="sbay-catalog-table"><div className="sbay-catalog-table__row is-header"><input type="checkbox" checked={items.length>0&&selected.length===items.length} onChange={()=>setSelected(selected.length===items.length?[]:items.map(item=>item.id))}/><strong>ID</strong><strong>Title</strong><strong>Status</strong><strong>Order</strong><strong>Action</strong></div>{items.map((item,index)=><div className="sbay-catalog-table__row" key={item.id}><input type="checkbox" checked={selected.includes(item.id)} onChange={()=>setSelected(current=>current.includes(item.id)?current.filter(id=>id!==item.id):[...current,item.id])}/><span>{item.id}</span><span><strong>{item.name}</strong><small>{item.type} · {item.form_location==='ticket'?'Ticket Form':'Registration Form'} · {item.audience==='both'?'Clients & Admin':'Admin Only'}</small></span><span><i className={`sbay-catalog-status is-${item.status}`}>{item.status}</i></span><span className="sbay-catalog-order"><button type="button" disabled={saving||index===0} onClick={()=>setOrderConfirmation({id:item.id,name:item.name,direction:'up'})} aria-label={`Move ${item.name} up`}>⌃</button><b>{index+1}</b><button type="button" disabled={saving||index===items.length-1} onClick={()=>setOrderConfirmation({id:item.id,name:item.name,direction:'down'})} aria-label={`Move ${item.name} down`}>⌄</button>{orderConfirmation?.id===item.id?<div className="sbay-order-confirmation" role="alertdialog" aria-modal="true" aria-label={`${orderConfirmation.direction==='up'?'Order Up':'Order Down'} ${orderConfirmation.name}`}><header><span>ⓘ</span><h2>{orderConfirmation.direction==='up'?'Order Up':'Order Down'}</h2></header><p>Are you sure want to change order?</p><footer><button type="button" disabled={saving} onClick={()=>setOrderConfirmation(null)}>No</button><button type="button" className="is-primary" disabled={saving} onClick={()=>void move(orderConfirmation.id,orderConfirmation.direction)}>{saving?'Moving…':'Yes'}</button></footer></div>:null}</span><span className="sbay-catalog-actions"><button type="button" onClick={()=>setDraft({...item,category_ids:[...item.category_ids]})}>✎</button><button type="button" className="is-danger" onClick={()=>setConfirm([item.id])}>🗑</button></span></div>)}<footer><div><select value={bulk} onChange={event=>setBulk(event.target.value)}><option value="">Bulk Actions</option><option value="active">Activate</option><option value="inactive">Deactivate</option><option value="delete">Delete</option></select><button disabled={!bulk||!selected.length||saving} onClick={()=>void applyBulk()}>Apply</button></div><span>Showing {items.length?`1 – ${items.length}`:'0'} of {items.length}</span></footer></div>}
+ {draft?<div className="sbay-catalog-modal" role="dialog" aria-modal="true"><form onSubmit={save}><header><h2>{draft.id?'Edit':'Add New'} Custom Field</h2><button type="button" onClick={()=>setDraft(null)}>×</button></header><div className="sbay-catalog-modal__grid"><label><span>Field Type <b>*</b></span><select value={draft.type} onChange={event=>update({type:event.target.value as FieldType})}>{types.map(type=><option key={type} value={type}>{type[0].toUpperCase()+type.slice(1)}</option>)}</select></label><label><span>Field Label <b>*</b></span><input required value={draft.name} onChange={event=>update({name:event.target.value,slug:slugify(event.target.value)})}/></label></div><label>Field Slug<input readOnly value={draft.slug||slugify(draft.name)}/></label><label>Placeholder<input value={draft.placeholder??''} onChange={event=>update({placeholder:event.target.value||null})}/></label>{draft.type==='select'?<label>Options<textarea required rows={5} value={draft.options.join('\n')} onChange={event=>update({options:event.target.value.split('\n')})} placeholder="One option per line"/></label>:null}<fieldset><legend>Form Options</legend><label><input type="checkbox" checked={draft.is_required} onChange={event=>update({is_required:event.target.checked})}/> Required Field</label></fieldset><fieldset><legend>Create Where</legend><label><input type="radio" checked={draft.form_location==='ticket'} onChange={()=>update({form_location:'ticket'})}/> Ticket Form</label><label><input type="radio" checked={draft.form_location==='registration'} onChange={()=>update({form_location:'registration',category_ids:[]})}/> Registration Form</label></fieldset><fieldset><legend>Create For</legend><label><input type="radio" checked={draft.audience==='both'} onChange={()=>update({audience:'both'})}/> Both (Clients &amp; Admin)</label><label><input type="radio" checked={draft.audience==='admin_only'} onChange={()=>update({audience:'admin_only'})}/> Admin Only</label></fieldset>{draft.form_location==='ticket'?<div className="sbay-category-picker"><label><span className="is-required">Choose Category</span></label><div className={`sbay-category-picker__control ${open?'is-open':''}`} onClick={()=>setOpen(true)}>{draft.category_ids.length===0?<span className="sbay-category-chip">All Categories</span>:draft.category_ids.map(id=><span className="sbay-category-chip" key={id}>{names.get(id)??`#${id}`}<button type="button" onClick={event=>{event.stopPropagation();choose(id);}}>×</button></span>)}<input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search categories…"/><span>⌕</span></div>{open?<div className="sbay-category-picker__menu"><button type="button" className={draft.category_ids.length===0?'is-selected':''} onClick={()=>update({category_ids:[]})}>All Categories {draft.category_ids.length===0?<span>✓</span>:null}</button>{visible.map(category=><button type="button" className={draft.category_ids.includes(category.id)?'is-selected':''} onClick={()=>choose(category.id)} key={category.id}>{category.name}{draft.category_ids.includes(category.id)?<span>✓</span>:null}</button>)}<button type="button" className="sbay-category-picker__done" onClick={()=>setOpen(false)}>Done</button></div>:null}</div>:null}<label className="sbay-general-toggle"><input type="checkbox" role="switch" checked={draft.status==='active'} onChange={event=>update({status:event.target.checked?'active':'inactive'})}/><span>Status</span></label><footer><button type="button" onClick={()=>setDraft(null)}>Cancel</button><button className="is-primary" disabled={saving||!draft.name.trim()||(draft.type==='select'&&!draft.options.some(value=>value.trim()))}>{saving?'Saving…':draft.id?'Update':'Create'}</button></footer></form></div>:null}
+ {confirm?<div className="sbay-catalog-confirmation" role="alertdialog"><div><header><span>ⓘ</span><h2>Delete</h2></header><p>Are you sure want to delete?</p><footer><button onClick={()=>setConfirm(null)}>No</button><button className="is-danger" onClick={()=>void remove(confirm)}>Yes</button></footer></div></div>:null}</section>;
 }

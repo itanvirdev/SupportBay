@@ -43,7 +43,6 @@ final class TicketVerificationFlowTest extends FlowTest {
 
     $firstTicketId = $tickets->create([
       'customer_id'              => 1,
-      'department_id'            => 1,
       'subject'                  => 'Verified Ticket One',
       'purchase_verification_id' => $verificationId,
     ]);
@@ -68,7 +67,6 @@ final class TicketVerificationFlowTest extends FlowTest {
 
     $secondTicketId = $tickets->create([
       'customer_id'              => 1,
-      'department_id'            => 1,
       'subject'                  => 'Verified Ticket Two',
       'purchase_verification_id' => $verificationId,
     ]);
@@ -88,7 +86,6 @@ final class TicketVerificationFlowTest extends FlowTest {
     try {
       $tickets->create([
         'customer_id'              => 2,
-        'department_id'            => 1,
         'subject'                  => 'Invalid Ownership Ticket',
         'purchase_verification_id' => $verificationId,
       ]);
@@ -113,7 +110,6 @@ final class TicketVerificationFlowTest extends FlowTest {
     try {
       $tickets->create([
         'customer_id'              => 1,
-        'department_id'            => 1,
         'subject'                  => 'Expired Support Ticket',
         'purchase_verification_id' => $expiredVerificationId,
       ]);
@@ -133,7 +129,6 @@ final class TicketVerificationFlowTest extends FlowTest {
     try {
       $tickets->create([
         'customer_id'              => 1,
-        'department_id'            => 1,
         'subject'                  => 'Revoked Verification Ticket',
         'purchase_verification_id' => $verificationId,
       ]);

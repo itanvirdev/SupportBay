@@ -42,7 +42,6 @@ final class ActivityFlowTest extends FlowTest {
 
     $ticketId = $ticketService->create([
       'customer_id'   => 1,
-      'department_id' => 1,
       'subject'       => 'Activity Flow Test',
     ]);
 

@@ -24,8 +24,8 @@ async function loadTickets(query: TicketQueryParams): Promise<TicketPage> {
   };
 }
 
-async function loadSavedReplies(departmentId?: number|null): Promise<SavedReply[]> {
-  return (await adminGet<SavedReply[]>(`saved-replies?orderby=usage&department_id=${departmentId??0}`)).data;
+async function loadSavedReplies(): Promise<SavedReply[]> {
+  return (await adminGet<SavedReply[]>('saved-replies?orderby=usage')).data;
 }
 
 async function trackSavedReply(id: number): Promise<void> {

@@ -34,7 +34,6 @@ final class TicketFlowTest extends FlowTest {
 
     $ticketId = $ticketService->create([
       'customer_id'   => 1,
-      'department_id' => 1,
       'subject'       => 'Ticket Flow Test',
     ]);
 
@@ -70,12 +69,6 @@ final class TicketFlowTest extends FlowTest {
       1,
       $ticket->customerId(),
       'Customer assigned.'
-    );
-
-    Assert::equals(
-      1,
-      $ticket->departmentId(),
-      'Department assigned.'
     );
 
     Assert::equals(

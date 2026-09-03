@@ -49,7 +49,6 @@ final class Activator {
   public static function defaultSettings(): array {
     return [
       'ticket_reopen_days' => 30,
-      'default_department' => 'support',
       'file_upload_enabled' => true,
       'file_upload_max_size_mb' => 20,
       'file_upload_allowed_groups' => ['photos'],

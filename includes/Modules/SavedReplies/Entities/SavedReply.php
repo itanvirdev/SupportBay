@@ -13,7 +13,6 @@ final class SavedReply extends Entity {
     private readonly string $title,
     private readonly string $content,
     private readonly ?string $category,
-    private readonly ?int $departmentId,
     private readonly SavedReplyStatus $status,
     private readonly int $createdBy,
     private readonly int $usageCount,
@@ -25,7 +24,7 @@ final class SavedReply extends Entity {
   }
 
   public function toArray(): array {
-    return ['id' => $this->id, 'title' => $this->title, 'content' => $this->content, 'category' => $this->category, 'department_id' => $this->departmentId,
+    return ['id' => $this->id, 'title' => $this->title, 'content' => $this->content, 'category' => $this->category,
       'status' => $this->status->value, 'created_by' => $this->createdBy,
       'usage_count' => $this->usageCount, 'last_used_at' => $this->lastUsedAt,
       'last_used_by' => $this->lastUsedBy,
@@ -36,7 +35,6 @@ final class SavedReply extends Entity {
   public function title(): string { return $this->title; }
   public function content(): string { return $this->content; }
   public function category(): ?string { return $this->category; }
-  public function departmentId(): ?int { return $this->departmentId; }
   public function status(): SavedReplyStatus { return $this->status; }
   public function createdBy(): int { return $this->createdBy; }
   public function usageCount(): int { return $this->usageCount; }

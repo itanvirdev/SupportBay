@@ -18,7 +18,7 @@ final class SavedReplyService {
       ['key' => 'ticket_id', 'label' => 'Ticket ID'], ['key' => 'track_id', 'label' => 'Ticket track ID'],
       ['key' => 'ticket_subject', 'label' => 'Ticket subject'], ['key' => 'ticket_priority', 'label' => 'Ticket priority'],
       ['key' => 'ticket_status', 'label' => 'Ticket status'], ['key' => 'agent_name', 'label' => 'Assigned agent'],
-      ['key' => 'department_name', 'label' => 'Department'], ['key' => 'product_name', 'label' => 'Product name'],
+      ['key' => 'category_name', 'label' => 'Category'], ['key' => 'product_name', 'label' => 'Product name'],
       ['key' => 'license_type', 'label' => 'License type'], ['key' => 'support_expires_at', 'label' => 'Support expiry'],
     ];
   }
@@ -43,13 +43,13 @@ final class SavedReplyService {
   public function find(int $id): ?SavedReply { return $this->repository->find($id); }
 
   /** @return SavedReply[] */
-  public function search(string $term = '', ?SavedReplyStatus $status = null, string $orderBy = 'title', ?string $category = null, ?int $departmentId = null, bool $scopeDepartment = false): array {
+  public function search(string $term = '', ?SavedReplyStatus $status = null, string $orderBy = 'title', ?string $category = null): array {
     $orderBy = sanitize_key($orderBy);
     if (! in_array($orderBy, ['title', 'usage', 'recent'], true)) {
       throw new InvalidArgumentException('Saved reply sort is invalid.');
     }
     $category = $category !== null ? sanitize_text_field($category) : null;
-    return $this->repository->search(sanitize_text_field($term), $status, $orderBy, $category !== '' ? $category : null, $departmentId && $departmentId > 0 ? $departmentId : null, $scopeDepartment);
+    return $this->repository->search(sanitize_text_field($term), $status, $orderBy, $category !== '' ? $category : null);
   }
 
   public function delete(int $id): bool {
@@ -83,10 +83,6 @@ final class SavedReplyService {
       $category = sanitize_text_field((string) ($data['category'] ?? ''));
       if (strlen($category) > 100) { throw new InvalidArgumentException('Saved reply category is too long.'); }
       $normalized['category'] = $category !== '' ? $category : null;
-    }
-    if ($creating || array_key_exists('department_id', $data)) {
-      $departmentId = absint($data['department_id'] ?? 0);
-      $normalized['department_id'] = $departmentId > 0 ? $departmentId : null;
     }
     return $normalized;
   }

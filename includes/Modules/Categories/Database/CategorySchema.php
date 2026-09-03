@@ -19,7 +19,6 @@ final class CategorySchema {
       name VARCHAR(100) NOT NULL,
       slug VARCHAR(120) NOT NULL,
       description TEXT NULL,
-      department_id BIGINT UNSIGNED NULL,
       status VARCHAR(20) NOT NULL DEFAULT '" . CategoryStatus::ACTIVE->value . "',
       color VARCHAR(20) NULL,
       sort_order INT UNSIGNED NOT NULL DEFAULT 0,
@@ -27,7 +26,6 @@ final class CategorySchema {
       updated_at DATETIME NOT NULL,
       PRIMARY KEY  (id),
       UNIQUE KEY slug (slug),
-      KEY department_id (department_id),
       KEY status (status),
       KEY sort_order (sort_order)
     ) {$wpdb->get_charset_collate()};";

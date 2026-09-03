@@ -12,7 +12,6 @@ export interface AdminConfig {
   canManageTags: boolean;
   canManageCustomFields: boolean;
   canManageRoles: boolean;
-  canManageDepartments: boolean;
   ticketListAutoRefreshEnabled: boolean;
   ticketListAutoRefreshInterval: number;
   attachmentPopupPreviewEnabled: boolean;

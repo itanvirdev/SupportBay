@@ -21,10 +21,11 @@ final class TagRepository extends Repository {
       'name' => $data['name'],
       'slug' => $data['slug'],
       'color' => $data['color'],
+      'show_on' => $data['show_on'],
       'status' => $data['status'],
       'created_at' => $this->now(),
       'updated_at' => $this->now(),
-    ], ['%s', '%s', '%s', '%s', '%s', '%s']);
+    ], ['%s', '%s', '%s', '%s', '%s', '%s', '%s']);
   }
 
   public function find(int $id): ?Tag { return $this->findById($id); }
@@ -45,6 +46,10 @@ final class TagRepository extends Repository {
   }
 
   public function delete(int $id): bool { return $this->deleteById($id); }
+
+  public function deleteAssignmentsForTag(int $tagId): bool {
+    return $this->db->delete(TicketTagSchema::tableName(), ['tag_id' => $tagId], ['%d']) !== false;
+  }
 
   public function attach(int $ticketId, int $tagId, ?int $actorId): bool {
     $result = $this->db->query($this->db->prepare(
@@ -121,6 +126,7 @@ final class TagRepository extends Repository {
       name: (string) $row['name'],
       slug: (string) $row['slug'],
       color: $row['color'] !== null ? (string) $row['color'] : null,
+      showOn: (string) ($row['show_on'] ?? 'both'),
       status: TagStatus::from($row['status']),
       createdAt: (string) $row['created_at'],
       updatedAt: (string) $row['updated_at'],

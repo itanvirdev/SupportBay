@@ -14,7 +14,6 @@ use SupportBay\Modules\Customers\Enums\CustomerState;
 use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\CustomFields\Services\CustomFieldService;
-use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Messages\Services\MessageService;
 use SupportBay\Modules\Tickets\Http\Controllers\TicketController;
 use SupportBay\Modules\Tickets\Services\TicketService;
@@ -34,13 +33,12 @@ final class ApiWebhookFlowTest extends FlowTest {
     /** @var TicketService $tickets */
     /** @var MessageService $messages */
     /** @var CustomerService $customers */
-    /** @var DepartmentService $departments */
     /** @var CategoryService $categories */
     /** @var ProviderService $providers */
     /** @var VerificationService $verifications */
     /** @var IntegrationManager $integrations */
     /** @var CustomFieldService $customFields */
-    [$controller, $tickets, $messages, $customers, $departments, $categories, $providers, $verifications, $integrations, $customFields] = $services;
+    [$controller, $tickets, $messages, $customers, $categories, $providers, $verifications, $integrations, $customFields] = $services;
 
     echo "🚀 Starting SupportBay API and Webhook Flow Test...\n\n";
 
@@ -123,7 +121,7 @@ final class ApiWebhookFlowTest extends FlowTest {
       'Paginated Customer Directory route is registered.'
     );
 
-    foreach (['customers', 'departments', 'categories', 'providers', 'verifications'] as $resource) {
+    foreach (['customers', 'categories', 'providers', 'verifications'] as $resource) {
       Assert::true(
         isset($routes['/sbay/v1/' . $resource]),
         sprintf('Administrator %s route is registered.', $resource)
@@ -167,27 +165,17 @@ final class ApiWebhookFlowTest extends FlowTest {
       'state'   => CustomerState::REGISTERED->value,
       'source'  => CustomerSource::REGISTRATION->value,
     ]);
-    $departmentId = $departments->create([
-      'name' => 'API Test ' . $suffix,
-      'slug' => 'api-test-' . $suffix,
-    ]);
-    $otherDepartmentId = $departments->create([
-      'name' => 'API Other ' . $suffix,
-      'slug' => 'api-other-' . $suffix,
-    ]);
     $category = $categories->create([
-      'name'          => 'API Category ' . $suffix,
-      'department_id' => $departmentId,
+      'name' => 'API Category ' . $suffix,
     ]);
     $customField = $customFields->create([
       'name' => 'API Environment ' . $suffix,
       'type' => 'select',
       'options' => ['Production', 'Staging'],
-      'department_id' => $departmentId,
+      'category_ids' => [$category->id()],
     ]);
     $ticketId = $tickets->create([
       'customer_id'   => $customerId,
-      'department_id' => $departmentId,
       'category_id'   => $category->id(),
       'subject'       => 'API and webhook test',
     ]);
@@ -229,12 +217,11 @@ final class ApiWebhookFlowTest extends FlowTest {
     Assert::true(
       $contextResponse->get_status() === 200
       && $context['customer']['email'] !== ''
-      && $context['information']['department'] !== null
       && $context['information']['category'] !== null
       && in_array($category->id(), array_column($context['options']['categories'], 'id'), true)
       && in_array($customField->id(), array_column($context['custom_fields'], 'id'), true)
       && is_array($context['activities']),
-      'Agent ticket context composes safe customer, department, custom-field, and activity data.'
+      'Agent ticket context composes safe customer, category, custom-field, and activity data.'
     );
 
     $customFieldChange = new WP_REST_Request(
@@ -332,32 +319,8 @@ final class ApiWebhookFlowTest extends FlowTest {
     Assert::equals(
       200,
       rest_do_request($categoryChange)->get_status(),
-      'Staff can select a category applicable to the ticket department.'
+      'Staff can select an active category.'
     );
-
-    $departmentChange = new WP_REST_Request(
-      'POST',
-      '/sbay/v1/admin/tickets/' . $ticketId . '/actions'
-    );
-    $departmentChange->set_param('action', 'department');
-    $departmentChange->set_param('value', $otherDepartmentId);
-    Assert::true(
-      rest_do_request($departmentChange)->get_status() === 200
-      && $tickets->find($ticketId)?->categoryId() === null,
-      'Moving a ticket clears a category that is invalid for the new department.'
-    );
-
-    $categoryChange->set_param('value', $category->id());
-    Assert::equals(
-      422,
-      rest_do_request($categoryChange)->get_status(),
-      'Staff cannot select a category scoped to another department.'
-    );
-
-    $departmentChange->set_param('value', $departmentId);
-    rest_do_request($departmentChange);
-    $categoryChange->set_param('value', $category->id());
-    rest_do_request($categoryChange);
 
     $categoryFilter = new WP_REST_Request('GET', '/sbay/v1/tickets');
     $categoryFilter->set_param('category_id', $category->id());
@@ -397,8 +360,7 @@ final class ApiWebhookFlowTest extends FlowTest {
       && $filteredResponse['data'][0]['id'] === $ticketId
       && $filteredResponse['data'][0]['reply_count'] >= 1
       && $filteredResponse['data'][0]['needs_reply'] === true
-      && $filteredResponse['data'][0]['customer_name'] !== null
-      && $filteredResponse['data'][0]['department_name'] !== null,
+      && $filteredResponse['data'][0]['customer_name'] !== null,
       'Ticket workspace API returns search-filtered queue intelligence.'
     );
 
@@ -545,10 +507,6 @@ final class ApiWebhookFlowTest extends FlowTest {
     $customerState->set_param('state', CustomerState::SUSPENDED->value);
     Assert::equals(200, rest_do_request($customerState)->get_status(), 'Administrator can suspend customers.');
 
-    $departmentUpdate = new WP_REST_Request('PUT', '/sbay/v1/departments/' . $departmentId);
-    $departmentUpdate->set_param('status', 'inactive');
-    Assert::equals(200, rest_do_request($departmentUpdate)->get_status(), 'Administrator can update departments.');
-
     Assert::equals(
       200,
       rest_do_request(new WP_REST_Request('POST', '/sbay/v1/providers/' . $providerId . '/enable'))->get_status(),
@@ -592,7 +550,6 @@ final class ApiWebhookFlowTest extends FlowTest {
 
     $otherTicketId = $tickets->create([
       'customer_id' => $customerId,
-      'department_id' => $otherDepartmentId,
       'subject' => 'API bulk category scope test',
     ]);
     $categoryChange->set_param('value', '');
@@ -608,11 +565,11 @@ final class ApiWebhookFlowTest extends FlowTest {
     $bulkCategoryResponse = rest_do_request($bulkCategory);
     Assert::true(
       $bulkCategoryResponse->get_status() === 200
-      && $bulkCategoryResponse->get_data()['meta']['updated'] === 1
-      && $bulkCategoryResponse->get_data()['meta']['failed'] === 1
+      && $bulkCategoryResponse->get_data()['meta']['updated'] === 2
+      && $bulkCategoryResponse->get_data()['meta']['failed'] === 0
       && $tickets->find($ticketId)?->categoryId() === $category->id()
-      && $tickets->find($otherTicketId)?->categoryId() === null,
-      'Bulk classification updates compatible tickets and reports scoped failures.'
+      && $tickets->find($otherTicketId)?->categoryId() === $category->id(),
+      'Bulk classification updates all selected tickets with the global category.'
     );
 
     $bulkCustomField = new WP_REST_Request('POST', '/sbay/v1/admin/tickets/bulk-actions');
@@ -625,11 +582,11 @@ final class ApiWebhookFlowTest extends FlowTest {
     $bulkCustomFieldResponse = rest_do_request($bulkCustomField);
     Assert::true(
       $bulkCustomFieldResponse->get_status() === 200
-      && $bulkCustomFieldResponse->get_data()['meta']['updated'] === 1
-      && $bulkCustomFieldResponse->get_data()['meta']['failed'] === 1
+      && $bulkCustomFieldResponse->get_data()['meta']['updated'] === 2
+      && $bulkCustomFieldResponse->get_data()['meta']['failed'] === 0
       && $customFields->valuesForTicket($ticketId)[0]->value() === 'Staging'
-      && $customFields->valuesForTicket($otherTicketId) === [],
-      'Bulk custom-field updates preserve field validation and report cross-department failures.',
+      && $customFields->valuesForTicket($otherTicketId)[0]->value() === 'Staging',
+      'Bulk custom-field updates preserve category-aware validation.',
     );
 
     $bulkCustomField->set_param('ticket_ids', [$ticketId]);
@@ -660,7 +617,6 @@ final class ApiWebhookFlowTest extends FlowTest {
 
     $targetTicketId = $tickets->create([
       'customer_id' => $customerId,
-      'department_id' => $departmentId,
       'subject' => 'API merge target',
     ]);
     $targetMessage = $messages->create([
@@ -695,8 +651,6 @@ final class ApiWebhookFlowTest extends FlowTest {
     $tickets->delete($otherTicketId);
     $categories->delete($category->id());
     $customFields->delete($customField->id());
-    $departments->delete($departmentId);
-    $departments->delete($otherDepartmentId);
     $customers->deleteWithUser($customerId);
   }
 }

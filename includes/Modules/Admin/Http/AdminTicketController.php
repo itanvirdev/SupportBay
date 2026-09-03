@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SupportBay\Modules\Admin\Http;
 
+use InvalidArgumentException;
 use RuntimeException;
 use SupportBay\Core\Authorization\CapabilityManager;
 use SupportBay\Core\Http\RestResponse;
@@ -15,7 +16,6 @@ use SupportBay\Modules\Customers\Services\CustomerService;
 use SupportBay\Modules\Categories\Services\CategoryService;
 use SupportBay\Modules\CustomFields\Services\CustomFieldService;
 use SupportBay\Modules\Tags\Services\TagService;
-use SupportBay\Modules\Departments\Services\DepartmentService;
 use SupportBay\Modules\Tickets\Services\TicketService;
 use SupportBay\Modules\Tickets\Services\TicketMergeService;
 use SupportBay\Modules\Tickets\Services\TicketAccessPolicy;
@@ -33,7 +33,6 @@ final class AdminTicketController {
   public function __construct(
     private readonly TicketService $tickets,
     private readonly CustomerService $customers,
-    private readonly DepartmentService $departments,
     private readonly CategoryService $categories,
     private readonly CustomFieldService $customFields,
     private readonly TagService $tags,
@@ -111,7 +110,16 @@ final class AdminTicketController {
       $user = get_user_by('id', $customer->userId());
       return ['id' => $customer->id(), 'name' => $user?->display_name ?? 'Customer', 'email' => $user?->user_email ?? ''];
     }, $this->customers->all());
-    return RestResponse::success(['customers' => $items, 'departments' => array_map(static fn($department): array => ['id'=>$department->id(),'name'=>$department->name()], $this->departments->active())], 'Ticket creation options retrieved.');
+    return RestResponse::success([
+      'customers' => $items,
+      'categories' => array_map(static fn($category): array => ['id'=>$category->id(),'name'=>$category->name()], $this->categories->active()),
+      'tags' => array_map(static fn($tag): array => $tag->toArray(), $this->tags->active()),
+      'custom_fields' => array_map(static fn($field): array => [
+        'id' => $field->id(), 'name' => $field->name(), 'type' => $field->type()->value,
+        'placeholder' => $field->placeholder(), 'options' => $field->options(),
+        'is_required' => $field->isRequired(), 'category_ids' => $field->categoryIds(),
+      ], $this->customFields->ticketFields()),
+    ], 'Ticket creation options retrieved.');
   }
 
   public function createForCustomer(WP_REST_Request $request): WP_REST_Response {
@@ -121,13 +129,20 @@ final class AdminTicketController {
       $subject = sanitize_text_field(wp_unslash((string) $request->get_param('subject')));
       $content = RichTextSanitizer::sanitize(wp_unslash((string) $request->get_param('content')));
       if ($subject === '' || $content === '') throw new RuntimeException('Subject and message are required.');
-      $department = $this->departments->find(absint($request->get_param('department_id'))) ?? $this->departments->default();
-      if (! $department->isActive()) throw new RuntimeException('Please select an active department.');
-      $ticketId = $this->tickets->create(['customer_id'=>$customer->id(),'created_by_id'=>get_current_user_id(),'created_by_type'=>AuthorType::AGENT->value,'department_id'=>$department->id(),'subject'=>$subject,'priority'=>TicketPriority::tryFrom(sanitize_key((string)$request->get_param('priority'))) ?->value ?? TicketPriority::default()->value]);
+      $categoryId = absint($request->get_param('category_id')) ?: null;
+      if ($categoryId === null) throw new InvalidArgumentException('Please select an available category.');
+      $this->categories->validateSelection($categoryId);
+      $values = $this->customFields->validateStaffValues($categoryId, (array) ($request->get_param('custom_fields') ?? []));
+      $selectedTags = $this->tags->validateSelection((array) ($request->get_param('tag_ids') ?? []));
+      $ticketId = $this->tickets->create(['customer_id'=>$customer->id(),'created_by_id'=>get_current_user_id(),'created_by_type'=>AuthorType::AGENT->value,'category_id'=>$categoryId,'subject'=>$subject,'priority'=>TicketPriority::tryFrom(sanitize_key((string)$request->get_param('priority'))) ?->value ?? TicketPriority::default()->value]);
       $this->messages->create(['ticket_id'=>$ticketId,'author_id'=>get_current_user_id(),'author_type'=>AuthorType::AGENT->value,'content'=>$content]);
+      foreach ($values as $fieldId => $value) {
+        $this->customFields->setValue($ticketId, $fieldId, $value, get_current_user_id(), AuthorType::AGENT);
+      }
+      foreach ($selectedTags as $tag) { $this->tags->attach($ticketId, $tag->id(), get_current_user_id()); }
       $ticket = $this->tickets->find($ticketId);
       return RestResponse::success($ticket?->toArray() ?? [], 'Ticket created for customer.', [], 201);
-    } catch (RuntimeException $exception) { return RestResponse::error($exception->getMessage(), 'STAFF_TICKET_CREATION_FAILED', [], 422); }
+    } catch (RuntimeException|InvalidArgumentException $exception) { return RestResponse::error($exception->getMessage(), 'STAFF_TICKET_CREATION_FAILED', [], 422); }
   }
 
   public function permissions(?WP_REST_Request $request = null): bool|WP_Error {
@@ -190,7 +205,6 @@ final class AdminTicketController {
       }
     }
 
-    $department = $this->departments->find($ticket->departmentId());
     $category = $ticket->categoryId() !== null
       ? $this->categories->find($ticket->categoryId())
       : null;
@@ -207,7 +221,6 @@ final class AdminTicketController {
       'customer' => $customer,
       'information' => [
         'agent' => $agent ? $agent->display_name : null,
-        'department' => $department?->name(),
         'category' => $category?->name(),
         'priority' => $ticket->priority()->value,
         'status' => $ticket->status()->value,
@@ -248,14 +261,12 @@ final class AdminTicketController {
         $this->customFields->staffFieldsForTicket($ticket->id()),
       ),
       'options' => [
-        'departments' => array_map(static fn($item): array => ['id' => $item->id(), 'name' => $item->name()], $this->departments->active()),
         'categories' => array_map(
           static fn($item): array => [
             'id' => $item->id(),
             'name' => $item->name(),
-            'department_id' => $item->departmentId(),
           ],
-          $this->categories->applicable($ticket->departmentId()),
+          $this->categories->active(),
         ),
         'tags' => array_map(static fn($tag): array => $tag->toArray(), $this->tags->active()),
         'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['capability' => CapabilityManager::VIEW_TICKETS])),
@@ -265,11 +276,9 @@ final class AdminTicketController {
 
   public function options(): WP_REST_Response {
     return RestResponse::success([
-      'departments' => array_map(static fn($item): array => ['id' => $item->id(), 'name' => $item->name()], $this->departments->active()),
       'categories' => array_map(static fn($item): array => [
         'id' => $item->id(),
         'name' => $item->name(),
-        'department_id' => $item->departmentId(),
       ], $this->categories->active()),
       'tags' => array_map(static fn($tag): array => $tag->toArray(), $this->tags->active()),
       'custom_fields' => array_map(static fn($field): array => [
@@ -277,8 +286,8 @@ final class AdminTicketController {
         'name' => $field->name(),
         'type' => $field->type()->value,
         'options' => $field->options(),
-        'department_id' => $field->departmentId(),
-      ], $this->customFields->active()),
+        'category_ids' => $field->categoryIds(),
+      ], $this->customFields->ticketFields()),
       'agents' => array_map(static fn($user): array => ['id' => $user->ID, 'name' => $user->display_name], get_users(['capability' => CapabilityManager::VIEW_TICKETS])),
     ], 'Ticket queue options retrieved.');
   }
@@ -292,7 +301,7 @@ final class AdminTicketController {
     $action = sanitize_key((string) $request->get_param('action'));
     $value = $request->get_param('value');
     $capability = match ($action) {
-      'assignment' => 'sbay_assign_ticket', 'department' => 'sbay_move_ticket_department',
+      'assignment' => 'sbay_assign_ticket',
       'category' => CapabilityManager::CHANGE_TICKET_CATEGORY,
       'tag_add', 'tag_remove' => CapabilityManager::CHANGE_TICKET_TAGS,
       'custom_field' => CapabilityManager::CHANGE_TICKET_CUSTOM_FIELDS,
@@ -306,7 +315,6 @@ final class AdminTicketController {
     try {
       $ticket = match ($action) {
         'assignment' => $this->tickets->changeAssignment($id, absint($value) ?: null, get_current_user_id()),
-        'department' => $this->tickets->changeDepartment($id, absint($value), get_current_user_id()),
         'category' => $this->tickets->changeCategory($id, absint($value) ?: null, get_current_user_id()),
         'tag_add' => $this->changeTag($id, absint($value), true),
         'tag_remove' => $this->changeTag($id, absint($value), false),
@@ -333,7 +341,6 @@ final class AdminTicketController {
 
     $capability = match ($action) {
       TicketBulkAction::ASSIGNMENT => 'sbay_reassign_ticket',
-      TicketBulkAction::DEPARTMENT => 'sbay_move_ticket_department',
       TicketBulkAction::CATEGORY => CapabilityManager::CHANGE_TICKET_CATEGORY,
       TicketBulkAction::TAG_ADD, TicketBulkAction::TAG_REMOVE => CapabilityManager::CHANGE_TICKET_TAGS,
       TicketBulkAction::CUSTOM_FIELD => CapabilityManager::CHANGE_TICKET_CUSTOM_FIELDS,

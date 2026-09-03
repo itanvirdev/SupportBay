@@ -56,13 +56,46 @@ final class TagService {
   /** @return Tag[] */
   public function active(): array { return $this->repository->active(); }
 
+  /** @return Tag[] */
+  public function activeForCustomers(): array {
+    return array_values(array_filter(
+      $this->active(),
+      static fn(Tag $tag): bool => $tag->isCustomerVisible(),
+    ));
+  }
+
+  /** @param mixed[] $values @return Tag[] */
+  public function validateSelection(array $values, bool $customerOnly = false): array {
+    $result = [];
+    foreach (array_values(array_unique(array_filter(array_map('absint', $values)))) as $id) {
+      $tag = $this->find($id);
+      if (! $tag || ! $tag->isActive() || ($customerOnly && ! $tag->isCustomerVisible())) {
+        throw new InvalidArgumentException('Please select available tags.');
+      }
+      $result[] = $tag;
+    }
+    return $result;
+  }
+
+  /** @param array<int, array<string, mixed>|string> $items @return Tag[] */
+  public function bulkUpsert(array $items): array {
+    $result = [];
+    foreach ($items as $item) {
+      $data = is_string($item) ? ['name' => $item] : $item;
+      $name = sanitize_text_field((string) ($data['name'] ?? ''));
+      if ($name === '') { continue; }
+      $slug = sanitize_title($name);
+      $existing = $this->repository->findBySlug($slug);
+      $result[] = $existing
+        ? $this->update($existing->id(), [...$data, 'name' => $name, 'slug' => $slug])
+        : $this->create([...$data, 'name' => $name, 'slug' => $slug]);
+    }
+    return array_values(array_filter($result));
+  }
+
   public function delete(int $id): bool {
     if (! $this->repository->find($id)) { return false; }
-    if ($this->repository->assignmentCount($id) > 0) {
-      throw new InvalidArgumentException(
-        'Tags used by tickets must be deactivated instead of deleted.'
-      );
-    }
+    $this->repository->deleteAssignmentsForTag($id);
     return $this->repository->delete($id);
   }
 
@@ -112,8 +145,9 @@ final class TagService {
     if ($creating || array_key_exists('name', $data)) {
       $name = sanitize_text_field((string) ($data['name'] ?? ''));
       if ($name === '') { throw new InvalidArgumentException('Tag name is required.'); }
+      if (strlen($name) > 150) { throw new InvalidArgumentException('Tag name cannot exceed 150 characters.'); }
       $result['name'] = $name;
-      if ($creating && ! isset($data['slug'])) { $data['slug'] = $name; }
+      $data['slug'] = $name;
     }
     if ($creating || array_key_exists('slug', $data)) {
       $slug = sanitize_title((string) ($data['slug'] ?? ''));
@@ -122,6 +156,13 @@ final class TagService {
     }
     if ($creating || array_key_exists('color', $data)) {
       $result['color'] = sanitize_hex_color((string) ($data['color'] ?? '')) ?: null;
+    }
+    if ($creating || array_key_exists('show_on', $data)) {
+      $showOn = sanitize_key((string) ($data['show_on'] ?? 'both'));
+      if (! in_array($showOn, ['both', 'admin_only'], true)) {
+        throw new InvalidArgumentException('Tag visibility is invalid.');
+      }
+      $result['show_on'] = $showOn;
     }
     if ($creating || array_key_exists('status', $data)) {
       $status = TagStatus::tryFrom(sanitize_key(

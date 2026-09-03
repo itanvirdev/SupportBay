@@ -2,7 +2,6 @@ import { apiDownload, apiGet, apiGetResponse, apiPost, apiUpload } from './clien
 import type {
   CreateTicketInput,
   CreatedPortalTicket,
-  PortalDepartment,
   PortalCategory,
   PortalCustomField,
   PortalAttachment,
@@ -14,6 +13,7 @@ import type {
   PortalVerification,
   PortalPurchaseProvider,
   PortalProviderConnection,
+  PortalTag,
   UpdateProfileInput,
 } from './types';
 
@@ -42,15 +42,11 @@ export const portalApi = {
     ),
   downloadAttachment: (attachmentId: number) =>
     apiDownload(`portal/attachments/${attachmentId}/download`),
-  departments: () => apiGet<PortalDepartment[]>('portal/departments'),
-  categories: (departmentId: number) =>
-    apiGet<PortalCategory[]>(
-      `portal/categories?department_id=${departmentId}`,
-    ),
-  customFields: (departmentId: number) =>
-    apiGet<PortalCustomField[]>(
-      `portal/custom-fields?department_id=${departmentId}`,
-    ),
+  categories: () => apiGet<PortalCategory[]>('portal/categories'),
+  tags: () => apiGet<PortalTag[]>('portal/tags'),
+  customFields: (categoryId: number | null) => apiGet<PortalCustomField[]>(
+    `portal/custom-fields${categoryId ? `?category_id=${categoryId}` : ''}`,
+  ),
   verifications: () =>
     apiGet<PortalVerification[]>('portal/verifications'),
   purchaseProviders: () =>

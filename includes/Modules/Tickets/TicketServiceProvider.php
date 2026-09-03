@@ -19,7 +19,6 @@ use SupportBay\Modules\Activities\Listeners\LogTicketResolvedActivity;
 use SupportBay\Modules\Tickets\Services\TicketMetricService;
 use SupportBay\Modules\Tickets\Http\Controllers\TicketMetricController;
 use SupportBay\Common\Utilities\CsvExporter;
-use SupportBay\Modules\Tickets\Repositories\TicketSlaBreachRepository;
 use SupportBay\Modules\Tickets\Services\TicketTrackIdService;
 use SupportBay\Modules\Tickets\Services\TicketLifecycleWorker;
 use SupportBay\Modules\Tickets\Services\TicketAccessPolicy;
@@ -49,8 +48,6 @@ final class TicketServiceProvider extends ServiceProvider {
    */
   public function register(Container $container): void {
     $container->singleton(TicketRepository::class);
-    // Retained only so permanent ticket deletion can clean legacy/future SLA rows.
-    $container->singleton(TicketSlaBreachRepository::class);
     $container->singleton(CsvExporter::class);
 
     $container->singleton(TicketService::class);

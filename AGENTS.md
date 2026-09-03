@@ -221,7 +221,7 @@ Attachments
 
 Customers
 
-Departments
+Categories
 
 Auth
 
@@ -673,7 +673,7 @@ Tickets
 
 Messages
 
-Departments
+Categories
 
 Activities
 
@@ -843,7 +843,7 @@ AttachmentSchema
 
 CustomerSchema
 
-DepartmentSchema
+CategorySchema
 
 ProviderSchema
 
@@ -1648,7 +1648,7 @@ TicketFlowTest
 
 MessageFlowTest
 
-DepartmentFlowTest
+CategoryFlowTest
 
 ActivityFlowTest
 
@@ -1719,7 +1719,7 @@ Completed
 
 ✅ Attachments
 
-✅ Departments
+✅ Categories
 
 ✅ Customers
 
@@ -2341,7 +2341,7 @@ Completed
 
 ✔ Messages
 
-✔ Departments
+✔ Categories
 
 ✔ Activities
 

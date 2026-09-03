@@ -18,10 +18,6 @@ final class Deactivator {
    * Clear scheduled cron jobs (future use)
    */
   private static function clearScheduledTasks(): void {
-    wp_clear_scheduled_hook('sbay_notification_dispatch');
-    wp_clear_scheduled_hook('sbay_notification_retry');
-    wp_clear_scheduled_hook('sbay_notification_cleanup');
-    wp_clear_scheduled_hook('sbay_ticket_sla_breach_detection');
     wp_clear_scheduled_hook('sbay_ticket_lifecycle_cleanup');
   }
 

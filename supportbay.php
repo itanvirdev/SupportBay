@@ -148,12 +148,6 @@ if (
         );
         break;
 
-      case 'department':
-        \SupportBay\Dev\DepartmentFlowTest::run(
-          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
-        );
-        break;
-
       case 'saved-reply':
         \SupportBay\Dev\SavedReplyFlowTest::run(
           $container->get(\SupportBay\Modules\SavedReplies\Services\SavedReplyService::class),
@@ -323,9 +317,6 @@ if (
             \SupportBay\Modules\Messages\Services\MessageService::class
           ),
           $container->get(
-            \SupportBay\Modules\Departments\Services\DepartmentService::class
-          ),
-          $container->get(
             \SupportBay\Modules\Categories\Services\CategoryService::class
           ),
           $container->get(
@@ -353,27 +344,12 @@ if (
 
       case 'notification':
         \SupportBay\Dev\NotificationFlowTest::run(
-          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
-          $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
-          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
-          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
-          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
-          $container->get(\SupportBay\Modules\AssignRules\Services\AssignRuleService::class),
         );
         break;
 
       case 'migration':
         \SupportBay\Dev\DatabaseMigrationFlowTest::run();
-        break;
-
-      case 'notification-retry':
-        \SupportBay\Dev\NotificationRetryFlowTest::run(
-          $container->get(\SupportBay\Modules\Notifications\Services\NotificationRetryWorker::class),
-          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
-        );
         break;
 
       case 'notification-template':
@@ -385,7 +361,6 @@ if (
       case 'notification-template-api':
         \SupportBay\Dev\NotificationTemplateApiFlowTest::run(
           $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationTemplateController::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
         );
         break;
 
@@ -398,13 +373,6 @@ if (
       case 'notification-preference-api':
         \SupportBay\Dev\NotificationPreferenceApiFlowTest::run(
           $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationPreferenceController::class),
-        );
-        break;
-
-      case 'notification-retention':
-        \SupportBay\Dev\NotificationRetentionFlowTest::run(
-          $container->get(\SupportBay\Modules\Notifications\Services\NotificationRetentionService::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
         );
         break;
 
@@ -427,7 +395,6 @@ if (
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
           $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
-          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
           $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
@@ -463,10 +430,6 @@ if (
           $container->make(\SupportBay\Modules\Messages\Services\MessageService::class),
           $container->make(\SupportBay\Modules\Attachments\Services\AttachmentService::class),
           $container->make(\SupportBay\Modules\Activities\Services\ActivityService::class),
-        );
-
-        \SupportBay\Dev\DepartmentFlowTest::run(
-          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
         );
 
         \SupportBay\Dev\SavedReplyFlowTest::run(
@@ -601,9 +564,6 @@ if (
             \SupportBay\Modules\Messages\Services\MessageService::class
           ),
           $container->get(
-            \SupportBay\Modules\Departments\Services\DepartmentService::class
-          ),
-          $container->get(
             \SupportBay\Modules\Categories\Services\CategoryService::class
           ),
           $container->get(
@@ -627,23 +587,10 @@ if (
         );
 
         \SupportBay\Dev\NotificationFlowTest::run(
-          $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
-          $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
-          $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
-          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
-          $container->get(\SupportBay\Modules\Activities\Services\ActivityService::class),
-          $container->get(\SupportBay\Modules\AssignRules\Services\AssignRuleService::class),
         );
 
         \SupportBay\Dev\DatabaseMigrationFlowTest::run();
-
-        \SupportBay\Dev\NotificationRetryFlowTest::run(
-          $container->get(\SupportBay\Modules\Notifications\Services\NotificationRetryWorker::class),
-          $container->get(\SupportBay\Modules\Notifications\Services\NotificationService::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
-        );
 
         \SupportBay\Dev\NotificationTemplateFlowTest::run(
           $container->get(\SupportBay\Modules\Notifications\Services\NotificationTemplateService::class),
@@ -651,7 +598,6 @@ if (
 
         \SupportBay\Dev\NotificationTemplateApiFlowTest::run(
           $container->get(\SupportBay\Modules\Notifications\Http\Controllers\NotificationTemplateController::class),
-          $container->get(\SupportBay\Modules\Notifications\Repositories\NotificationLogRepository::class),
         );
 
         \SupportBay\Dev\NotificationPreferenceFlowTest::run(
@@ -678,7 +624,6 @@ if (
           $container->get(\SupportBay\Modules\Tickets\Services\TicketService::class),
           $container->get(\SupportBay\Modules\Messages\Services\MessageService::class),
           $container->get(\SupportBay\Modules\Customers\Services\CustomerService::class),
-          $container->get(\SupportBay\Modules\Departments\Services\DepartmentService::class),
           $container->get(\SupportBay\Modules\Categories\Services\CategoryService::class),
           $container->get(\SupportBay\Modules\Providers\Services\ProviderService::class),
           $container->get(\SupportBay\Modules\Verifications\Services\VerificationService::class),
@@ -706,7 +651,6 @@ if (
         echo "- message\n";
         echo "- activity\n";
         echo "- attachment\n";
-        echo "- department\n";
         echo "- customer\n";
         echo "- auth\n";
         echo "- weekend-holiday\n";
@@ -721,8 +665,6 @@ if (
         echo "- portal-react\n";
         echo "- notification\n";
         echo "- migration\n";
-        echo "- notification-api\n";
-        echo "- notification-retry\n";
         echo "- notification-template\n";
         echo "- notification-template-api\n";
         echo "- api-webhook\n";

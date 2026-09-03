@@ -26,6 +26,10 @@ final class TagController {
       'methods' => 'POST', 'callback' => [$this, 'create'],
       'permission_callback' => [$this, 'canManage'],
     ]);
+    register_rest_route('sbay/v1', '/tags/bulk', [
+      'methods' => 'POST', 'callback' => [$this, 'bulk'],
+      'permission_callback' => [$this, 'canManage'],
+    ]);
     foreach (['GET' => 'show', 'PUT' => 'update', 'DELETE' => 'delete'] as $method => $callback) {
       register_rest_route('sbay/v1', '/tags/(?P<id>\d+)', [
         'methods' => $method,
@@ -74,6 +78,19 @@ final class TagController {
       absint($request['id']),
       (array) $request->get_json_params(),
     ));
+  }
+
+  public function bulk(WP_REST_Request $request): WP_REST_Response {
+    try {
+      $tags = $this->tags->bulkUpsert((array) $request->get_param('items'));
+      return RestResponse::success(
+        array_map(static fn(Tag $tag): array => $tag->toArray(), $tags),
+        'Tags saved.',
+        ['total' => count($tags)],
+      );
+    } catch (InvalidArgumentException $exception) {
+      return RestResponse::error($exception->getMessage(), 'INVALID_TAGS', [], 422);
+    }
   }
 
   public function delete(WP_REST_Request $request): WP_REST_Response {

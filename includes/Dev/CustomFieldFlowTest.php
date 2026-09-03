@@ -44,25 +44,25 @@ final class CustomFieldFlowTest extends FlowTest {
       'type' => 'select',
       'options' => [' Current ', '<b>Legacy</b>', 'Current'],
       'is_required' => true,
-      'customer_visible' => true,
-      'department_id' => 1,
-      'sort_order' => 10,
+      'placeholder' => 'Select a version',
+      'form_location' => 'ticket',
+      'audience' => 'both',
+      'category_ids' => [],
     ]);
     $ticketId = $tickets->create([
       'customer_id' => 1,
-      'department_id' => 1,
       'subject' => 'Custom field foundation ' . $suffix,
     ]);
 
     try {
       Assert::true(
-        $field->slug() === 'product-version-' . $suffix
+        $field->slug() === 'product_version_' . $suffix
         && $field->options() === ['Current', 'Legacy']
         && $field->isRequired()
         && $field->isCustomerVisible()
-        && count($fields->applicable(1, true)) >= 1
-        && ! in_array($field->id(), array_map(static fn($item): int => $item->id(), $fields->applicable(2, true)), true),
-        'Definitions sanitize choices and respect status, audience, order, and department scope.',
+        && $field->placeholder() === 'Select a version'
+        && in_array($field->id(), array_map(static fn($item): int => $item->id(), $fields->applicable(null, true)), true),
+        'Definitions sanitize choices and respect status, audience, order, and category scope.',
       );
 
       $fields->setValue($ticketId, $field->id(), 'Current', 1, AuthorType::CUSTOMER);

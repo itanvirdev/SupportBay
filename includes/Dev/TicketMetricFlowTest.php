@@ -46,7 +46,6 @@ final class TicketMetricFlowTest extends FlowTest {
       'name' => 'Metric Category ' . strtolower(
         wp_generate_password(8, false, false)
       ),
-      'department_id' => 1,
     ]);
     $tag = $tags->create(['name' => 'Metric Tag ' . strtolower(wp_generate_password(8, false, false))]);
     $secondTag = $tags->create(['name' => 'Escalated ' . strtolower(wp_generate_password(8, false, false))]);
@@ -54,7 +53,6 @@ final class TicketMetricFlowTest extends FlowTest {
       'name' => 'Metric Environment ' . strtolower(wp_generate_password(8, false, false)),
       'type' => 'select',
       'options' => ['Production', 'Staging'],
-      'department_id' => 1,
     ]);
 
     try {
@@ -72,7 +70,6 @@ final class TicketMetricFlowTest extends FlowTest {
         $ticketIds[] = $tickets->create([
           'track_id' => strtoupper(substr(wp_generate_password(9, false, false), 0, 9)),
           'customer_id' => 1,
-          'department_id' => 1,
           'category_id' => $index < 2 ? $category->id() : null,
           'assigned_agent_id' => $agentId,
           'subject' => 'Metric flow ' . $index,
@@ -109,7 +106,6 @@ final class TicketMetricFlowTest extends FlowTest {
       $report = $metrics->report(new TicketMetricQuery(
         dateFrom: $today,
         dateTo: $today,
-        departmentId: 1,
         assignedAgentId: $agentId,
         priority: TicketPriority::NORMAL->value,
       ));
@@ -118,14 +114,12 @@ final class TicketMetricFlowTest extends FlowTest {
         && $report['summary']['responses'] === 1
         && $report['summary']['need_reply'] === 1
         && $report['summary']['closed'] === 1
-        && ! isset($report['summary']['sla'])
         && ! isset($report['summary']['response_bands']),
-        'Ticket report derives MVP volume, response, queue, and closure metrics without SLA analysis.',
+        'Ticket report derives MVP volume, response, queue, and closure metrics.',
       );
       Assert::true(
         count($report['daily']) === 1
         && $report['daily'][0]['tickets'] === 3
-        && $report['departments'][0]['tickets'] === 3
         && count($report['categories']) === 2
         && array_sum(array_column($report['categories'], 'tickets')) === 3
         && count($report['tags']) === 3
@@ -205,7 +199,7 @@ final class TicketMetricFlowTest extends FlowTest {
       Assert::true($controller->permissions() === true, 'Authorized administrators can view ticket reports.');
       Assert::true($controller->exportPermissions() === true, 'Administrators can export ticket reports.');
       $request = new WP_REST_Request('GET', '/sbay/v1/reports/tickets');
-      $request->set_query_params(['date_from' => $today, 'date_to' => $today, 'department_id' => 1, 'tag_id' => $tag->id(), 'custom_field_id' => $customField->id(), 'custom_field_value' => 'Production', 'assigned_agent_id' => $agentId]);
+      $request->set_query_params(['date_from' => $today, 'date_to' => $today, 'tag_id' => $tag->id(), 'custom_field_id' => $customField->id(), 'custom_field_value' => 'Production', 'assigned_agent_id' => $agentId]);
       $response = rest_do_request($request);
       Assert::true(
         $response->get_status() === 200

@@ -23,9 +23,9 @@ final class SecurityAuthorizationFlowTest extends FlowTest {
     $managerId=wp_create_user('sbay-sec-manager-'.$suffix,wp_generate_password(24),'manager-'.$suffix.'@example.test');
     (new \WP_User($agentId))->set_role('sbay_agent');
     (new \WP_User($managerId))->set_role('sbay_manager');
-    $ownedId=$tickets->create(['customer_id'=>1,'department_id'=>1,'subject'=>'Owned security ticket']);
-    $otherId=$tickets->create(['customer_id'=>1,'department_id'=>1,'subject'=>'Other security ticket']);
-    $unassignedId=$tickets->create(['customer_id'=>1,'department_id'=>1,'subject'=>'Unassigned security ticket']);
+    $ownedId=$tickets->create(['customer_id'=>1,'subject'=>'Owned security ticket']);
+    $otherId=$tickets->create(['customer_id'=>1,'subject'=>'Other security ticket']);
+    $unassignedId=$tickets->create(['customer_id'=>1,'subject'=>'Unassigned security ticket']);
     try {
       $tickets->changeAssignment($ownedId,$agentId,$managerId);
       $tickets->changeAssignment($otherId,$managerId,$managerId);

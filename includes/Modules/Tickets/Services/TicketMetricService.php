@@ -42,13 +42,6 @@ final class TicketMetricService {
         ], $report['daily']),
       ],
       [
-        'name' => 'Department workload',
-        'headers' => ['Department', 'Tickets', 'Responses', 'Need reply', 'Resolved or closed'],
-        'rows' => array_map(static fn(array $row): array => [
-          $row['department'], $row['tickets'], $row['responses'], $row['need_reply'], $row['closed'],
-        ], $report['departments']),
-      ],
-      [
         'name' => 'Agent workload',
         'headers' => ['Agent', 'Tickets', 'Responses', 'Need reply', 'Resolved or closed'],
         'rows' => array_map(static fn(array $row): array => [
@@ -121,7 +114,6 @@ final class TicketMetricService {
     return [
       'range' => ['from' => $query->dateFrom, 'to' => $query->dateTo],
       'filters' => [
-        'department_id' => $query->departmentId,
         'category_id' => $query->categoryId,
         'uncategorized' => $query->uncategorized,
         'tag_id' => $query->tagId,
@@ -132,7 +124,6 @@ final class TicketMetricService {
       ],
       'summary' => $metrics['summary'],
       'daily' => $filled,
-      'departments' => $metrics['departments'],
       'categories' => $metrics['categories'],
       'tags' => $metrics['tags'],
       'custom_fields' => $metrics['custom_fields'],

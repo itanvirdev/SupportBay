@@ -15,15 +15,9 @@ use SupportBay\Modules\Notifications\Listeners\SendMessageCreatedEmail;
 use SupportBay\Modules\Notifications\Listeners\SendTicketCreatedEmails;
 use SupportBay\Modules\Notifications\Listeners\SendTicketLifecycleEmail;
 use SupportBay\Modules\Notifications\Listeners\SendTicketAssignedEmail;
-use SupportBay\Modules\Notifications\Repositories\NotificationLogRepository;
 use SupportBay\Modules\Notifications\Repositories\NotificationPreferenceRepository;
-use SupportBay\Modules\Notifications\Repositories\NotificationRetentionRepository;
 use SupportBay\Modules\Notifications\Repositories\NotificationTemplateRepository;
-use SupportBay\Modules\Notifications\Services\NotificationRetryWorker;
-use SupportBay\Modules\Notifications\Services\NotificationCleanupWorker;
 use SupportBay\Modules\Notifications\Services\NotificationPreferenceService;
-use SupportBay\Modules\Notifications\Services\NotificationRetentionService;
-use SupportBay\Modules\Notifications\Services\NotificationScheduler;
 use SupportBay\Modules\Notifications\Services\NotificationService;
 use SupportBay\Modules\Notifications\Services\NotificationTemplateService;
 use SupportBay\Modules\Notifications\Templates\DefaultNotificationTemplates;
@@ -62,18 +56,12 @@ final class NotificationServiceProvider extends ServiceProvider {
       WordPressEmailChannel::class,
     );
     $container->singleton(NotificationService::class);
-    $container->singleton(NotificationRetryWorker::class);
-    $container->singleton(NotificationCleanupWorker::class);
-    $container->singleton(NotificationScheduler::class);
-    $container->singleton(NotificationLogRepository::class);
     $container->singleton(NotificationPreferenceRepository::class);
-    $container->singleton(NotificationRetentionRepository::class);
     $container->singleton(NotificationTemplateRepository::class);
     $container->singleton(NotificationPreferenceController::class);
     $container->singleton(NotificationTemplateController::class);
     $container->singleton(NotificationTemplateService::class);
     $container->singleton(NotificationPreferenceService::class);
-    $container->singleton(NotificationRetentionService::class);
     $container->singleton(DefaultNotificationTemplates::class);
     $container->singleton(SendTicketCreatedEmails::class);
     $container->singleton(SendTicketLifecycleEmail::class);
@@ -92,8 +80,5 @@ final class NotificationServiceProvider extends ServiceProvider {
       $container->get(NotificationPreferenceController::class),
       'registerRoutes',
     ]);
-    $container->get(NotificationScheduler::class)->register();
-    $container->get(NotificationRetryWorker::class)->register();
-    $container->get(NotificationCleanupWorker::class)->register();
   }
 }

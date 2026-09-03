@@ -24,7 +24,6 @@ final class Ticket extends Entity {
 
     private ?int $purchaseVerificationId,
 
-    private int $departmentId,
     private ?int $categoryId,
 
     private ?int $assignedAgentId,
@@ -69,7 +68,6 @@ final class Ticket extends Entity {
 
       'purchase_verification_id' => $this->purchaseVerificationId,
 
-      'department_id' => $this->departmentId,
       'category_id' => $this->categoryId,
 
       'assigned_agent_id' => $this->assignedAgentId,
@@ -117,10 +115,6 @@ final class Ticket extends Entity {
 
   public function purchaseVerificationId(): ?int {
     return $this->purchaseVerificationId;
-  }
-
-  public function departmentId(): int {
-    return $this->departmentId;
   }
 
   public function categoryId(): ?int { return $this->categoryId; }

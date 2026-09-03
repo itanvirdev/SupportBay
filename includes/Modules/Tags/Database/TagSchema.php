@@ -16,15 +16,17 @@ final class TagSchema {
     global $wpdb;
     return "CREATE TABLE " . self::tableName() . " (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-      name VARCHAR(100) NOT NULL,
+      name VARCHAR(150) NOT NULL,
       slug VARCHAR(120) NOT NULL,
       color VARCHAR(20) NULL,
+      show_on VARCHAR(20) NOT NULL DEFAULT 'both',
       status VARCHAR(20) NOT NULL DEFAULT '" . TagStatus::ACTIVE->value . "',
       created_at DATETIME NOT NULL,
       updated_at DATETIME NOT NULL,
       PRIMARY KEY  (id),
       UNIQUE KEY slug (slug),
-      KEY status (status)
+      KEY status (status),
+      KEY show_on (show_on)
     ) {$wpdb->get_charset_collate()};";
   }
 }
