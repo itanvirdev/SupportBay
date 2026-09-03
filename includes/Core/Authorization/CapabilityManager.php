@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SupportBay\Core\Authorization;
 
 final class CapabilityManager {
-  private const ROLE_DEFAULTS_VERSION = '1.4.0';
+  private const ROLE_DEFAULTS_VERSION = '1.4.1';
   public const MANAGE_CUSTOMERS = 'sbay_manage_customers';
   public const VIEW_TICKETS = 'sbay_view_tickets';
   public const VIEW_ALL_TICKETS = 'sbay_view_all_tickets';
@@ -49,7 +49,6 @@ final class CapabilityManager {
     $manager = array_merge($agent, [
       self::VIEW_ALL_TICKETS, self::SHOW_TICKET_USER_EMAIL,
       'sbay_reassign_ticket', 'sbay_escalate_ticket',
-      'sbay_merge_ticket',
       self::VIEW_REPORTS, self::REFRESH_VERIFICATION,
       'sbay_manage_agents', self::MANAGE_CUSTOMERS,
       self::MANAGE_SAVED_REPLIES,
@@ -75,6 +74,7 @@ final class CapabilityManager {
     }
     self::grant('administrator', $administrator);
     self::removeDeprecatedCapability('sbay_split_ticket');
+    self::removeDeprecatedCapability('sbay_merge_ticket');
   }
 
   private static function removeDeprecatedCapability(string $capability): void {

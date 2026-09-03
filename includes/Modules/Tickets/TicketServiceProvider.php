@@ -11,9 +11,6 @@ use SupportBay\Modules\Tickets\Repositories\TicketRepository;
 use SupportBay\Modules\Tickets\Http\Controllers\TicketController;
 use SupportBay\Modules\Tickets\Events\TicketChanged;
 use SupportBay\Modules\Activities\Listeners\LogTicketChangedActivity;
-use SupportBay\Modules\Tickets\Events\TicketMerged;
-use SupportBay\Modules\Activities\Listeners\LogTicketMergedActivity;
-use SupportBay\Modules\Tickets\Services\TicketMergeService;
 use SupportBay\Modules\Tickets\Events\TicketResolved;
 use SupportBay\Modules\Activities\Listeners\LogTicketResolvedActivity;
 use SupportBay\Modules\Tickets\Services\TicketMetricService;
@@ -27,7 +24,6 @@ final class TicketServiceProvider extends ServiceProvider {
 
   protected array $listeners = [
     TicketChanged::class => [LogTicketChangedActivity::class],
-    TicketMerged::class => [LogTicketMergedActivity::class],
     TicketResolved::class => [LogTicketResolvedActivity::class],
   ];
 
@@ -51,7 +47,6 @@ final class TicketServiceProvider extends ServiceProvider {
     $container->singleton(CsvExporter::class);
 
     $container->singleton(TicketService::class);
-    $container->singleton(TicketMergeService::class);
     $container->singleton(TicketMetricService::class);
     $container->singleton(TicketTrackIdService::class);
     $container->singleton(TicketLifecycleWorker::class);
@@ -60,7 +55,6 @@ final class TicketServiceProvider extends ServiceProvider {
     $container->singleton(TicketController::class);
     $container->singleton(TicketMetricController::class);
     $container->singleton(LogTicketChangedActivity::class);
-    $container->singleton(LogTicketMergedActivity::class);
     $container->singleton(LogTicketResolvedActivity::class);
   }
 
