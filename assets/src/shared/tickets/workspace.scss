@@ -125,3 +125,165 @@
 @media(max-width:800px){.sbay-conversation__toolbar{align-items:flex-start;gap:12px;padding:12px;flex-wrap:wrap}.sbay-conversation__grid{grid-template-columns:1fr}.sbay-conversation__sidebar{order:2}}
 .sbay-rich-text-editor__saved-replies{position:absolute;z-index:5;top:5px;right:8px;min-width:145px;height:30px;padding:2px 10px;border:1px solid #9aa6a0;border-radius:4px;background:#fff;color:#2d3832;font:700 14px/1.2 inherit;cursor:pointer}.sbay-insert-saved-replies-modal{position:fixed;z-index:100200;inset:0;display:grid;place-items:center;padding:24px;background:rgba(20,26,23,.5)}.sbay-insert-saved-replies-modal>div{width:min(900px,100%);max-height:calc(100vh - 48px);overflow:auto;padding:30px;border-radius:14px;background:#fff;box-shadow:0 24px 70px rgba(0,0,0,.28)}.sbay-insert-saved-replies-modal header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.sbay-insert-saved-replies-modal h2{margin:0;font-size:27px}.sbay-insert-saved-replies-modal header button{border:0;background:transparent;color:#79827d;font-size:32px}.sbay-insert-saved-replies-modal ul{display:grid;gap:12px;margin:0;padding:0;list-style:none}.sbay-insert-saved-replies-modal li button{display:grid;width:100%;gap:7px;padding:20px;border:1px solid #d8e0db;border-radius:12px;background:#fff;text-align:left;font:inherit;cursor:pointer}.sbay-insert-saved-replies-modal li button:hover{border-color:var(--sbay-green,#216e52);background:#f7fbf8}.sbay-insert-saved-replies-modal li strong{font-size:19px}.sbay-insert-saved-replies-modal li span{color:#77817b;font-size:16px}
 .sbay-tag-picker{display:grid;gap:8px}.sbay-tag-picker details{position:relative}.sbay-tag-picker summary{min-height:44px;box-sizing:border-box;padding:9px 38px 9px 12px;border:1px solid #cfd8d3;border-radius:8px;background:#fff;cursor:pointer;list-style:none}.sbay-tag-picker summary::-webkit-details-marker{display:none}.sbay-tag-picker summary::after{content:'⌄';position:absolute;right:13px;top:9px;color:#718078}.sbay-tag-picker summary i{display:inline-block;margin:0 6px 2px 0;padding:2px 8px;border:1px solid #b9c8c0;border-radius:5px;font-style:normal}.sbay-tag-picker summary em{color:#7d8983;font-style:normal}.sbay-tag-picker details>div{position:absolute;z-index:50;left:0;right:0;top:calc(100% + 4px);max-height:230px;overflow:auto;padding:7px;border:1px solid #dbe3df;border-radius:8px;background:#fff;box-shadow:0 12px 30px rgba(24,35,29,.16)}.sbay-tag-picker details>div label{display:flex;align-items:center;gap:9px;padding:9px;border-radius:6px;cursor:pointer}.sbay-tag-picker details>div label:hover{background:#f1f7f4}.sbay-tag-picker details>div input{width:18px;height:18px}.sbay-tag-picker details>div i{width:10px;height:10px;border-radius:50%}
+
+/* Toolbar inline popovers for priority and assign */
+.sbay-conversation__toolbar .sbay-toolbar-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.sbay-conversation__toolbar .sbay-toolbar-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #d5ddd8;
+  border-radius: 7px;
+  background: #fff;
+  color: #252b28;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.sbay-conversation__toolbar .sbay-toolbar-trigger:hover,
+.sbay-conversation__toolbar .sbay-toolbar-trigger:focus {
+  border-color: #216e52;
+  background: #f7fbf8;
+}
+
+.sbay-conversation__toolbar .sbay-toolbar-label {
+  display: inline-block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sbay-conversation__toolbar .sbay-inline-popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 180px;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid #dce3df;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(20,34,27,.18);
+}
+
+.sbay-conversation__toolbar .sbay-inline-popover button {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #354039;
+  font: inherit;
+  text-align: left;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.sbay-conversation__toolbar .sbay-inline-popover button:hover,
+.sbay-conversation__toolbar .sbay-inline-popover button:focus {
+  background: #f0f4f2;
+  border-color: #dce3df;
+}
+
+.sbay-conversation__toolbar .sbay-inline-popover button.is-active {
+  background: #e1e7e4;
+  border-color: #ccd6d1;
+  color: #252b28;
+  font-weight: 600;
+}
+
+.sbay-conversation__toolbar .sbay-reload-btn.is-loading {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.sbay-conversation__toolbar .sbay-reload-btn.is-loading .sbay-reload-icon {
+  display: inline-block;
+  animation: sbay-spin 0.6s linear infinite;
+}
+
+@keyframes sbay-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.sbay-delete-confirm-modal {
+  position: fixed;
+  z-index: 100400;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20,26,23,.55);
+}
+
+.sbay-delete-confirm-modal > div {
+  width: min(420px, 100%);
+  padding: 24px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+
+.sbay-delete-confirm-modal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sbay-delete-confirm-modal h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.sbay-delete-confirm-modal header button {
+  border: 0;
+  background: none;
+  color: #7c8580;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.sbay-delete-confirm-modal p {
+  margin: 0 0 18px;
+  color: #354039;
+}
+
+.sbay-delete-confirm-modal footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sbay-delete-confirm-modal footer button {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid #ccd6d1;
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.sbay-delete-confirm-modal footer button:last-child {
+  border-color: #b13b35;
+  background: #b13b35;
+  color: #fff;
+}
+
+.sbay-delete-confirm-modal footer button:last-child:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+

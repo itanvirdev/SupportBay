@@ -87,12 +87,45 @@ final class AdminTicketController {
       'permission_callback' => [$this, 'permissions'],
       'args' => ['id' => ['sanitize_callback' => 'absint']],
     ]);
+
+    register_rest_route('sbay/v1', '/admin/tickets/(?P<id>\d+)/delete', [
+      'methods' => 'POST',
+      'callback' => [$this, 'deleteTicket'],
+      'permission_callback' => [$this, 'permissions'],
+      'args' => ['id' => ['sanitize_callback' => 'absint']],
+    ]);
   }
 
   public function canCreateForCustomer(): bool|WP_Error {
     return current_user_can(CapabilityManager::CREATE_TICKET_FOR_CUSTOMER)
       ? true
       : new WP_Error('sbay_permission_denied', 'You are not allowed to create tickets for customers.', ['status' => 403]);
+  }
+
+  public function canDeleteTicket(WP_REST_Request $request): bool|WP_Error {
+    return current_user_can('sbay_delete_ticket')
+      ? true
+      : new WP_Error('sbay_permission_denied', 'You are not allowed to delete tickets.', ['status' => 403]);
+  }
+
+  public function deleteTicket(WP_REST_Request $request): WP_REST_Response {
+    $id = (int) $request->get_param('id');
+    if (! $this->canDeleteTicket($request)) {
+      return RestResponse::error('You are not allowed to perform this action.', 'TICKET_ACTION_DENIED', [], 403);
+    }
+    $ticket = $this->tickets->find($id);
+    if (! $ticket) {
+      return RestResponse::error('Ticket was not found.', 'TICKET_NOT_FOUND', [], 404);
+    }
+    if (! $this->access->canView($ticket)) {
+      return RestResponse::error('You are not allowed to access this ticket.', 'TICKET_ACCESS_DENIED', [], 403);
+    }
+    try {
+      $this->tickets->delete($id);
+      return RestResponse::success(['id' => $id], 'Ticket permanently deleted.', [], 200);
+    } catch (\Throwable $exception) {
+      return RestResponse::error($exception->getMessage(), 'TICKET_DELETE_FAILED', [], 422);
+    }
   }
 
   public function createOptions(): WP_REST_Response {
@@ -132,7 +165,7 @@ final class AdminTicketController {
       foreach ($selectedTags as $tag) { $this->tags->attach($ticketId, $tag->id(), get_current_user_id()); }
       $ticket = $this->tickets->find($ticketId);
       return RestResponse::success($ticket?->toArray() ?? [], 'Ticket created for customer.', [], 201);
-    } catch (RuntimeException|InvalidArgumentException $exception) { return RestResponse::error($exception->getMessage(), 'STAFF_TICKET_CREATION_FAILED', [], 422); }
+    } catch (\Throwable $exception) { return RestResponse::error($exception->getMessage(), 'STAFF_TICKET_CREATION_FAILED', [], 422); }
   }
 
   public function permissions(?WP_REST_Request $request = null): bool|WP_Error {
@@ -261,6 +294,7 @@ final class AdminTicketController {
         'status' => current_user_can(CapabilityManager::CHANGE_TICKET_STATUS),
         'email' => current_user_can(CapabilityManager::SHOW_TICKET_USER_EMAIL),
         'verification' => current_user_can(CapabilityManager::REFRESH_VERIFICATION),
+        'delete' => current_user_can(CapabilityManager::DELETE_TICKET),
       ],
       'attachments' => array_map(fn($attachment): array => $this->attachmentData($attachment), array_filter(
         $this->attachments->findByTicket($ticket->id()),
@@ -341,7 +375,7 @@ final class AdminTicketController {
         'priority' => $this->tickets->changePriority($id, TicketPriority::from(sanitize_key((string) $value)), get_current_user_id()),
         'state' => $this->tickets->changeState($id, TicketState::from(sanitize_key((string) $value)), get_current_user_id()),
       };
-    } catch (\InvalidArgumentException|\ValueError|RuntimeException $exception) {
+    } catch (\Throwable $exception) {
       return RestResponse::error($exception->getMessage(), 'TICKET_ACTION_FAILED', [], 422);
     }
     return RestResponse::success($ticket->toArray(), 'Ticket updated.');
@@ -440,7 +474,7 @@ final class AdminTicketController {
         'uploaded_by_id' => get_current_user_id(),
         'uploaded_by_type' => AuthorType::AGENT->value,
       ]);
-    } catch (\InvalidArgumentException|RuntimeException $exception) {
+    } catch (\Throwable $exception) {
       return RestResponse::error($exception->getMessage(), 'ATTACHMENT_UPLOAD_FAILED', [], 422);
     }
 

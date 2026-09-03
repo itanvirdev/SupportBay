@@ -16,7 +16,7 @@ August 2026
 
 Current Version
 
-v0.2.34 Prerelease
+v0.2.35 Prerelease
 
 Prerelease policy: increment the patch version for every completed change set.
 

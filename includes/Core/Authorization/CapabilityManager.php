@@ -30,6 +30,7 @@ final class CapabilityManager {
   public const MANAGE_CUSTOM_FIELDS = 'sbay_manage_custom_fields';
   public const CHANGE_TICKET_CUSTOM_FIELDS = 'sbay_change_ticket_custom_fields';
   public const MANAGE_ROLES = 'sbay_manage_roles';
+  public const DELETE_TICKET = 'sbay_delete_ticket';
 
   /** Register protected SupportBay roles and capabilities. */
   public static function register(): void {
@@ -63,6 +64,7 @@ final class CapabilityManager {
         self::MANAGE_ROLES, 'sbay_manage_capabilities',
         self::EXPORT_REPORTS, 'sbay_download_attachment',
         'sbay_delete_attachment', 'sbay_close_ticket', 'sbay_reopen_ticket',
+        self::DELETE_TICKET,
       ],
     )));
 

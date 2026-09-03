@@ -71,7 +71,10 @@ function AdminApp() {
   const loadTicketDetail=useCallback(async(background=false)=>{
     if(!ticketId)return;
     const currentRequest=++detailRequestId.current;
-    if(!background)setError(null);
+    if(!background){
+      setError(null);
+      setDetail(null);
+    }
     try{
       const [ticket,messages,context]=await Promise.all([
       adminGet<ConversationTicket>(`tickets/${ticketId}`),
@@ -137,6 +140,16 @@ function AdminApp() {
     }finally{detailMutationPending.current=false;}
   };
 
+  const permDeleteTicket = async () => {
+    if (!ticketId || !detail) return;
+    detailMutationPending.current=true;detailRequestId.current++;
+    try{
+      await adminPost<void>(`admin/tickets/${ticketId}/delete`, {});
+      // Navigate back to ticket list after deletion
+      window.location.href = `${config.adminUrl}`;
+    }finally{detailMutationPending.current=false;}
+  };
+
   const bulkTickets = async (ticketIds: number[], action: string, value: unknown) => {
     const response = await adminPost('admin/tickets/bulk-actions', {
       ticket_ids: ticketIds,
@@ -159,7 +172,7 @@ function AdminApp() {
       {error && !ticketId ? <div className="sbay-admin-error" role="alert">{error}</div> : null}
 
       {config.section === 'tickets' ? (
-        ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={() => { window.location.href = config.adminUrl; }} refresh={()=>void loadTicketDetail(false)} submit={addMessage} transition={transition} download={downloadAttachment} previewAttachments={config.attachmentPopupPreviewEnabled} mutate={mutateTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} /> : error ? <RequestState title="Ticket could not be loaded" message={error} retry={()=>void loadTicketDetail(false)}/> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
+        ticketId ? (detail ? <TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={() => { window.location.href = config.adminUrl; }} refresh={()=>void loadTicketDetail(false)} submit={addMessage} transition={transition} download={downloadAttachment} previewAttachments={config.attachmentPopupPreviewEnabled} mutate={mutateTicket} permDelete={permDeleteTicket} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply} /> : error ? <RequestState title="Ticket could not be loaded" message={error} retry={()=>void loadTicketDetail(false)}/> : <Preloader label="Loading ticket conversation…" />) : <TicketWorkspace
           mode="staff"
           load={loadTickets}
           options={queueOptions}

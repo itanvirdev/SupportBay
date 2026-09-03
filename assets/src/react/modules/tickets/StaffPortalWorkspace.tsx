@@ -52,7 +52,10 @@ export function StaffPortalWorkspace({ navigate }: Props) {
   const loadDetail = useCallback(async (background = false) => {
     if (ticketId === null) return;
     const id = ++requestId.current;
-    if (!background) setError(null);
+    if (!background) {
+      setError(null);
+      setDetail(null);
+    }
 
     try {
       const [ticket, messages, context] = await Promise.all([
@@ -141,6 +144,15 @@ export function StaffPortalWorkspace({ navigate }: Props) {
     } finally { mutationPending.current = false; }
   };
 
+  const permDelete = async () => {
+    if (!detail || ticketId === null) return;
+    mutationPending.current = true;
+    try {
+      await apiPost<void>(`admin/tickets/${ticketId}/delete`, {});
+      navigate('/support/tickets/');
+    } finally { mutationPending.current = false; }
+  };
+
   const bulk = async (ticketIds: number[], action: string, value: unknown) => {
     const response = await apiPostResponse<unknown>('admin/tickets/bulk-actions', { ticket_ids: ticketIds, action, value });
     return {
@@ -175,7 +187,7 @@ export function StaffPortalWorkspace({ navigate }: Props) {
   );
 
   if (ticketId !== null) {
-    if (detail) return shell(<section className="sbay-staff-portal"><TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={back} refresh={()=>void loadDetail(false)} submit={submit} transition={transition} download={(file) => apiDownload(`admin/attachments/${file.id}/download`)} previewAttachments={config.attachmentPopupPreviewEnabled} mutate={mutate} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply}/></section>);
+    if (detail) return shell(<section className="sbay-staff-portal"><TicketConversation ticket={detail.ticket} messages={detail.messages} context={detail.context} statusLabels={config.ticketStatusLabels} back={back} refresh={()=>void loadDetail(false)} submit={submit} transition={transition} download={(file) => apiDownload(`admin/attachments/${file.id}/download`)} previewAttachments={config.attachmentPopupPreviewEnabled} mutate={mutate} permDelete={permDelete} loadSavedReplies={loadSavedReplies} trackSavedReply={trackSavedReply}/></section>);
     if (error) return shell(<RequestState title="Ticket could not be loaded" message={error} retry={() => void loadDetail()}/>);
     return shell(<Preloader label="Loading ticket conversation…"/>);
   }
