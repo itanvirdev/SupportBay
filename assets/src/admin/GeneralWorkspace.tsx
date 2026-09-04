@@ -13,6 +13,7 @@ interface GeneralSettings {
   support_portal_url:string;
   shortcode_mode:boolean;
   footer_copyright_text:string;
+  portal_page_title:string;
   remove_powered_by_branding:boolean;
   delete_data_on_uninstall:boolean;
   wordpress_auth_enabled:boolean;
@@ -47,7 +48,7 @@ interface GeneralSettings {
 type GeneralDraft = Pick<GeneralSettings,
   'registration_override'|'disable_registration_form'|'disable_guest_ticket_creation'|
   'client_user_default_role'|'support_portal_page_id'|'shortcode_mode'|
-  'footer_copyright_text'|'remove_powered_by_branding'|'wordpress_auth_enabled'|
+  'footer_copyright_text'|'portal_page_title'|'remove_powered_by_branding'|'wordpress_auth_enabled'|
   'delete_data_on_uninstall'|
   'wordpress_login_url'|'wordpress_registration_url'
   |'wordpress_profile_enabled'
@@ -85,6 +86,7 @@ const draftFrom = (settings:GeneralSettings):GeneralDraft => ({
   support_portal_page_id:settings.support_portal_page_id,
   shortcode_mode:settings.shortcode_mode,
   footer_copyright_text:settings.footer_copyright_text,
+  portal_page_title:settings.portal_page_title,
   remove_powered_by_branding:settings.remove_powered_by_branding,
   delete_data_on_uninstall:settings.delete_data_on_uninstall,
   wordpress_auth_enabled:settings.wordpress_auth_enabled,
@@ -186,6 +188,7 @@ export function GeneralWorkspace(){
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.shortcode_mode} onChange={event=>update({shortcode_mode:event.target.checked})}/><span>Enable <code>[supportbay]</code> shortcode on other pages.</span></label>
         {draft.shortcode_mode?<p className="sbay-shortcode-notice">Add <code>[supportbay]</code> to any other WordPress page. The selected Support Portal Page continues to work independently.</p>:null}
         <label className="sbay-general-select"><span>Footer Copyright Text</span><input type="text" disabled={saving} value={draft.footer_copyright_text} onChange={event=>update({footer_copyright_text:event.target.value})}/><small>Use <code>{'{year}'}</code> for the current year and <code>{'{site_name}'}</code> for the clickable site name.</small></label>
+        <label className="sbay-general-select"><span>Portal Page Title</span><input type="text" maxLength={120} disabled={saving} value={draft.portal_page_title} onChange={event=>update({portal_page_title:event.target.value})}/><small>Browser tab title shown on the front-end portal. Leave empty to use the default “<code>{'{site_name}'}</code> — Support Portal”.</small></label>
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.remove_powered_by_branding} onChange={event=>update({remove_powered_by_branding:event.target.checked})}/><span>Remove &apos;powered by&apos; branding.</span></label>
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.delete_data_on_uninstall} onChange={event=>update({delete_data_on_uninstall:event.target.checked})}/><span>Delete all SupportBay data when the plugin is uninstalled.</span><span className="sbay-setting-help" tabIndex={0} aria-label="Uninstall data policy help">?<span role="tooltip">OFF preserves tickets, settings, roles, and attachments. ON permanently removes all SupportBay data only when the plugin is deleted from WordPress.</span></span></label>
         <label className="sbay-general-toggle"><input type="checkbox" role="switch" disabled={saving} checked={draft.wordpress_auth_enabled} onChange={event=>update({wordpress_auth_enabled:event.target.checked})}/><span>Enable WordPress login &amp; registration.</span></label>

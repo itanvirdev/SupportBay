@@ -13,7 +13,7 @@ export function SupportBayConfigProvider({ children }: SupportBayConfigProviderP
   return (
     <ConfigProvider
       theme={supportBayTheme}
-      getPopupContainer={(trigger) => trigger?.parentNode}
+      getPopupContainer={(trigger) => (trigger?.parentNode as HTMLElement | undefined) ?? document.body}
     >
       {children}
     </ConfigProvider>

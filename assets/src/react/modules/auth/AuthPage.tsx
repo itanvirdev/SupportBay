@@ -5,6 +5,7 @@ import { PortalCopyright } from "../../components/PortalCopyright";
 import { FilePicker } from "../../components/FilePicker";
 import { RichTextEditor } from "../../../shared/editor/RichTextEditor";
 import { recaptchaToken } from "../../core/recaptcha";
+import { Card, Form, Input, Button, Space, Typography, Switch, Select } from "antd";
 
 interface AuthPageProps {
 	mode: "login" | "register" | "guest";
@@ -81,13 +82,13 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 
 	return (
 		<main className="sbay-auth-page">
-			<section className="sbay-auth-card">
-				<header className="sbay-auth-card-header">
+			<Card bordered={false} className="sbay-auth-card">
+				<div className="sbay-auth-card-header">
 					<div className="sbay-auth-brand">
-						<img src={config.portalLogoUrl} alt={config.siteName}/>
+						<img src={config.portalLogoUrl} alt={config.siteName} />
 					</div>
-				</header>
-				<nav className="sbay-auth-card-nav">
+				</div>
+				<div className="sbay-auth-card-nav">
 					<div className="sbay-auth-card-nav-left">
 						<a className="sbay-auth-nav-btn" href={config.homeUrl} aria-label="Home">
 							<span className="sbay-auth-nav-btn-icon" aria-hidden="true">⌂</span>
@@ -120,7 +121,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 							</button>
 						) : null}
 					</div>
-				</nav>
+				</div>
 				<div className="sbay-auth-card-body">
 					{config.availabilityNotices.map(notice => (
 						<aside className={`sbay-availability-notice is-${notice.type}`} role="status" key={notice.type}>
@@ -129,14 +130,22 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 					))}
 					{guestTicket ? (
 						<section className="sbay-guest-ticket-success" role="status">
-							<h1>Ticket submitted</h1>
-							<p>Your ticket <strong>#{guestTicket.track_id}</strong> was created successfully. We sent the ticket confirmation to your email address.</p>
-							{guestTicket.account_created ? <p>A customer account was also created for you. Check your email to set your password.</p> : null}
-							<button className="sbay-auth-btn sbay-auth-btn-primary" type="button" onClick={() => navigate('/support/login/')}>Go to Login</button>
+							<Typography.Title level={3}>Ticket submitted</Typography.Title>
+							<Typography.Text>
+								Your ticket <strong>#{guestTicket.track_id}</strong> was created successfully. We sent the ticket confirmation to your email address.
+							</Typography.Text>
+							{guestTicket.account_created ? (
+								<Typography.Text>
+									A customer account was also created for you. Check your email to set your password.
+								</Typography.Text>
+							) : null}
+							<Button type="primary" onClick={() => navigate("/support/login/")}>
+								Go to Login
+							</Button>
 						</section>
 					) : (
 						<>
-							<h1>{headingLabel}</h1>
+							<Typography.Title level={3}>{headingLabel}</Typography.Title>
 							{mode !== "guest" && config.oauthLoginProviders.length ? (
 								<div className="sbay-auth-oauth">
 									{config.oauthLoginProviders.map(provider => (
@@ -148,212 +157,186 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 									<div className="sbay-auth-oauth-divider"><span>or</span></div>
 								</div>
 							) : null}
-							<form className="sbay-auth-form" onSubmit={submit}>
+							<Form layout="vertical" className="sbay-auth-form" onFinish={submit}>
 								{mode === "register" || mode === "guest" ? (
 									<>
 										<div className="sbay-name-fields">
-											<div className="sbay-auth-form-group">
-												<label htmlFor="firstName">First Name</label>
-												<input
+											<Form.Item label="First Name" required>
+												<Input
 													id="firstName"
 													value={firstName}
 													onChange={event => setFirstName(event.target.value)}
 													autoComplete="given-name"
-													required
 													maxLength={100}
 												/>
-											</div>
-											<div className="sbay-auth-form-group">
-												<label htmlFor="lastName">Last Name</label>
-												<input
+											</Form.Item>
+											<Form.Item label="Last Name" required>
+												<Input
 													id="lastName"
 													value={lastName}
 													onChange={event => setLastName(event.target.value)}
 													autoComplete="family-name"
-													required
 													maxLength={100}
 												/>
-											</div>
+											</Form.Item>
 										</div>
-										<div className="sbay-auth-form-group">
-											<label htmlFor="email">Email Address</label>
-											<input
+										<Form.Item label="Email Address" required>
+											<Input
 												id="email"
 												type="email"
 												value={email}
 												onChange={event => setEmail(event.target.value)}
 												autoComplete="email"
-												required
 											/>
-										</div>
+										</Form.Item>
 									</>
 								) : (
-									<div className="sbay-auth-form-group">
-										<label htmlFor="login">Username or Email Address</label>
-										<input id="login" value={login} onChange={event => setLogin(event.target.value)} autoComplete="username" required />
-									</div>
+									<Form.Item label="Username or Email Address" required>
+										<Input id="login" value={login} onChange={event => setLogin(event.target.value)} autoComplete="username" />
+									</Form.Item>
 								)}
 								{mode === "guest" ? (
 									<>
-										<div className="sbay-auth-form-group">
-											<label htmlFor="subject">Subject</label>
-											<input
+										<Form.Item label="Subject" required>
+											<Input
 												id="subject"
 												value={subject}
 												onChange={event => setSubject(event.target.value)}
-												required
 												maxLength={255}
 											/>
-										</div>
-										<div className="sbay-auth-form-group">
-											<label>Description</label>
-											<RichTextEditor value={description} onChange={setDescription} disabled={busy}/>
-										</div>
+										</Form.Item>
+										<Form.Item label="Description" required>
+											<RichTextEditor value={description} onChange={setDescription} disabled={busy} />
+										</Form.Item>
 										{config.fileUploadEnabled ? (
-											<FilePicker files={files} onChange={next => setFiles(next.slice(0, 1))} disabled={busy} maxSizeMb={config.fileUploadMaxSizeMb} allowedExtensions={config.fileUploadAllowedExtensions}/>
+											<FilePicker files={files} onChange={next => setFiles(next.slice(0, 1))} disabled={busy} maxSizeMb={config.fileUploadMaxSizeMb} allowedExtensions={config.fileUploadAllowedExtensions} />
 										) : null}
 									</>
 								) : (
-									<div className="sbay-auth-form-group">
-										<label htmlFor="password">Password</label>
-										<div className="sbay-password-input">
-											<input
-												id="password"
-												type={showPassword ? "text" : "password"}
-												value={password}
-												onChange={event => setPassword(event.target.value)}
-												autoComplete={mode === "login" ? "current-password" : "new-password"}
-												required
-												minLength={mode === "register" ? 8 : undefined}
-											/>
-											<button
-												type="button"
-												className="sbay-password-toggle"
-												aria-label={showPassword ? "Hide password" : "Show password"}
-												onClick={() => setShowPassword(!showPassword)}
-											>
-												{showPassword ? "Hide" : "Show"}
-											</button>
-										</div>
-									</div>
+									<Form.Item label="Password" required>
+										<Input.Password
+											id="password"
+											value={password}
+											onChange={event => setPassword(event.target.value)}
+											autoComplete={mode === "login" ? "current-password" : "new-password"}
+											minLength={mode === "register" ? 8 : undefined}
+										/>
+									</Form.Item>
 								)}
 								{mode === "register" ? (
 									<>
-										<div className="sbay-auth-form-group">
-											<label htmlFor="confirmPassword">Confirm Password</label>
-											<div className="sbay-password-input">
-												<input
-													id="confirmPassword"
-													type={showConfirmation ? "text" : "password"}
-													value={confirmPassword}
-													onChange={event => setConfirmPassword(event.target.value)}
-													autoComplete="new-password"
-													required
-													minLength={8}
-												/>
-												<button
-													type="button"
-													className="sbay-password-toggle"
-													aria-label={showConfirmation ? "Hide confirmed password" : "Show confirmed password"}
-													onClick={() => setShowConfirmation(!showConfirmation)}
-												>
-													{showConfirmation ? "Hide" : "Show"}
-												</button>
-											</div>
-										</div>
+										<Form.Item label="Confirm Password" required>
+											<Input.Password
+												id="confirmPassword"
+												value={confirmPassword}
+												onChange={event => setConfirmPassword(event.target.value)}
+												autoComplete="new-password"
+												minLength={8}
+											/>
+										</Form.Item>
 										{registrationFields.map(field => {
 											const value = customFields[field.id] ?? '';
 											const update = (next: string) => setCustomFields(current => ({ ...current, [field.id]: next }));
 											if (field.type === 'textarea') {
 												return (
-													<div className="sbay-auth-form-group" key={field.id}>
-														<label htmlFor={`field-${field.id}`}>{field.name}</label>
-														<textarea
+													<Form.Item key={field.id} label={field.name} required={field.is_required}>
+														<Input.TextArea
 															id={`field-${field.id}`}
 															rows={4}
-															placeholder={field.placeholder ?? undefined}
-															required={field.is_required}
+															placeholder={field.placeholder ?? ''}
 															value={value}
 															onChange={event => update(event.target.value)}
 														/>
-													</div>
+													</Form.Item>
 												);
 											}
 											if (field.type === 'select') {
 												return (
-													<div className="sbay-auth-form-group" key={field.id}>
-														<label htmlFor={`field-${field.id}`}>{field.name}</label>
-														<select id={`field-${field.id}`} required={field.is_required} value={value} onChange={event => update(event.target.value)}>
-															<option value="">Select {field.name}</option>
-															{field.options.map(option => <option key={option} value={option}>{option}</option>)}
-														</select>
-													</div>
+													<Form.Item key={field.id} label={field.name} required={field.is_required}>
+														<Select
+															placeholder={`Select ${field.name}`}
+															value={value || undefined}
+															onChange={(next: string) => update(next)}
+															options={field.options.map(option => ({ label: option, value: option }))}
+														/>
+													</Form.Item>
 												);
 											}
 											if (field.type === 'checkbox') {
 												return (
-													<div className="sbay-auth-checkbox" key={field.id}>
-														<input
+													<Form.Item key={field.id} valuePropName="checked">
+														<Switch
 															id={`field-${field.id}`}
-															type="checkbox"
-															required={field.is_required}
 															checked={value === '1'}
-															onChange={event => update(event.target.checked ? '1' : '0')}
+															onChange={checked => update(checked ? '1' : '0')}
 														/>
 														<label htmlFor={`field-${field.id}`}>{field.name}</label>
-													</div>
+													</Form.Item>
 												);
 											}
 											return (
-												<div className="sbay-auth-form-group" key={field.id}>
-													<label htmlFor={`field-${field.id}`}>{field.name}</label>
-													<input
+												<Form.Item key={field.id} label={field.name} required={field.is_required}>
+													<Input
 														id={`field-${field.id}`}
 														type={field.type}
-														placeholder={field.placeholder ?? undefined}
-														required={field.is_required}
+														placeholder={field.placeholder ?? ''}
 														value={value}
 														onChange={event => update(event.target.value)}
 													/>
-												</div>
+												</Form.Item>
 											);
 										})}
 									</>
 								) : null}
-								{error ? <p className="sbay-form-error" role="alert">{error}</p> : null}
+								{error ? (
+									<Typography.Text type="danger" className="sbay-form-error" role="alert">
+										{error}
+									</Typography.Text>
+								) : null}
 								{mode === "login" ? (
-									<div className="sbay-auth-row">
-										<div className="sbay-auth-checkbox">
-											<input id="remember" type="checkbox" checked={remember} onChange={event => setRemember(event.target.checked)} />
-											<label htmlFor="remember">Remember me</label>
-										</div>
-										<button className="sbay-auth-btn sbay-auth-btn-primary" disabled={busy}>
-											{busy ? "Logging in…" : "Login"}
-										</button>
-									</div>
+									<Space className="sbay-auth-row">
+										<Switch checked={remember} onChange={checked => setRemember(checked)} />
+										<Typography.Text>Remember me</Typography.Text>
+										<Space>
+											<Button type="primary" htmlType="submit" disabled={busy}>
+												{busy ? "Logging in…" : "Login"}
+											</Button>
+										</Space>
+									</Space>
 								) : (
-									<button className="sbay-auth-btn sbay-auth-btn-primary sbay-auth-btn-block" disabled={busy || (mode === "guest" && description.replace(/<[^>]*>/g, '').trim() === '')}>
-										{busy ? (mode === "register" ? "Creating account…" : "Submitting ticket…") : mode === "register" ? "Register" : "Create Ticket"}
-									</button>
+									<Form.Item>
+										<Button type="primary" htmlType="submit" block disabled={busy || (mode === "guest" && description.replace(/<[^>]*>/g, '').trim() === '')}>
+											{busy ? (mode === "register" ? "Creating account…" : "Submitting ticket…") : mode === "register" ? "Register" : "Create Ticket"}
+										</Button>
+									</Form.Item>
 								)}
-							</form>
+							</Form>
 						</>
 					)}
 					{mode === "login" ? (
 						<div className="sbay-auth-footer">
 							<div className="sbay-auth-links">
-								<span className="sbay-auth-muted">Lost your password?</span>
-								<a onClick={() => navigate("/support/reset-password/")}>Reset Password</a>
+								<Typography.Text type="secondary" className="sbay-auth-muted">
+									Lost your password?
+								</Typography.Text>
+								<Button type="link" onClick={() => navigate("/support/reset-password/")}>
+									Reset Password
+								</Button>
 							</div>
 						</div>
 					) : null}
 					{mode === "guest" && config.registrationEnabled ? (
-						<div className="sbay-auth-register-prompt">
-							Don't have an account? <a onClick={() => navigate("/support/register/")}>Register Now</a>
-						</div>
+						<Space direction="vertical" className="sbay-auth-register-prompt">
+							<Typography.Text>
+								Don't have an account?{' '}
+								<Button type="link" onClick={() => navigate("/support/register/")}>
+									Register Now
+								</Button>
+							</Typography.Text>
+						</Space>
 					) : null}
 				</div>
-			</section>
+			</Card>
 			<PortalCopyright />
 		</main>
 	);

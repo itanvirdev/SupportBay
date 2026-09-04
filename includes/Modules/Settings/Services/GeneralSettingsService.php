@@ -116,6 +116,11 @@ final class GeneralSettingsService {
   }
   public function shortcodeMode(): bool { return (bool)($this->repository->all()['shortcode_mode']??false); }
   public function footerCopyrightText(): string { return $this->normalizeFooterCopyrightText($this->repository->all()); }
+  public function portalPageTitle(): string {
+    $settings=$this->repository->all();
+    $title=sanitize_text_field((string)($settings['portal_page_title']??''));
+    return $title!==''?$title:sanitize_text_field(get_bloginfo('name')).' — Support Portal';
+  }
   public function removePoweredByBranding(): bool { return (bool)($this->repository->all()['remove_powered_by_branding']??false); }
   public function wordpressAuthEnabled(): bool { return (bool)($this->repository->all()['wordpress_auth_enabled']??false); }
   public function wordpressLoginUrl(string $redirectTo): string {
@@ -188,6 +193,9 @@ final class GeneralSettingsService {
     if (array_key_exists('footer_copyright_text',$data)) {
       $copyright=sanitize_text_field(wp_unslash((string)$data['footer_copyright_text']));
       $settings['footer_copyright_text']=$copyright!==''?$copyright:'Copyright © {year} {site_name}';
+    }
+    if (array_key_exists('portal_page_title',$data)) {
+      $settings['portal_page_title']=sanitize_text_field(wp_unslash((string)$data['portal_page_title']));
     }
     if (array_key_exists('remove_powered_by_branding',$data)) {
       $settings['remove_powered_by_branding']=filter_var($data['remove_powered_by_branding'],FILTER_VALIDATE_BOOL);

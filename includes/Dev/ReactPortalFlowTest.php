@@ -91,6 +91,7 @@ final class ReactPortalFlowTest extends FlowTest {
     Assert::true(
       is_array($bootstrap) &&
       str_contains(implode('', $bootstrap), 'restNonce') &&
+      str_contains(implode('', $bootstrap), 'pageTitle') &&
       str_contains(implode('', $bootstrap), 'portalLogoUrl') &&
       str_contains(implode('', $bootstrap), 'logoutUrl') &&
       str_contains(implode('', $bootstrap), 'registrationEnabled') &&

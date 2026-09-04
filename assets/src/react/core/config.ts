@@ -4,6 +4,7 @@ export interface SupportBayConfig {
   portalUrl: string;
   logoutUrl: string;
   siteName: string;
+  pageTitle: string;
   portalLogoUrl: string;
   homeUrl: string;
   footerCopyrightText: string;

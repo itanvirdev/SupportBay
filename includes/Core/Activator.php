@@ -73,6 +73,7 @@ final class Activator {
       'shortcode_mode' => false,
       'footer_copyright_text' => 'Copyright © {year} {site_name}',
       'remove_powered_by_branding' => false,
+      'portal_page_title' => '',
       'wordpress_auth_enabled' => false,
       'wordpress_login_url' => '',
       'wordpress_registration_url' => '',

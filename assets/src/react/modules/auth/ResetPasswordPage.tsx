@@ -3,6 +3,7 @@ import { apiPost } from "../../api/client";
 import { getConfig } from "../../core/config";
 import { PortalCopyright } from "../../components/PortalCopyright";
 import { recaptchaToken } from "../../core/recaptcha";
+import { Card, Form, Input, Button, Space, Typography } from "antd";
 
 interface ResetPasswordPageProps {
 	navigate: (path: string) => void;
@@ -15,8 +16,7 @@ export function ResetPasswordPage({ navigate }: ResetPasswordPageProps) {
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
 
-	const submit = async (event: FormEvent) => {
-		event.preventDefault();
+	const submit = async () => {
 		setBusy(true);
 		setError(null);
 		setSuccess(null);
@@ -34,13 +34,13 @@ export function ResetPasswordPage({ navigate }: ResetPasswordPageProps) {
 
 	return (
 		<main className="sbay-auth-page">
-			<section className="sbay-auth-card">
-				<header className="sbay-auth-card-header">
+			<Card bordered={false} className="sbay-auth-card">
+				<div className="sbay-auth-card-header">
 					<div className="sbay-auth-brand">
 						<img src={config.portalLogoUrl} alt={config.siteName} />
 					</div>
-				</header>
-				<nav className="sbay-auth-card-nav">
+				</div>
+				<div className="sbay-auth-card-nav">
 					<div className="sbay-auth-card-nav-left">
 						<a className="sbay-auth-nav-btn" href={config.homeUrl} aria-label="Home">
 							<span className="sbay-auth-nav-btn-icon" aria-hidden="true">⌂</span>
@@ -56,38 +56,53 @@ export function ResetPasswordPage({ navigate }: ResetPasswordPageProps) {
 							</button>
 						) : null}
 					</div>
-				</nav>
+				</div>
 				<div className="sbay-auth-card-body">
-					<h1>Reset Password</h1>
-					<p>Enter your username or email address and we'll email you a link to reset your password.</p>
-					<form className="sbay-auth-form" onSubmit={submit}>
-						<div className="sbay-auth-form-group">
-							<label htmlFor="reset-login">Username or Email Address</label>
-							<input
+					<Typography.Title level={3}>Reset Password</Typography.Title>
+					<Typography.Text>
+						Enter your username or email address and we'll email you a link to reset your password.
+					</Typography.Text>
+					<Form layout="vertical" className="sbay-auth-form" onFinish={submit}>
+						<Form.Item
+							label="Username or Email Address"
+							hasFeedback
+						>
+							<Input
 								id="reset-login"
 								value={login}
-								onChange={(event) => setLogin(event.target.value)}
+								onChange={(e) => setLogin(e.target.value)}
 								autoComplete="username"
-								required
+								placeholder="Enter your username or email"
 							/>
-						</div>
+						</Form.Item>
 						{error ? (
-							<p className="sbay-form-error" role="alert">{error}</p>
+							<Typography.Text type="danger" className="sbay-form-error" role="alert">
+								{error}
+							</Typography.Text>
 						) : null}
 						{success ? (
-							<p className="sbay-form-success" role="status">{success}</p>
+							<Typography.Text type="success" className="sbay-form-success" role="status">
+								{success}
+							</Typography.Text>
 						) : null}
-						<button className="sbay-auth-btn sbay-auth-btn-primary sbay-auth-btn-block" disabled={busy}>
-							{busy ? "Sending…" : "Get New Password"}
-						</button>
-					</form>
+						<Form.Item>
+							<Button type="primary" htmlType="submit" block disabled={busy}>
+								{busy ? "Sending…" : "Get New Password"}
+							</Button>
+						</Form.Item>
+					</Form>
 					{config.registrationEnabled ? (
-						<div className="sbay-auth-register-prompt">
-							Don't have an account? <a onClick={() => navigate("/support/register/")}>Register Now</a>
-						</div>
+						<Space direction="vertical" className="sbay-auth-register-prompt">
+							<Typography.Text>
+								Don't have an account?{' '}
+								<Button type="link" className="sbay-auth-link" onClick={() => navigate("/support/register/")}>
+									Register Now
+								</Button>
+							</Typography.Text>
+						</Space>
 					) : null}
 				</div>
-			</section>
+			</Card>
 			<PortalCopyright />
 		</main>
 	);

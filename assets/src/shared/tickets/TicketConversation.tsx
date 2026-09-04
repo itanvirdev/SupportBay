@@ -48,15 +48,15 @@ export function TicketConversation({ticket,messages,context,statusLabels={},back
   useEffect(()=>{if(!loadSavedReplies||!trackSavedReply)return;loadSavedReplies().then(setSavedReplies).catch(()=>setSavedReplies([]));},[loadSavedReplies,trackSavedReply]);
   useEffect(()=>{
     function onClick(event:MouseEvent){
-      const target=event.target as Node;
+      const target=event.target;
       if(priorityOpen){
-        const insideTrigger=priorityRef.current?.contains(target);
-        const insidePopover=priorityPopoverRef.current?.contains(target);
+        const insideTrigger=priorityRef.current?.contains(target as Node);
+        const insidePopover=priorityPopoverRef.current?.contains(target as Node);
         if(!insideTrigger&&!insidePopover)setPriorityOpen(false);
       }
       if(assignOpen){
-        const insideTrigger=assignRef.current?.contains(target);
-        const insidePopover=assignPopoverRef.current?.contains(target);
+        const insideTrigger=assignRef.current?.contains(target as Node);
+        const insidePopover=assignPopoverRef.current?.contains(target as Node);
         if(!insideTrigger&&!insidePopover)setAssignOpen(false);
       }
     }

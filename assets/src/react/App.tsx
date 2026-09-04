@@ -6,6 +6,7 @@ import { PortalLayout, type PortalRoute } from './components/PortalLayout';
 import { PortalState } from './components/PortalState';
 import { getConfig } from './core/config';
 import { SupportBayConfigProvider } from './core/ConfigProvider';
+import { usePortalTitle } from './core/usePortalTitle';
 import './styles/portal.scss';
 
 const AuthPage = lazy(() => import('./modules/auth/AuthPage').then((module) => ({ default: module.AuthPage })));
@@ -88,6 +89,8 @@ function App() {
     : 'login';
   const authRoute = /^\/support\/(?:login|register)\/?$/.test(canonicalPath) || guestRoute;
 
+  usePortalTitle(resetPasswordRoute ? 'reset-password' : guestRoute ? 'guest-ticket' : authMode);
+
   if (resetPasswordRoute) {
     return <Suspense fallback={<PortalState loading message="Loading reset password page…" />}><ResetPasswordPage navigate={navigate}/></Suspense>;
   }
@@ -128,6 +131,8 @@ function App() {
   }
 
   const route = matchRoute(canonicalPath);
+  usePortalTitle(route.active);
+
   let page = <DashboardPage overview={overview} navigate={navigate} />;
 
   if (route.active === 'tickets') {
