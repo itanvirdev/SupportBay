@@ -112,6 +112,8 @@ final class PortalPage {
     );
     wp_add_inline_style('supportbay-customer', $this->settings->supportBayCss());
 
+    wp_enqueue_editor();
+
     wp_enqueue_script(
       'supportbay-customer',
       SBAY_PLUGIN_URL . 'assets/dist/supportbay-customer.js',

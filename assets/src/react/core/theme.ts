@@ -15,10 +15,10 @@ export const supportBayTheme: ThemeConfig = {
 	token: {
 		// Brand colors
 		colorPrimary: "#216e52",
-		colorSuccess: "#67c23a",
-		colorWarning: "#e6a23c",
-		colorError: "#9c342d",
-		colorInfo: "#1890ff",
+		// colorSuccess: "#67c23a",
+		// colorWarning: "#e6a23c",
+		// colorError: "#9c342d",
+		// colorInfo: "#1890ff",
 
 		// Typography
 		fontFamily:
@@ -31,61 +31,57 @@ export const supportBayTheme: ThemeConfig = {
 		fontSizeHeading5: 16,
 
 		// Border radius
-		borderRadius: 6,
-		borderRadiusLG: 8,
-		borderRadiusSM: 4,
+		// borderRadius: 6,
+		// borderRadiusLG: 8,
+		// borderRadiusSM: 4,
 
 		// Colors
 		colorBgContainer: "#ffffff",
-		colorBgLayout: "#f2f6f3",
-		colorBgElevated: "#ffffff",
+		colorBgMask: "#ffffff80",
+		// colorBgLayout: "#f2f6f3",
+		// colorBgElevated: "#ffffff",
 		colorBorder: "#dfe7e2",
-		colorBorderSecondary: "#e5e9e7",
-		colorText: "#16231f",
-		colorTextSecondary: "#697770",
-		colorTextTertiary: "#8a9992",
-		colorTextQuaternary: "#b3bdb7",
+		// colorBorderSecondary: "#e5e9e7",
+		colorText: "rgba(0, 0, 0, 0.75)",
+		colorTextHeading: "rgba(0,0,0,0.88)",
+		// colorTextSecondary: "#697770",
+		// colorTextTertiary: "#8a9992",
+		// colorTextQuaternary: "#b3bdb7",
 
 		// Link
-		colorLink: "#216e52",
-		colorLinkHover: "#195b42",
-		colorLinkActive: "#144033",
+		// colorLink: "#1677ff",
+		// colorLinkHover: "#010302",
+		// colorLinkActive: "#090b0a",
 
 		// Box Shadow
-		boxShadow: "0 2px 8px rgba(22, 35, 31, 0.08)",
-		boxShadowSecondary: "0 4px 16px rgba(22, 35, 31, 0.12)",
+		// boxShadow: "0 2px 0 rgba(0,0,0,0.02)",
+		// boxShadowSecondary: "0 4px 16px rgba(22, 35, 31, 0.12)",
 	},
 	components: {
 		Button: {
-			primaryShadow: "none",
-			defaultShadow: "none",
-			dangerShadow: "none",
-			borderRadius: 6,
-			controlHeight: 36,
-			controlHeightLG: 44,
-			controlHeightSM: 28,
+			colorBorder: "#d9d9d9",
+			colorText: "rgba(0,0,0,0.88)",
+			primaryShadow: "0 2px 0 rgba(0,0,0,0.02)",
 		},
 		Input: {
-			borderRadius: 6,
-			controlHeight: 36,
-			controlHeightLG: 44,
-			controlHeightSM: 28,
+			activeShadow: "0 0 0 2px rgba(33, 110, 82, 0.1)",
 		},
 		Card: {
-			borderRadiusLG: 8,
-		},
-		Select: {
-			borderRadius: 6,
-		},
-		Table: {
 			borderRadius: 8,
+			colorBorder: "#f0f0f0",
 		},
-		Modal: {
-			borderRadiusLG: 8,
-		},
-		Menu: {
-			itemBorderRadius: 6,
-		},
+		// Select: {
+		// 	borderRadius: 6,
+		// },
+		// Table: {
+		// 	borderRadius: 8,
+		// },
+		// Modal: {
+		// 	borderRadiusLG: 8,
+		// },
+		// Menu: {
+		// 	itemBorderRadius: 6,
+		// },
 	},
 };
 

@@ -1,22 +1,34 @@
-import { Preloader } from '../../shared/components/Preloader';
+import { Spin, theme } from "antd";
 
 interface PortalStateProps {
-  title?: string;
-  message: string;
-  loading?: boolean;
+	title?: string;
+	message: string;
+	loading?: boolean;
 }
 
 export function PortalState({ title, message, loading }: PortalStateProps) {
-  return (
-    <main className="sbay-state" role={loading ? undefined : 'alert'}>
-      {loading ? <Preloader label={message} /> : null}
-      {title ? <h1>{title}</h1> : null}
-      {!loading ? <p>{message}</p> : null}
-      {!loading ? (
-        <button type="button" onClick={() => window.location.reload()}>
-          Try again
-        </button>
-      ) : null}
-    </main>
-  );
+	const { token } = theme.useToken();
+
+	return (
+		<>
+			{loading ? (
+				<Spin
+					styles={{
+						indicator: {
+							color: token.colorPrimary,
+						},
+					}}
+					fullscreen
+				/>
+			) : (
+				<main className="sbay-state" role="alert">
+					{title ? <h1>{title}</h1> : null}
+					<p>{message}</p>
+					<button type="button" onClick={() => window.location.reload()}>
+						Try again
+					</button>
+				</main>
+			)}
+		</>
+	);
 }

@@ -1,14 +1,400 @@
 * {
 	box-sizing: border-box;
 }
-body.supportbay-portal {
-	background: #f0f0f1;
-	margin: 0;
-	padding: 0;
-}
+body {
+	&.supportbay-portal {
+		font-weight: 400;
+		background: #f0f0f1;
+		margin: 0;
+		padding: 0;
 
-body.supportbay-portal #wpadminbar {
-	display: none;
+		a {
+			display: inline-flex;
+		}
+		h1,
+		h2,
+		h3,
+		h4,
+		h5,
+		h6 {
+			margin-top: 0;
+			margin-bottom: 1em;
+		}
+
+		#wpadminbar {
+			display: none;
+		}
+
+		// Auth page
+		.sbay-auth-page {
+			display: flex;
+			flex-direction: column;
+			width: 100%;
+			min-height: 100dvh;
+			padding: 16px;
+
+			&-content {
+				max-width: 620px;
+				width: 100%;
+			}
+		}
+		.sbay-auth-card {
+			width: 100%;
+		}
+
+		// Rich Editor
+		.sbay-editor-container {
+			background: #fff;
+			border: 1px solid #d9d9d9;
+			border-radius: 6px;
+			overflow: hidden;
+			box-shadow: none;
+
+			div.mce-panel {
+				border: 0;
+			}
+			div.mce-toolbar-grp > div {
+				padding: 3px;
+			}
+			.mce-toolbar {
+				.mce-container > div {
+					white-space: normal;
+				}
+				.mce-btn-group {
+					.mce-btn {
+						margin: 2px;
+						border-radius: 2px;
+						min-width: 26px;
+						text-align: center;
+						border: 1px solid transparent;
+
+						&:hover,
+						&:focus {
+							box-shadow: none;
+							border: 1px solid #06c;
+						}
+
+						&.mce-active,
+						&:active {
+							background: transparent;
+							border: 1px solid #06c;
+						}
+					}
+					.mce-btn-has-text {
+						border-color: #d9d9d9;
+						padding: 0 3px;
+					}
+				}
+				.mce-btn {
+					button {
+						padding: 2px 3px;
+						line-height: normal;
+					}
+					&.mce-active .mce-caret,
+					&.mce-opened .mce-caret,
+					&.mce-active:hover .mce-caret,
+					&.mce-opened:hover .mce-caret,
+					.mce-caret {
+						border-top-color: inherit;
+					}
+				}
+				.mce-colorbutton {
+					.mce-preview {
+						background: #50575e;
+					}
+				}
+				.mce-ico {
+					color: #50575e;
+					line-height: 20px;
+					width: 20px;
+					height: 20px;
+					text-align: center;
+					text-shadow: none;
+					margin: 0;
+					padding: 0;
+				}
+			}
+
+			.qt-dfw {
+				margin: 2px;
+				border-radius: 2px;
+				min-width: 26px;
+				text-align: center;
+				padding: 2px 3px;
+				line-height: normal;
+				border: 1px solid transparent;
+
+				&:hover,
+				&:focus {
+					box-shadow: none;
+					border: 1px solid #06c;
+				}
+				&.active {
+					background: transparent;
+					border: 1px solid #06c;
+				}
+			}
+			div.mce-path {
+				padding: 2px 10px;
+				margin: 0;
+			}
+			.mce-disabled {
+				.mce-top-part,
+				.mce-statusbar {
+					position: relative;
+					background: #0000000a;
+				}
+
+				.mce-top-part:after {
+					position: absolute;
+					content: "";
+					top: 0;
+					left: 0;
+					width: 100%;
+					height: 100%;
+					background: #fff9;
+					z-index: 1;
+				}
+				.mce-top-part:before {
+					box-shadow: none;
+				}
+			}
+			.mce-top-part {
+				.mce-toolbar-grp {
+					background: transparent;
+					border-bottom: 1px solid #d9d9d9;
+				}
+				&:before {
+					box-shadow: none;
+				}
+			}
+			.mce-btn {
+				&.mce-active {
+					button,
+					&:hover button {
+						color: #06c;
+					}
+					i,
+					&:hover i {
+						color: #06c;
+					}
+				}
+				.mce-txt {
+					font-weight: 500;
+					line-height: 20px;
+				}
+			}
+			.mce-disabled {
+				.mce-btn {
+					button,
+					&:hover button {
+						cursor: default;
+						-webkit-box-shadow: none;
+						-moz-box-shadow: none;
+						box-shadow: none;
+						opacity: 0.4;
+						filter: alpha(opacity=40);
+						zoom: 1;
+					}
+				}
+			}
+			div.mce-panel.mce-statusbar {
+				border-top: 1px solid #d9d9d9;
+			}
+		}
+		.mce-floatpanel {
+			&.mce-window {
+				border: 1px solid #f0f0f0;
+				border-radius: 8px;
+				overflow: hidden;
+
+				.mce-window-head {
+					border-bottom: 1px solid #f0f0f0;
+
+					.mce-title {
+						font-size: 14px;
+						line-height: 20px;
+						font-weight: 500;
+						color: #000000e0;
+					}
+				}
+				.mce-window-body {
+					.mce-formitem {
+						label.mce-label {
+							color: #000000e0;
+						}
+						input.mce-textbox {
+							border: 1px solid #d9d9d9;
+							border-radius: 6px;
+							color: #000000e0;
+							transition: all 0.2s;
+
+							&:hover,
+							&:focus {
+								border: 1px solid #4096ff;
+							}
+						}
+						.mce-btn {
+							border: 1px solid #d9d9d9;
+							border-radius: 6px;
+							transition: all 0.2s;
+
+							button {
+								color: #000000e0;
+								transition: all 0.2s;
+							}
+
+							&:hover,
+							&:focus,
+							&.mce-active,
+							&.mce-active:hover,
+							&.mce-active:focus {
+								background: transparent;
+								border: 1px solid #4096ff;
+							}
+							&.mce-active button,
+							&.mce-active:hover button,
+							&.mce-active i,
+							&.mce-active:hover i {
+								color: #000000e0;
+							}
+							&.mce-active .mce-caret,
+							&.mce-active:hover .mce-caret {
+								border-top-color: #b5bcc2;
+							}
+						}
+					}
+				}
+				.mce-foot {
+					border-top: 1px solid #f0f0f0;
+					.mce-btn {
+						border: 1px solid #d9d9d9;
+						border-radius: 6px;
+						box-shadow: 2px 0 #00000005;
+						text-shadow: none;
+						transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+
+						&:hover,
+						&:focus {
+							border: 1px solid #4096ff;
+						}
+
+						&.mce-primary {
+							background-color: #1677ff;
+							border: 1px solid #1677ff;
+
+							&:hover,
+							&:focus {
+								background-color: #4096ff;
+								border: 1px solid #4096ff;
+							}
+
+							button {
+								color: #fff;
+								&:hover {
+									color: #fff;
+								}
+							}
+						}
+
+						button {
+							color: #000000e0;
+							padding: 4px 15px;
+							transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+
+							&:hover {
+								color: #4096ff;
+							}
+						}
+					}
+				}
+			}
+			&.mce-menu {
+				border-radius: 6px;
+				margin-top: 4px;
+				max-height: 174px;
+				overflow-y: auto;
+
+				.mce-menu-item {
+					color: #000000e0;
+					&:hover,
+					&:focus {
+						background: #0000000a;
+					}
+					&.mce-active.mce-menu-item-normal {
+						background: #e6f4ff;
+
+						.mce-text,
+						.mce-ico {
+							color: #000000e0;
+						}
+					}
+				}
+				&.mce-combobox-menu {
+					display: none;
+				}
+			}
+			&.mce-popover {
+				border-radius: 4px;
+
+				.mce-colorbutton-grid {
+					.mce-colorbtn-trans div {
+						font-size: 14px;
+						line-height: 1;
+					}
+				}
+			}
+			&.mce-tinymce-inline {
+				border-radius: 4px;
+				.mce-toolbar {
+					.mce-btn-group {
+						.mce-btn,
+						.mce-btn.mce-active {
+							background: #fff;
+							border-radius: 4px;
+						}
+						.mce-btn {
+							&:hover,
+							&:active,
+							&.mce-active:hover,
+							&.mce-active:active {
+								background: #fff;
+								border-color: #06c;
+								border-radius: 4px;
+							}
+							button,
+							button i,
+							&:hover button,
+							&:active button,
+							&:hover button i,
+							&:active button i,
+							&.mce-active button,
+							&.mce-active button i,
+							&.mce-active:hover button,
+							&.mce-active:active button,
+							&.mce-active:hover button i,
+							&.mce-active:active button i {
+								color: #50575e;
+							}
+						}
+					}
+				}
+			}
+		}
+		#mce-modal-block {
+			background: #00000073;
+			&.mce-in {
+				opacity: 1;
+			}
+		}
+
+		// copyright
+		.sbay-auth-copyright {
+			display: block;
+			text-align: center;
+			padding: 20px 0 0 0;
+		}
+	}
 }
 
 .sbay-shell {
@@ -1034,22 +1420,49 @@ body.supportbay-portal #wpadminbar {
 	}
 }
 /* Auth Pages - Ant Design Style */
-.sbay-auth-page {
-	min-height: 100vh;
-	padding: 8px 8px 24px;
-	box-sizing: border-box;
-	background: #f0f2f5;
-	color: #000000e6;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+// .sbay-auth-page {
+// 	min-height: 100vh;
+// 	padding: 8px 8px 24px;
+// 	box-sizing: border-box;
+// 	background: #f0f2f5;
+// 	color: #000000e6;
+// 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+// }
+
+/* Full-screen loading spinner (Support Genix pattern) */
+.sbay-auth-page .sbay-auth-loading-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 1000000;
+	background: #ffffff80;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
 }
 
-.sbay-auth-card {
-	width: min(480px, 100%);
-	margin: 24px auto;
-	border-radius: 8px;
-	background: #fff;
-	border: 1px solid #f0f0f0;
-	overflow: hidden;
+.sbay-auth-page .sbay-auth-loading-overlay .ant-spin {
+	color: #216e52;
+}
+
+/* Fullscreen spinner used in PortalState */
+.sbay-fullscreen-spin {
+	position: fixed;
+	inset: 0;
+	z-index: 1000000;
+	background: #ffffff80;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.sbay-fullscreen-spin .ant-spin-dot,
+.sbay-fullscreen-spin .ant-spin-dot-item {
+	background-color: #216e52;
+}
+
+.sbay-fullscreen-spin .ant-spin-text {
+	color: #216e52;
 }
 
 .sbay-auth-card-header {
@@ -1388,23 +1801,6 @@ body.supportbay-portal #wpadminbar {
 	text-decoration: underline;
 }
 
-.sbay-auth-copyright {
-	margin-top: 24px;
-	text-align: center;
-	color: #00000073;
-	font-size: 14px;
-}
-
-.sbay-auth-copyright a {
-	color: var(--sbay-green);
-	font-weight: 500;
-	text-decoration: none;
-}
-
-.sbay-auth-copyright a:hover {
-	text-decoration: underline;
-}
-
 .sbay-guest-ticket-success {
 	padding: 32px 0;
 	display: grid;
@@ -1604,20 +2000,6 @@ body.supportbay-portal #wpadminbar {
 	border-color: #9cc7e8;
 	background: #eef7ff;
 	color: #174a70;
-}
-.sbay-auth-copyright {
-	display: flex;
-	justify-content: center;
-	flex-wrap: wrap;
-	gap: 0;
-}
-.sbay-auth-copyright a {
-	color: #216e52;
-	font-weight: 650;
-	text-decoration: none;
-}
-.sbay-auth-copyright a:hover {
-	text-decoration: underline;
 }
 .sbay-attachment-preview {
 	position: fixed;
