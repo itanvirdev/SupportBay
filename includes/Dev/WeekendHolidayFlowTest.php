@@ -22,7 +22,7 @@ final class WeekendHolidayFlowTest extends FlowTest {
       ]);
       Assert::true($saved['timezone']===wp_timezone_string(),'Availability settings expose the WordPress timezone.');
       $state=$settings->activeState();Assert::true($state['weekend']&&$state['holiday'],'Current WordPress-local time matches configured overlapping periods.');
-      Assert::equals(2,count($settings->activeNotices()),'Overlapping weekend and holiday portal notices are both returned.');
+      Assert::equals(1,count($settings->activeNotices()),'On overlapping weekend+holiday days only the holiday notice is shown.');
     }finally{update_option('sbay_weekend_holiday_settings',is_array($previous)?$previous:[],false);}
   }
 }

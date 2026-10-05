@@ -49,8 +49,8 @@ final class WeekendHolidaySettingsService {
   /** @return array<int,array{type:string,message:string}> */
   public function activeNotices(): array {
     $settings=$this->get();$state=$this->activeState($settings);$notices=[];
-    if($state['weekend']&&$settings['weekend_portal_notice_enabled'])$notices[]=['type'=>'weekend','message'=>$settings['weekend_portal_notice']];
     if($state['holiday']&&$settings['holiday_portal_notice_enabled'])$notices[]=['type'=>'holiday','message'=>$settings['holiday_portal_notice']];
+    if($state['weekend']&&$settings['weekend_portal_notice_enabled']&&!$state['holiday'])$notices[]=['type'=>'weekend','message'=>$settings['weekend_portal_notice']];
     return $notices;
   }
 
