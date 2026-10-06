@@ -29,12 +29,13 @@ body.supportbay-portal #wpadminbar {
 body.supportbay-portal .sbay-auth-page {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-height: 100dvh;
-  padding: 16px;
+  padding: 20px;
 }
 body.supportbay-portal .sbay-auth-page-content {
-  max-width: 620px;
   width: 100%;
 }
 body.supportbay-portal .sbay-auth-card {

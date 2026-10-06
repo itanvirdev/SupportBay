@@ -29,12 +29,13 @@ body {
 		.sbay-auth-page {
 			display: flex;
 			flex-direction: column;
+			align-items: center;
+			justify-content: center;
 			width: 100%;
 			min-height: 100dvh;
-			padding: 16px;
+			padding: 20px;
 
 			&-content {
-				max-width: 620px;
 				width: 100%;
 			}
 		}

@@ -173,7 +173,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 				/>
 			) : null}
 
-			<Flex className="sbay-flex" align="center" justify="center" vertical>
+			<Flex className="sbay-flex" align="center" justify="center" vertical style={{ maxWidth: "620px", width: "100%" }}>
 				<Flex className="sbay-auth-page-content" align="center" justify="center" vertical>
 					<Card className="sbay-auth-card">
 						<Row>
@@ -187,6 +187,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 											alt={config.siteName}
 											width={"auto"}
 											height={40}
+											preview={false}
 										/>
 									</Link>
 								</Flex>

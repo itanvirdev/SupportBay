@@ -1,9 +1,13 @@
-import { FormEvent, useState } from "react";
+import { HomeOutlined, PlusOutlined, UserOutlined } from "@ant-design/icons";
+import { Alert, Button, Card, Col, Divider, Flex, Form, Image, Input, Row, Space, Spin, theme, Tooltip } from "antd";
+import Link from "antd/es/typography/Link";
+import Text from "antd/es/typography/Text";
+import Title from "antd/es/typography/Title";
+import { useState } from "react";
 import { apiPost } from "../../api/client";
-import { getConfig } from "../../core/config";
 import { PortalCopyright } from "../../components/PortalCopyright";
+import { getConfig } from "../../core/config";
 import { recaptchaToken } from "../../core/recaptcha";
-import { Card, Form, Input, Button, Space, Typography } from "antd";
 
 interface ResetPasswordPageProps {
 	navigate: (path: string) => void;
@@ -32,78 +36,159 @@ export function ResetPasswordPage({ navigate }: ResetPasswordPageProps) {
 		}
 	};
 
+	const { token } = theme.useToken();
+
 	return (
 		<main className="sbay-auth-page">
-			<Card bordered={false} className="sbay-auth-card">
-				<div className="sbay-auth-card-header">
-					<div className="sbay-auth-brand">
-						<img src={config.portalLogoUrl} alt={config.siteName} />
-					</div>
-				</div>
-				<div className="sbay-auth-card-nav">
-					<div className="sbay-auth-card-nav-left">
-						<a className="sbay-auth-nav-btn" href={config.homeUrl} aria-label="Home">
-							<span className="sbay-auth-nav-btn-icon" aria-hidden="true">⌂</span>
-						</a>
-						<button type="button" className="sbay-auth-nav-btn" onClick={() => navigate("/support/login/")}>
-							<span className="sbay-auth-nav-btn-icon" aria-hidden="true">♙</span> Login
-						</button>
-					</div>
-					<div className="sbay-auth-card-nav-right">
-						{config.guestTicketCreationEnabled ? (
-							<button type="button" className="sbay-auth-nav-btn sbay-auth-nav-btn-primary" onClick={() => navigate("/support/guest-ticket/")}>
-								<span className="sbay-auth-nav-btn-icon" aria-hidden="true">＋</span> Create Ticket as a Guest
-							</button>
-						) : null}
-					</div>
-				</div>
-				<div className="sbay-auth-card-body">
-					<Typography.Title level={3}>Reset Password</Typography.Title>
-					<Typography.Text>
-						Enter your username or email address and we'll email you a link to reset your password.
-					</Typography.Text>
-					<Form layout="vertical" className="sbay-auth-form" onFinish={submit}>
-						<Form.Item
-							label="Username or Email Address"
-							hasFeedback
-						>
-							<Input
-								id="reset-login"
-								value={login}
-								onChange={(e) => setLogin(e.target.value)}
-								autoComplete="username"
-								placeholder="Enter your username or email"
-							/>
-						</Form.Item>
-						{error ? (
-							<Typography.Text type="danger" className="sbay-form-error" role="alert">
-								{error}
-							</Typography.Text>
-						) : null}
-						{success ? (
-							<Typography.Text type="success" className="sbay-form-success" role="status">
-								{success}
-							</Typography.Text>
-						) : null}
-						<Form.Item>
-							<Button type="primary" htmlType="submit" block disabled={busy}>
-								{busy ? "Sending…" : "Get New Password"}
-							</Button>
-						</Form.Item>
-					</Form>
-					{config.registrationEnabled ? (
-						<Space direction="vertical" className="sbay-auth-register-prompt">
-							<Typography.Text>
-								Don't have an account?{' '}
-								<Button type="link" className="sbay-auth-link" onClick={() => navigate("/support/register/")}>
-									Register Now
-								</Button>
-							</Typography.Text>
-						</Space>
-					) : null}
-				</div>
-			</Card>
-			<PortalCopyright />
+			{/* loading state */}
+			{busy ? (
+				<Spin
+					styles={{
+						indicator: {
+							color: token.colorPrimary,
+						},
+					}}
+					fullscreen
+				/>
+			) : null}
+
+			<Flex className="sbay-flex" align="center" justify="center" vertical style={{ maxWidth: "620px", width: "100%" }}>
+				<Flex className="sbay-auth-page-content" align="center" justify="center" vertical>
+					<Card className="sbay-auth-card">
+						<Row>
+							{/* Logo */}
+							<Col span={24} style={{ marginBottom: "24px" }}>
+								<Flex align="center" justify="center">
+									<Link href={config.homeUrl}>
+										<Image
+											className="sbay-portal-logo"
+											src={config.portalLogoUrl}
+											alt={config.siteName}
+											width={"auto"}
+											height={40}
+											preview={false}
+										/>
+									</Link>
+								</Flex>
+							</Col>
+
+							{/* Auth navigation */}
+							<Col span={24}>
+								<Divider style={{ margin: "0px 0px 12px" }} />
+								<Row gutter={"small"} justify={"space-between"}>
+									<Col>
+										<Flex wrap gap={"small"}>
+											<Tooltip title="Home">
+												<Button className="sbay-home" icon={<HomeOutlined />} href={config.homeUrl} />
+											</Tooltip>
+
+											<Button
+												className="sbay-login"
+												icon={<UserOutlined />}
+												onClick={() => navigate("/support/login/")}
+											>
+												Login
+											</Button>
+										</Flex>
+									</Col>
+
+									{config.guestTicketCreationEnabled ? (
+										<Col>
+											<Flex gap={"small"}>
+												<Button
+													className="sbay-create-guest-ticket"
+													icon={<PlusOutlined />}
+													type="primary"
+													ghost
+													onClick={() => navigate("/support/guest-ticket/")}
+												>
+													Create Ticket as a Guest
+												</Button>
+											</Flex>
+										</Col>
+									) : null}
+								</Row>
+								<Divider style={{ margin: "12px 0px 24px 0px" }} />
+							</Col>
+						</Row>
+
+						<Row>
+							<Col span={24}>
+								{/* Auth title */}
+								<Title className="sbay-auth-title" level={5} style={{ marginBottom: "5px" }}>
+									Reset Password
+								</Title>
+								<Flex style={{ marginBottom: "24px" }}>
+									<Text>Enter your username or email address and we'll email you a link to reset your password.</Text>
+								</Flex>
+
+								<Col span={24}>
+									<Form layout="vertical" onFinish={submit} autoComplete="off">
+										<Row gutter={16}>
+											{/* username or email address */}
+											<Col span={24}>
+												<Form.Item
+													label="Username or Email Address"
+													name="reset-login"
+													rules={[{ required: true, message: "Username or email address is required." }]}
+												>
+													<Input
+														id="reset-login"
+														value={login}
+														onChange={e => setLogin(e.target.value)}
+														autoComplete="username"
+													/>
+												</Form.Item>
+											</Col>
+
+											{/* Form error alert */}
+											{error ? (
+												<Col span={24}>
+													<Alert title={error} type="error" />
+												</Col>
+											) : null}
+
+											{/* Form success alert */}
+											{success ? (
+												<Col span={24}>
+													<Alert title={success} type="success" />
+												</Col>
+											) : null}
+
+											<Col span={24}>
+												<Space style={{ display: "flex", justifyContent: "end" }}>
+													<Form.Item label={null}>
+														<Button type="primary" htmlType="submit" block disabled={busy}>
+															{busy ? "Sending…" : "Get New Password"}
+														</Button>
+													</Form.Item>
+												</Space>
+											</Col>
+										</Row>
+									</Form>
+
+									{/* Register */}
+									<Divider style={{ margin: "0px 0px 24px" }} />
+									<Flex justify="center" gap={"small"}>
+										<Text>Don't have an account?</Text>
+
+										<Link
+											className="sbay-anchor"
+											onClick={() => navigate("/support/register/")}
+											style={{ color: token.colorPrimary }}
+										>
+											Register Now
+										</Link>
+									</Flex>
+								</Col>
+							</Col>
+						</Row>
+					</Card>
+
+					{/* Copyright Text */}
+					<PortalCopyright />
+				</Flex>
+			</Flex>
 		</main>
 	);
 }
