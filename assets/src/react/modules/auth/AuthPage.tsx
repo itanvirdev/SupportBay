@@ -78,8 +78,7 @@ export function AuthPage({ mode, navigate }: AuthPageProps) {
 				.catch(() => setRegistrationFields([]));
 	}, [mode]);
 
-	const submit = async (event: FormEvent) => {
-		event.preventDefault();
+	const submit = async () => {
 		if (mode === "register" && password !== confirmPassword) {
 			setError("Passwords do not match.");
 			return;
