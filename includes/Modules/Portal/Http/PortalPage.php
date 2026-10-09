@@ -54,7 +54,10 @@ final class PortalPage {
     add_action('init', [self::class, 'registerRewriteRule']);
     add_action('init', [$this, 'maybeFlushRewriteRules'], 99);
     add_filter('query_vars', [$this, 'queryVars']);
-    add_action('wp_enqueue_scripts', [$this, 'enqueueAssets']);
+    add_filter('show_admin_bar', [$this, 'showAdminBar']);
+    add_action('wp_enqueue_scripts', [$this, 'enqueueAssets'], 9);
+    add_action('wp_print_scripts', [$this, 'dequeueWordPressAssets'], 100);
+    add_action('wp_print_styles', [$this, 'dequeueWordPressAssets'], 100);
     add_action('template_redirect', [$this, 'render']);
     add_shortcode('supportbay', [$this, 'shortcode']);
     add_filter('display_post_states', [$this, 'postStates'], 10, 2);
@@ -168,6 +171,47 @@ final class PortalPage {
   }
 
   /**
+   * Dequeue default WordPress frontend assets to prevent conflicts.
+   * Runs at wp_print_scripts/wp_print_styles before assets are output to the page.
+   * Guards on isPortalRequest() so it only runs on the portal route.
+   */
+  public function dequeueWordPressAssets(): void {
+    if (! $this->isPortalRequest()) {
+      return;
+    }
+
+    // Dequeue default WordPress scripts
+    wp_dequeue_script('jquery');
+    wp_dequeue_script('jquery-migrate');
+    wp_dequeue_script('underscore');
+    wp_dequeue_script('backbone');
+    wp_dequeue_script('wp-util');
+    wp_dequeue_script('wp-api');
+    wp_dequeue_script('wp-api-request');
+    wp_dequeue_script('wp-embed');
+    wp_dequeue_script('editor');
+
+    // Dequeue default WordPress styles
+    wp_dequeue_style('wp-block-library');
+    wp_dequeue_style('wp-block-library-theme');
+    wp_dequeue_style('global-styles');
+    wp_dequeue_style('buttons');
+    wp_dequeue_style('forms');
+    wp_dequeue_style('dashicons');
+    wp_dequeue_style('wp-admin');
+
+    // Dequeue admin bar styles (adds margin-top: 32px to html)
+    wp_dequeue_style('admin-bar');
+  }
+
+  /**
+   * Hide the admin bar on the frontend portal.
+   */
+  public function showAdminBar(): bool {
+    return false;
+  }
+
+  /**
    * Render the isolated React mount document.
    */
   public function render(): void {
@@ -193,7 +237,7 @@ final class PortalPage {
     <head>
       <meta charset="<?php bloginfo('charset'); ?>">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-	    <link rel="profile" href="https://gmpg.org/xfn/11">
+      <link rel="profile" href="https://gmpg.org/xfn/11">
       <title><?php echo esc_html($this->settings->portalPageTitle()); ?></title>
 
       <?php wp_head(); ?>
