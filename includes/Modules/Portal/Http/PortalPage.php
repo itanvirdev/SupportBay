@@ -268,7 +268,18 @@ final class PortalPage {
 
           private function isSelectedPage(): bool {
             $pageId = $this->settings->portalPageId();
-            return $pageId > 0 && is_page($pageId);
+            if ($pageId <= 0) {
+              return false;
+            }
+
+            // If this page is set as the front page, only count it as selected when
+            // actually viewing the front page to avoid matching on other pages
+            $frontPageId = get_option('page_on_front');
+            if ($frontPageId > 0 && $pageId == $frontPageId) {
+              return is_page($pageId) && is_front_page();
+            }
+
+            return is_page($pageId);
           }
 
           private function hasPortalShortcode(): bool {
